@@ -29,13 +29,10 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-// ── Auto-create DB in development ────────────────────────────────────────────
-if (app.Environment.IsDevelopment())
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-}
+
+await using var scope = app.Services.CreateAsyncScope();
+var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await db.Database.EnsureCreatedAsync();
 
 app.MapDefaultEndpoints();
 
