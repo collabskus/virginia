@@ -1,600 +1,48 @@
-
 ===============================================================================
-ASP.NET PROJECT EXPORT
-Generated: 03/26/2026 14:24:25
+ASP.NET PROJECT EXPORT  (git-tracked files only)
+Generated: 03/26/2026 14:29:06
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
-DIRECTORY STRUCTURE:
-===================
+DIRECTORY STRUCTURE (tracked):
+==============================
 
-Folder PATH listing
-Volume serial number is 2A9E-9DAE
-D:\DEV\PERSONAL\VIRGINIA
-|   .gitignore
-|   Export.ps1
-|   Virginia.slnx
-|   
-+---docs
-|   \---llm
-|           dump.txt
-|           
-+---Virginia
-|   |   appsettings.Development.json
-|   |   appsettings.json
-|   |   Program.cs
-|   |   Virginia.csproj
-|   |   Virginia.csproj.user
-|   |   
-|   +---bin
-|   |   +---Debug
-|   |   |   \---net10.0
-|   |   |           appsettings.Development.json
-|   |   |           appsettings.json
-|   |   |           Microsoft.Extensions.AmbientMetadata.Application.dll
-|   |   |           Microsoft.Extensions.Compliance.Abstractions.dll
-|   |   |           Microsoft.Extensions.DependencyInjection.AutoActivation.dll
-|   |   |           Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll
-|   |   |           Microsoft.Extensions.Http.Diagnostics.dll
-|   |   |           Microsoft.Extensions.Http.Resilience.dll
-|   |   |           Microsoft.Extensions.Resilience.dll
-|   |   |           Microsoft.Extensions.ServiceDiscovery.Abstractions.dll
-|   |   |           Microsoft.Extensions.ServiceDiscovery.dll
-|   |   |           Microsoft.Extensions.Telemetry.Abstractions.dll
-|   |   |           Microsoft.Extensions.Telemetry.dll
-|   |   |           OpenTelemetry.Api.dll
-|   |   |           OpenTelemetry.Api.ProviderBuilderExtensions.dll
-|   |   |           OpenTelemetry.dll
-|   |   |           OpenTelemetry.Exporter.OpenTelemetryProtocol.dll
-|   |   |           OpenTelemetry.Extensions.Hosting.dll
-|   |   |           OpenTelemetry.Instrumentation.AspNetCore.dll
-|   |   |           OpenTelemetry.Instrumentation.Http.dll
-|   |   |           OpenTelemetry.Instrumentation.Runtime.dll
-|   |   |           Polly.Core.dll
-|   |   |           Polly.Extensions.dll
-|   |   |           Polly.RateLimiting.dll
-|   |   |           Virginia.deps.json
-|   |   |           Virginia.dll
-|   |   |           Virginia.exe
-|   |   |           Virginia.pdb
-|   |   |           Virginia.runtimeconfig.json
-|   |   |           Virginia.ServiceDefaults.dll
-|   |   |           Virginia.ServiceDefaults.pdb
-|   |   |           Virginia.staticwebassets.endpoints.json
-|   |   |           Virginia.staticwebassets.runtime.json
-|   |   |           
-|   |   \---Release
-|   |       \---net10.0
-|   |               appsettings.Development.json
-|   |               appsettings.json
-|   |               Microsoft.Extensions.AmbientMetadata.Application.dll
-|   |               Microsoft.Extensions.Compliance.Abstractions.dll
-|   |               Microsoft.Extensions.DependencyInjection.AutoActivation.dll
-|   |               Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll
-|   |               Microsoft.Extensions.Http.Diagnostics.dll
-|   |               Microsoft.Extensions.Http.Resilience.dll
-|   |               Microsoft.Extensions.Resilience.dll
-|   |               Microsoft.Extensions.ServiceDiscovery.Abstractions.dll
-|   |               Microsoft.Extensions.ServiceDiscovery.dll
-|   |               Microsoft.Extensions.Telemetry.Abstractions.dll
-|   |               Microsoft.Extensions.Telemetry.dll
-|   |               OpenTelemetry.Api.dll
-|   |               OpenTelemetry.Api.ProviderBuilderExtensions.dll
-|   |               OpenTelemetry.dll
-|   |               OpenTelemetry.Exporter.OpenTelemetryProtocol.dll
-|   |               OpenTelemetry.Extensions.Hosting.dll
-|   |               OpenTelemetry.Instrumentation.AspNetCore.dll
-|   |               OpenTelemetry.Instrumentation.Http.dll
-|   |               OpenTelemetry.Instrumentation.Runtime.dll
-|   |               Polly.Core.dll
-|   |               Polly.Extensions.dll
-|   |               Polly.RateLimiting.dll
-|   |               Virginia.deps.json
-|   |               Virginia.dll
-|   |               Virginia.exe
-|   |               Virginia.pdb
-|   |               Virginia.runtimeconfig.json
-|   |               Virginia.ServiceDefaults.dll
-|   |               Virginia.ServiceDefaults.pdb
-|   |               Virginia.staticwebassets.endpoints.json
-|   |               Virginia.staticwebassets.runtime.json
-|   |               
-|   +---Components
-|   |   |   App.razor
-|   |   |   Routes.razor
-|   |   |   _Imports.razor
-|   |   |   
-|   |   +---Layout
-|   |   |       MainLayout.razor
-|   |   |       MainLayout.razor.css
-|   |   |       ReconnectModal.razor
-|   |   |       ReconnectModal.razor.css
-|   |   |       ReconnectModal.razor.js
-|   |   |       
-|   |   \---Pages
-|   |           Error.razor
-|   |           Home.razor
-|   |           Home.razor.css
-|   |           NotFound.razor
-|   |           
-|   +---obj
-|   |   |   project.assets.json
-|   |   |   project.nuget.cache
-|   |   |   Virginia.csproj.nuget.dgspec.json
-|   |   |   Virginia.csproj.nuget.g.props
-|   |   |   Virginia.csproj.nuget.g.targets
-|   |   |   
-|   |   +---Debug
-|   |   |   \---net10.0
-|   |   |       |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-|   |   |       |   ApiEndpoints.json
-|   |   |       |   apphost.exe
-|   |   |       |   EmbeddedAttribute.cs
-|   |   |       |   rbcswa.dswa.cache.json
-|   |   |       |   rjimswa.dswa.cache.json
-|   |   |       |   rjsmcshtml.dswa.cache.json
-|   |   |       |   rjsmrazor.dswa.cache.json
-|   |   |       |   rpswa.dswa.cache.json
-|   |   |       |   staticwebassets.build.endpoints.json
-|   |   |       |   staticwebassets.build.json
-|   |   |       |   staticwebassets.build.json.cache
-|   |   |       |   staticwebassets.development.json
-|   |   |       |   staticwebassets.references.upToDateCheck.txt
-|   |   |       |   staticwebassets.removed.txt
-|   |   |       |   staticwebassets.upToDateCheck.txt
-|   |   |       |   swae.build.ex.cache
-|   |   |       |   ValidatableTypeAttribute.cs
-|   |   |       |   Virginia.AssemblyInfo.cs
-|   |   |       |   Virginia.AssemblyInfoInputs.cache
-|   |   |       |   Virginia.assets.cache
-|   |   |       |   Virginia.csproj.AssemblyReference.cache
-|   |   |       |   Virginia.csproj.BuildWithSkipAnalyzers
-|   |   |       |   Virginia.csproj.CoreCompileInputs.cache
-|   |   |       |   Virginia.csproj.FileListAbsolute.txt
-|   |   |       |   Virginia.csproj.Up2Date
-|   |   |       |   Virginia.dll
-|   |   |       |   Virginia.GeneratedMSBuildEditorConfig.editorconfig
-|   |   |       |   Virginia.genruntimeconfig.cache
-|   |   |       |   Virginia.GlobalUsings.g.cs
-|   |   |       |   Virginia.MvcApplicationPartsAssemblyInfo.cache
-|   |   |       |   Virginia.pdb
-|   |   |       |   
-|   |   |       +---compressed
-|   |   |       |       42rbbzcnt4-{0}-4kywy7iv6g-4kywy7iv6g.gz
-|   |   |       |       f1evobo17n-{0}-2tj1sjhksk-2tj1sjhksk.gz
-|   |   |       |       f2tcbn1u86-{0}-b9228eflpl-b9228eflpl.gz
-|   |   |       |       jui0v16emj-{0}-jtfv7b3gvk-jtfv7b3gvk.gz
-|   |   |       |       yuybuj433e-{0}-jtfv7b3gvk-jtfv7b3gvk.gz
-|   |   |       |       zjz2gc0wux-{0}-abdmv1u4y3-abdmv1u4y3.gz
-|   |   |       |       
-|   |   |       +---ref
-|   |   |       |       Virginia.dll
-|   |   |       |       
-|   |   |       +---refint
-|   |   |       |       Virginia.dll
-|   |   |       |       
-|   |   |       +---scopedcss
-|   |   |       |   +---bundle
-|   |   |       |   |       Virginia.styles.css
-|   |   |       |   |       
-|   |   |       |   +---Components
-|   |   |       |   |   +---Layout
-|   |   |       |   |   |       MainLayout.razor.rz.scp.css
-|   |   |       |   |   |       ReconnectModal.razor.rz.scp.css
-|   |   |       |   |   |       
-|   |   |       |   |   \---Pages
-|   |   |       |   |           Home.razor.rz.scp.css
-|   |   |       |   |           
-|   |   |       |   \---projectbundle
-|   |   |       |           Virginia.bundle.scp.css
-|   |   |       |           
-|   |   |       \---staticwebassets
-|   |   \---Release
-|   |       \---net10.0
-|   |           |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-|   |           |   apphost.exe
-|   |           |   EmbeddedAttribute.cs
-|   |           |   PublishOutputs.160b98ecbf.txt
-|   |           |   rbcswa.dswa.cache.json
-|   |           |   rjimswa.dswa.cache.json
-|   |           |   rjsmcshtml.dswa.cache.json
-|   |           |   rjsmrazor.dswa.cache.json
-|   |           |   rpswa.dswa.cache.json
-|   |           |   staticwebassets.build.endpoints.json
-|   |           |   staticwebassets.build.json
-|   |           |   staticwebassets.build.json.cache
-|   |           |   staticwebassets.development.json
-|   |           |   staticwebassets.publish.endpoints.json
-|   |           |   staticwebassets.publish.json
-|   |           |   staticwebassets.references.upToDateCheck.txt
-|   |           |   staticwebassets.removed.txt
-|   |           |   staticwebassets.upToDateCheck.txt
-|   |           |   swae.build.ex.cache
-|   |           |   swae.publish.ex.cache
-|   |           |   ValidatableTypeAttribute.cs
-|   |           |   Virginia.AssemblyInfo.cs
-|   |           |   Virginia.AssemblyInfoInputs.cache
-|   |           |   Virginia.assets.cache
-|   |           |   Virginia.csproj.AssemblyReference.cache
-|   |           |   Virginia.csproj.CoreCompileInputs.cache
-|   |           |   Virginia.csproj.FileListAbsolute.txt
-|   |           |   Virginia.csproj.Up2Date
-|   |           |   Virginia.deps.json
-|   |           |   Virginia.dll
-|   |           |   Virginia.GeneratedMSBuildEditorConfig.editorconfig
-|   |           |   Virginia.genpublishdeps.cache
-|   |           |   Virginia.genruntimeconfig.cache
-|   |           |   Virginia.GlobalUsings.g.cs
-|   |           |   Virginia.MvcApplicationPartsAssemblyInfo.cache
-|   |           |   Virginia.pdb
-|   |           |   
-|   |           +---compressed
-|   |           |   |   42rbbzcnt4-{0}-4kywy7iv6g-4kywy7iv6g.gz
-|   |           |   |   f1evobo17n-{0}-2tj1sjhksk-2tj1sjhksk.gz
-|   |           |   |   f2tcbn1u86-{0}-b9228eflpl-b9228eflpl.gz
-|   |           |   |   jui0v16emj-{0}-jtfv7b3gvk-jtfv7b3gvk.gz
-|   |           |   |   yuybuj433e-{0}-jtfv7b3gvk-jtfv7b3gvk.gz
-|   |           |   |   zjz2gc0wux-{0}-abdmv1u4y3-abdmv1u4y3.gz
-|   |           |   |   
-|   |           |   \---publish
-|   |           |           42rbbzcnt4-{0}-4kywy7iv6g-4kywy7iv6g.br
-|   |           |           f1evobo17n-{0}-2tj1sjhksk-2tj1sjhksk.br
-|   |           |           f2tcbn1u86-{0}-b9228eflpl-b9228eflpl.br
-|   |           |           jui0v16emj-{0}-jbgsn99m35-jbgsn99m35.br
-|   |           |           jui0v16emj-{0}-jtfv7b3gvk-jtfv7b3gvk.br
-|   |           |           jui0v16emj-{0}-wisol2u27k-wisol2u27k.br
-|   |           |           yuybuj433e-{0}-jbgsn99m35-jbgsn99m35.br
-|   |           |           yuybuj433e-{0}-jtfv7b3gvk-jtfv7b3gvk.br
-|   |           |           yuybuj433e-{0}-wisol2u27k-wisol2u27k.br
-|   |           |           zjz2gc0wux-{0}-abdmv1u4y3-abdmv1u4y3.br
-|   |           |           
-|   |           +---PubTmp
-|   |           |   |   Virginia.Parameters.xml
-|   |           |   |   Virginia.SourceManifest.xml
-|   |           |   |   
-|   |           |   \---Out
-|   |           |       |   appsettings.Development.json
-|   |           |       |   appsettings.json
-|   |           |       |   Microsoft.Extensions.AmbientMetadata.Application.dll
-|   |           |       |   Microsoft.Extensions.Compliance.Abstractions.dll
-|   |           |       |   Microsoft.Extensions.DependencyInjection.AutoActivation.dll
-|   |           |       |   Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll
-|   |           |       |   Microsoft.Extensions.Http.Diagnostics.dll
-|   |           |       |   Microsoft.Extensions.Http.Resilience.dll
-|   |           |       |   Microsoft.Extensions.Resilience.dll
-|   |           |       |   Microsoft.Extensions.ServiceDiscovery.Abstractions.dll
-|   |           |       |   Microsoft.Extensions.ServiceDiscovery.dll
-|   |           |       |   Microsoft.Extensions.Telemetry.Abstractions.dll
-|   |           |       |   Microsoft.Extensions.Telemetry.dll
-|   |           |       |   OpenTelemetry.Api.dll
-|   |           |       |   OpenTelemetry.Api.ProviderBuilderExtensions.dll
-|   |           |       |   OpenTelemetry.dll
-|   |           |       |   OpenTelemetry.Exporter.OpenTelemetryProtocol.dll
-|   |           |       |   OpenTelemetry.Extensions.Hosting.dll
-|   |           |       |   OpenTelemetry.Instrumentation.AspNetCore.dll
-|   |           |       |   OpenTelemetry.Instrumentation.Http.dll
-|   |           |       |   OpenTelemetry.Instrumentation.Runtime.dll
-|   |           |       |   Polly.Core.dll
-|   |           |       |   Polly.Extensions.dll
-|   |           |       |   Polly.RateLimiting.dll
-|   |           |       |   Virginia.deps.json
-|   |           |       |   Virginia.dll
-|   |           |       |   Virginia.exe
-|   |           |       |   Virginia.pdb
-|   |           |       |   Virginia.runtimeconfig.json
-|   |           |       |   Virginia.ServiceDefaults.dll
-|   |           |       |   Virginia.ServiceDefaults.pdb
-|   |           |       |   Virginia.staticwebassets.endpoints.json
-|   |           |       |   web.config
-|   |           |       |   
-|   |           |       \---wwwroot
-|   |           |           |   app.css
-|   |           |           |   app.css.br
-|   |           |           |   app.css.gz
-|   |           |           |   Virginia.styles.css
-|   |           |           |   Virginia.styles.css.br
-|   |           |           |   Virginia.styles.css.gz
-|   |           |           |   
-|   |           |           +---Components
-|   |           |           |   \---Layout
-|   |           |           |           ReconnectModal.razor.js
-|   |           |           |           ReconnectModal.razor.js.br
-|   |           |           |           ReconnectModal.razor.js.gz
-|   |           |           |           
-|   |           |           \---_framework
-|   |           |                   blazor.server.js
-|   |           |                   blazor.server.js.br
-|   |           |                   blazor.server.js.gz
-|   |           |                   blazor.web.js
-|   |           |                   blazor.web.js.br
-|   |           |                   blazor.web.js.gz
-|   |           |                   
-|   |           +---ref
-|   |           |       Virginia.dll
-|   |           |       
-|   |           +---refint
-|   |           |       Virginia.dll
-|   |           |       
-|   |           +---scopedcss
-|   |           |   +---bundle
-|   |           |   |       Virginia.styles.css
-|   |           |   |       
-|   |           |   +---Components
-|   |           |   |   +---Layout
-|   |           |   |   |       MainLayout.razor.rz.scp.css
-|   |           |   |   |       ReconnectModal.razor.rz.scp.css
-|   |           |   |   |       
-|   |           |   |   \---Pages
-|   |           |   |           Home.razor.rz.scp.css
-|   |           |   |           
-|   |           |   \---projectbundle
-|   |           |           Virginia.bundle.scp.css
-|   |           |           
-|   |           \---staticwebassets
-|   +---Properties
-|   |   |   launchSettings.json
-|   |   |   
-|   |   \---PublishProfiles
-|   |           site33169-WebDeploy.pubxml
-|   |           site33169-WebDeploy.pubxml.user
-|   |           
-|   \---wwwroot
-|           app.css
-|           
-+---Virginia.AppHost
-|   |   AppHost.cs
-|   |   appsettings.Development.json
-|   |   appsettings.json
-|   |   Virginia.AppHost.csproj
-|   |   
-|   +---bin
-|   |   +---Debug
-|   |   |   \---net10.0
-|   |   |       |   Aspire.Hosting.AppHost.dll
-|   |   |       |   Aspire.Hosting.dll
-|   |   |       |   Fractions.dll
-|   |   |       |   Google.Protobuf.dll
-|   |   |       |   Grpc.AspNetCore.Server.ClientFactory.dll
-|   |   |       |   Grpc.AspNetCore.Server.dll
-|   |   |       |   Grpc.Core.Api.dll
-|   |   |       |   Grpc.Net.Client.dll
-|   |   |       |   Grpc.Net.ClientFactory.dll
-|   |   |       |   Grpc.Net.Common.dll
-|   |   |       |   HealthChecks.Uris.dll
-|   |   |       |   Humanizer.dll
-|   |   |       |   Json.More.dll
-|   |   |       |   JsonPatch.Net.dll
-|   |   |       |   JsonPointer.Net.dll
-|   |   |       |   KubernetesClient.dll
-|   |   |       |   MessagePack.Annotations.dll
-|   |   |       |   MessagePack.dll
-|   |   |       |   Microsoft.NET.StringTools.dll
-|   |   |       |   Microsoft.VisualStudio.Threading.dll
-|   |   |       |   Microsoft.VisualStudio.Validation.dll
-|   |   |       |   Nerdbank.Streams.dll
-|   |   |       |   Newtonsoft.Json.dll
-|   |   |       |   Polly.Core.dll
-|   |   |       |   Semver.dll
-|   |   |       |   StreamJsonRpc.dll
-|   |   |       |   System.IO.Hashing.dll
-|   |   |       |   Virginia.AppHost.deps.json
-|   |   |       |   Virginia.AppHost.dll
-|   |   |       |   Virginia.AppHost.exe
-|   |   |       |   Virginia.AppHost.pdb
-|   |   |       |   Virginia.AppHost.runtimeconfig.json
-|   |   |       |   YamlDotNet.dll
-|   |   |       |   
-|   |   |       +---cs
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---de
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---es
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---fr
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---it
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---ja
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---ko
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---pl
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---pt-BR
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---ru
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---tr
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       +---zh-Hans
-|   |   |       |       Aspire.Hosting.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Threading.resources.dll
-|   |   |       |       Microsoft.VisualStudio.Validation.resources.dll
-|   |   |       |       StreamJsonRpc.resources.dll
-|   |   |       |       
-|   |   |       \---zh-Hant
-|   |   |               Aspire.Hosting.resources.dll
-|   |   |               Microsoft.VisualStudio.Threading.resources.dll
-|   |   |               Microsoft.VisualStudio.Validation.resources.dll
-|   |   |               StreamJsonRpc.resources.dll
-|   |   |               
-|   |   \---Release
-|   |       \---net10.0
-|   +---obj
-|   |   |   project.assets.json
-|   |   |   project.nuget.cache
-|   |   |   Virginia.AppHost.csproj.nuget.dgspec.json
-|   |   |   Virginia.AppHost.csproj.nuget.g.props
-|   |   |   Virginia.AppHost.csproj.nuget.g.targets
-|   |   |   
-|   |   +---Debug
-|   |   |   \---net10.0
-|   |   |       |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-|   |   |       |   apphost.exe
-|   |   |       |   AppSettingsSchema.json
-|   |   |       |   CombinedComponentSchema.json
-|   |   |       |   Virginia.AppHost.AssemblyInfo.cs
-|   |   |       |   Virginia.AppHost.AssemblyInfoInputs.cache
-|   |   |       |   Virginia.AppHost.assets.cache
-|   |   |       |   Virginia.AppHost.csproj.AssemblyReference.cache
-|   |   |       |   Virginia.AppHost.csproj.CoreCompileInputs.cache
-|   |   |       |   Virginia.AppHost.csproj.FileListAbsolute.txt
-|   |   |       |   Virginia.AppHost.dll
-|   |   |       |   Virginia.AppHost.GeneratedMSBuildEditorConfig.editorconfig
-|   |   |       |   Virginia.AppHost.genruntimeconfig.cache
-|   |   |       |   Virginia.AppHost.GlobalUsings.g.cs
-|   |   |       |   Virginia.AppHost.pdb
-|   |   |       |   Virginia.C70646E7.Up2Date
-|   |   |       |   
-|   |   |       +---Aspire
-|   |   |       |   \---references
-|   |   |       |           Virginia.ProjectMetadata.g.cs
-|   |   |       |           _AppHost.ProjectMetadata.g.cs
-|   |   |       |           
-|   |   |       +---ref
-|   |   |       |       Virginia.AppHost.dll
-|   |   |       |       
-|   |   |       \---refint
-|   |   |               Virginia.AppHost.dll
-|   |   |               
-|   |   \---Release
-|   |       \---net10.0
-|   |           |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-|   |           |   AppSettingsSchema.json
-|   |           |   CombinedComponentSchema.json
-|   |           |   Virginia.AppHost.AssemblyInfo.cs
-|   |           |   Virginia.AppHost.AssemblyInfoInputs.cache
-|   |           |   Virginia.AppHost.assets.cache
-|   |           |   Virginia.AppHost.csproj.AssemblyReference.cache
-|   |           |   Virginia.AppHost.GeneratedMSBuildEditorConfig.editorconfig
-|   |           |   Virginia.AppHost.GlobalUsings.g.cs
-|   |           |   
-|   |           +---Aspire
-|   |           |   \---references
-|   |           |           Virginia.ProjectMetadata.g.cs
-|   |           |           _AppHost.ProjectMetadata.g.cs
-|   |           |           
-|   |           +---ref
-|   |           \---refint
-|   \---Properties
-|           launchSettings.json
-|           
-\---Virginia.ServiceDefaults
-    |   Extensions.cs
-    |   Virginia.ServiceDefaults.csproj
-    |   
-    +---bin
-    |   +---Debug
-    |   |   \---net10.0
-    |   |           Virginia.ServiceDefaults.deps.json
-    |   |           Virginia.ServiceDefaults.dll
-    |   |           Virginia.ServiceDefaults.pdb
-    |   |           
-    |   \---Release
-    |       \---net10.0
-    |               Virginia.ServiceDefaults.deps.json
-    |               Virginia.ServiceDefaults.dll
-    |               Virginia.ServiceDefaults.pdb
-    |               
-    \---obj
-        |   project.assets.json
-        |   project.nuget.cache
-        |   Virginia.ServiceDefaults.csproj.nuget.dgspec.json
-        |   Virginia.ServiceDefaults.csproj.nuget.g.props
-        |   Virginia.ServiceDefaults.csproj.nuget.g.targets
-        |   
-        +---Debug
-        |   \---net10.0
-        |       |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-        |       |   Virginia.ServiceDefaults.AssemblyInfo.cs
-        |       |   Virginia.ServiceDefaults.AssemblyInfoInputs.cache
-        |       |   Virginia.ServiceDefaults.assets.cache
-        |       |   Virginia.ServiceDefaults.csproj.AssemblyReference.cache
-        |       |   Virginia.ServiceDefaults.csproj.BuildWithSkipAnalyzers
-        |       |   Virginia.ServiceDefaults.csproj.CoreCompileInputs.cache
-        |       |   Virginia.ServiceDefaults.csproj.FileListAbsolute.txt
-        |       |   Virginia.ServiceDefaults.dll
-        |       |   Virginia.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
-        |       |   Virginia.ServiceDefaults.GlobalUsings.g.cs
-        |       |   Virginia.ServiceDefaults.pdb
-        |       |   
-        |       +---ref
-        |       |       Virginia.ServiceDefaults.dll
-        |       |       
-        |       \---refint
-        |               Virginia.ServiceDefaults.dll
-        |               
-        \---Release
-            \---net10.0
-                |   .NETCoreApp,Version=v10.0.AssemblyAttributes.cs
-                |   Virginia.ServiceDefaults.AssemblyInfo.cs
-                |   Virginia.ServiceDefaults.AssemblyInfoInputs.cache
-                |   Virginia.ServiceDefaults.assets.cache
-                |   Virginia.ServiceDefaults.csproj.AssemblyReference.cache
-                |   Virginia.ServiceDefaults.csproj.CoreCompileInputs.cache
-                |   Virginia.ServiceDefaults.csproj.FileListAbsolute.txt
-                |   Virginia.ServiceDefaults.dll
-                |   Virginia.ServiceDefaults.GeneratedMSBuildEditorConfig.editorconfig
-                |   Virginia.ServiceDefaults.GlobalUsings.g.cs
-                |   Virginia.ServiceDefaults.pdb
-                |   
-                +---ref
-                |       Virginia.ServiceDefaults.dll
-                |       
-                \---refint
-                        Virginia.ServiceDefaults.dll
-                        
+.gitignore
+docs/llm/dump.txt
+Export.ps1
+Virginia.AppHost/AppHost.cs
+Virginia.AppHost/appsettings.Development.json
+Virginia.AppHost/appsettings.json
+Virginia.AppHost/Properties/launchSettings.json
+Virginia.AppHost/Virginia.AppHost.csproj
+Virginia.ServiceDefaults/Extensions.cs
+Virginia.ServiceDefaults/Virginia.ServiceDefaults.csproj
+Virginia.slnx
+Virginia/appsettings.Development.json
+Virginia/appsettings.json
+Virginia/Components/_Imports.razor
+Virginia/Components/App.razor
+Virginia/Components/Layout/MainLayout.razor
+Virginia/Components/Layout/MainLayout.razor.css
+Virginia/Components/Layout/ReconnectModal.razor
+Virginia/Components/Layout/ReconnectModal.razor.css
+Virginia/Components/Layout/ReconnectModal.razor.js
+Virginia/Components/Pages/Error.razor
+Virginia/Components/Pages/Home.razor
+Virginia/Components/Pages/Home.razor.css
+Virginia/Components/Pages/NotFound.razor
+Virginia/Components/Routes.razor
+Virginia/Program.cs
+Virginia/Properties/launchSettings.json
+Virginia/Virginia.csproj
+Virginia/wwwroot/app.css
 
 
 FILE CONTENTS:
 ==============
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\.gitignore
+FILE: .gitignore
 SIZE: 8.3 KB
 MODIFIED: 03/26/2026 14:02:15
 ================================================================================
@@ -1085,7 +533,159 @@ $RECYCLE.BIN/
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.AppHost\AppHost.cs
+FILE: Export.ps1
+SIZE: 5.83 KB
+MODIFIED: 03/26/2026 14:28:40
+================================================================================
+
+# Export Git-tracked ASP.NET Project Files to Single Text File
+# Uses `git ls-files` so only committed/staged files are included.
+
+param(
+    [string]$ProjectPath = ".",
+    [string]$OutputFile = "docs/llm/dump.txt"
+)
+
+# File extensions to include (without the leading dot)
+$IncludeExtensions = @(
+    "cs", "json", "xml", "csproj", "slnx", "sln", "config",
+    "cshtml", "razor", "js", "css", "scss", "html",
+    "yml", "yaml", "sql", "props", "targets", "sh",
+    "ps1"
+)
+
+# Exact filenames (no extension match needed)
+$IncludeSpecificFiles = @(
+    "Dockerfile", ".dockerignore", ".editorconfig",
+    ".gitignore", ".gitattributes"
+)
+
+# Directories to skip even if tracked (e.g. this script's own output)
+$ExcludeDirectories = @("docs")
+
+Write-Host "Starting project export..." -ForegroundColor Green
+Write-Host "Project Path: $ProjectPath" -ForegroundColor Yellow
+Write-Host "Output File: $OutputFile" -ForegroundColor Yellow
+
+# ── Resolve paths ────────────────────────────────────────────────────────────
+Push-Location $ProjectPath
+$ResolvedRoot = (Resolve-Path ".").Path
+
+$OutputPath = Join-Path $ResolvedRoot $OutputFile
+$outputDir  = Split-Path $OutputPath -Parent
+if (!(Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir -Force | Out-Null }
+
+# ── Get tracked files from Git ───────────────────────────────────────────────
+Write-Host "Querying git for tracked files..." -ForegroundColor Cyan
+
+$gitFiles = git ls-files --cached --others --exclude-standard 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: git ls-files failed. Are you inside a git repository?" -ForegroundColor Red
+    Pop-Location
+    exit 1
+}
+
+# Filter to desired extensions / specific filenames, and exclude dirs
+$AllFiles = $gitFiles | ForEach-Object {
+    $rel = $_
+    $name = Split-Path $rel -Leaf
+    $ext  = ($name -replace '^.*\.', '').ToLower()
+
+    # Skip excluded directories
+    $skip = $false
+    foreach ($d in $ExcludeDirectories) {
+        if ($rel -like "$d/*" -or $rel -like "$d\*") { $skip = $true; break }
+    }
+    if ($skip) { return }
+
+    # Match by extension or specific filename
+    if ($IncludeExtensions -contains $ext -or $IncludeSpecificFiles -contains $name) {
+        $fullPath = Join-Path $ResolvedRoot $rel
+        if (Test-Path $fullPath) {
+            [PSCustomObject]@{ Relative = $rel; Full = $fullPath }
+        }
+    }
+} | Sort-Object Relative
+
+Write-Host "Found $($AllFiles.Count) files to export" -ForegroundColor Green
+
+# ── Write header ─────────────────────────────────────────────────────────────
+$header = @"
+===============================================================================
+ASP.NET PROJECT EXPORT  (git-tracked files only)
+Generated: $(Get-Date)
+Project Path: $ResolvedRoot
+===============================================================================
+
+"@
+$header | Out-File -FilePath $OutputPath -Encoding UTF8
+
+# ── Directory tree (git ls-tree) ─────────────────────────────────────────────
+"DIRECTORY STRUCTURE (tracked):" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+"==============================" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+# Show a compact tree of tracked paths
+$gitFiles | Sort-Object | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+# ── File contents ────────────────────────────────────────────────────────────
+"FILE CONTENTS:" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+"==============" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+$i = 0
+foreach ($f in $AllFiles) {
+    $i++
+    $info = Get-Item $f.Full
+    Write-Host "Processing ($i/$($AllFiles.Count)): $($f.Relative)" -ForegroundColor White
+
+    $sep = "=" * 80
+    @"
+$sep
+FILE: $($f.Relative)
+SIZE: $([math]::Round($info.Length / 1KB, 2)) KB
+MODIFIED: $($info.LastWriteTime)
+$sep
+
+"@ | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+    try {
+        $content = Get-Content -Path $f.Full -Raw -ErrorAction Stop
+        if ($content) {
+            $content | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+        } else {
+            "[EMPTY FILE]" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+        }
+    } catch {
+        "[ERROR READING FILE: $($_.Exception.Message)]" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+    }
+
+    "" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+    "" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+}
+
+# ── Footer ───────────────────────────────────────────────────────────────────
+@"
+===============================================================================
+EXPORT COMPLETED: $(Get-Date)
+Total Files Exported: $i
+Output File: $OutputPath
+===============================================================================
+"@ | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+Pop-Location
+
+Write-Host "`nExport completed!" -ForegroundColor Green
+Write-Host "Total files exported: $i" -ForegroundColor Green
+Write-Host "Output file size: $([math]::Round((Get-Item $OutputPath).Length / 1KB, 2)) KB" -ForegroundColor Cyan
+
+
+
+================================================================================
+FILE: Virginia.AppHost/AppHost.cs
 SIZE: 0.14 KB
 MODIFIED: 03/26/2026 10:11:22
 ================================================================================
@@ -1099,7 +699,7 @@ builder.Build().Run();
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.AppHost\appsettings.Development.json
+FILE: Virginia.AppHost/appsettings.Development.json
 SIZE: 0.12 KB
 MODIFIED: 03/26/2026 10:11:15
 ================================================================================
@@ -1116,7 +716,7 @@ MODIFIED: 03/26/2026 10:11:15
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.AppHost\appsettings.json
+FILE: Virginia.AppHost/appsettings.json
 SIZE: 0.16 KB
 MODIFIED: 03/26/2026 10:11:15
 ================================================================================
@@ -1134,7 +734,7 @@ MODIFIED: 03/26/2026 10:11:15
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.AppHost\Properties\launchSettings.json
+FILE: Virginia.AppHost/Properties/launchSettings.json
 SIZE: 1.15 KB
 MODIFIED: 03/26/2026 10:11:15
 ================================================================================
@@ -1174,7 +774,7 @@ MODIFIED: 03/26/2026 10:11:15
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.AppHost\Virginia.AppHost.csproj
+FILE: Virginia.AppHost/Virginia.AppHost.csproj
 SIZE: 0.42 KB
 MODIFIED: 03/26/2026 10:11:25
 ================================================================================
@@ -1198,7 +798,7 @@ MODIFIED: 03/26/2026 10:11:25
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.ServiceDefaults\Extensions.cs
+FILE: Virginia.ServiceDefaults/Extensions.cs
 SIZE: 5.01 KB
 MODIFIED: 03/26/2026 10:11:15
 ================================================================================
@@ -1334,7 +934,7 @@ public static class Extensions
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia.ServiceDefaults\Virginia.ServiceDefaults.csproj
+FILE: Virginia.ServiceDefaults/Virginia.ServiceDefaults.csproj
 SIZE: 0.99 KB
 MODIFIED: 03/26/2026 10:23:33
 ================================================================================
@@ -1365,7 +965,21 @@ MODIFIED: 03/26/2026 10:23:33
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\appsettings.Development.json
+FILE: Virginia.slnx
+SIZE: 0.21 KB
+MODIFIED: 03/26/2026 10:11:25
+================================================================================
+
+<Solution>
+  <Project Path="Virginia.AppHost/Virginia.AppHost.csproj" />
+  <Project Path="Virginia.ServiceDefaults/Virginia.ServiceDefaults.csproj" />
+  <Project Path="Virginia/Virginia.csproj" />
+</Solution>
+
+
+
+================================================================================
+FILE: Virginia/appsettings.Development.json
 SIZE: 0.12 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1382,7 +996,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\appsettings.json
+FILE: Virginia/appsettings.json
 SIZE: 0.15 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1400,7 +1014,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\_Imports.razor
+FILE: Virginia/Components/_Imports.razor
 SIZE: 0.41 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1420,7 +1034,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\App.razor
+FILE: Virginia/Components/App.razor
 SIZE: 0.5 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1450,7 +1064,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Layout\MainLayout.razor
+FILE: Virginia/Components/Layout/MainLayout.razor
 SIZE: 0.21 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1468,7 +1082,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Layout\MainLayout.razor.css
+FILE: Virginia/Components/Layout/MainLayout.razor.css
 SIZE: 0.45 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1497,7 +1111,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Layout\ReconnectModal.razor
+FILE: Virginia/Components/Layout/ReconnectModal.razor
 SIZE: 1.33 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1537,7 +1151,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Layout\ReconnectModal.razor.css
+FILE: Virginia/Components/Layout/ReconnectModal.razor.css
 SIZE: 3.78 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1703,7 +1317,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Layout\ReconnectModal.razor.js
+FILE: Virginia/Components/Layout/ReconnectModal.razor.js
 SIZE: 2.39 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1775,7 +1389,7 @@ async function retryWhenDocumentBecomesVisible() {
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Pages\Error.razor
+FILE: Virginia/Components/Pages/Error.razor
 SIZE: 1.19 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1820,7 +1434,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Pages\Home.razor
+FILE: Virginia/Components/Pages/Home.razor
 SIZE: 1.9 KB
 MODIFIED: 03/26/2026 14:00:19
 ================================================================================
@@ -1897,7 +1511,7 @@ MODIFIED: 03/26/2026 14:00:19
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Pages\Home.razor.css
+FILE: Virginia/Components/Pages/Home.razor.css
 SIZE: 0.12 KB
 MODIFIED: 03/26/2026 10:24:49
 ================================================================================
@@ -1917,7 +1531,7 @@ p {
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Pages\NotFound.razor
+FILE: Virginia/Components/Pages/NotFound.razor
 SIZE: 0.12 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1930,7 +1544,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Components\Routes.razor
+FILE: Virginia/Components/Routes.razor
 SIZE: 0.29 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -1945,7 +1559,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Program.cs
+FILE: Virginia/Program.cs
 SIZE: 0.83 KB
 MODIFIED: 03/26/2026 10:11:25
 ================================================================================
@@ -1985,7 +1599,7 @@ app.Run();
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Properties\launchSettings.json
+FILE: Virginia/Properties/launchSettings.json
 SIZE: 0.7 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -2017,7 +1631,7 @@ MODIFIED: 03/26/2026 10:11:10
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\Virginia.csproj
+FILE: Virginia/Virginia.csproj
 SIZE: 0.43 KB
 MODIFIED: 03/26/2026 10:11:25
 ================================================================================
@@ -2040,7 +1654,7 @@ MODIFIED: 03/26/2026 10:11:25
 
 
 ================================================================================
-FILE: :\DEV\personal\Virginia\Virginia\wwwroot\app.css
+FILE: Virginia/wwwroot/app.css
 SIZE: 2.41 KB
 MODIFIED: 03/26/2026 10:11:10
 ================================================================================
@@ -2086,7 +1700,7 @@ h1:focus {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 14:24:29
-Total Files Exported: 26
-Output File: .\docs\llm\dump.txt
+EXPORT COMPLETED: 03/26/2026 14:29:06
+Total Files Exported: 28
+Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
