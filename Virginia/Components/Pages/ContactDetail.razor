@@ -1,0 +1,351 @@
+@page "/contacts/new"
+@page "/contacts/{Id:int}"
+@rendermode InteractiveServer
+@inject IContactService ContactService
+@inject NavigationManager Nav
+@inject ILogger<ContactDetail> Logger
+
+<PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
+
+<div class="detail">
+    <nav class="detail-nav">
+        <button class="btn btn-ghost" @onclick="GoBack">← Back to list</button>
+    </nav>
+
+    @if (notFound)
+    {
+        <div class="status">Contact not found. <a href="/">Back to list</a></div>
+        return;
+    }
+
+    @if (loading)
+    {
+        <div class="status" aria-live="polite">Loading...</div>
+        return;
+    }
+
+    @if (error is not null)
+    {
+        <div class="banner banner-error" role="alert">@error</div>
+    }
+
+    @if (saved)
+    {
+        <div class="banner banner-success" role="status">Contact saved successfully.</div>
+    }
+
+    <!-- Profile picture (edit mode only) -->
+    @if (!IsNew)
+    {
+        <section class="card">
+            <h2>Profile Picture</h2>
+            <div class="photo-row">
+                @if (detail?.HasPhoto == true)
+                {
+                    <img src="/api/contacts/@Id/photo?v=@photoVer"
+                         alt="@model.FirstName @model.LastName"
+                         class="avatar-lg" />
+                    <button class="btn btn-danger-sm" @onclick="RemovePhoto"
+                            disabled="@saving">Remove</button>
+                }
+                else
+                {
+                    <div class="avatar-lg avatar-empty">No photo</div>
+                }
+                <div class="photo-upload">
+                    <label>Upload (max 2 MB, JPEG/PNG/WebP):</label>
+                    <InputFile OnChange="OnPhotoSelected"
+                               accept="image/jpeg,image/png,image/webp" />
+                </div>
+            </div>
+        </section>
+    }
+
+    <EditForm Model="model" OnValidSubmit="SaveAsync" FormName="contact">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <!-- Basic info -->
+        <section class="card">
+            <h2>Basic Info</h2>
+            <div class="row">
+                <div class="group">
+                    <label for="fn">First Name *</label>
+                    <InputText id="fn" @bind-Value="model.FirstName" />
+                    <ValidationMessage For="() => model.FirstName" />
+                </div>
+                <div class="group">
+                    <label for="ln">Last Name *</label>
+                    <InputText id="ln" @bind-Value="model.LastName" />
+                    <ValidationMessage For="() => model.LastName" />
+                </div>
+            </div>
+        </section>
+
+        <!-- Emails -->
+        <section class="card">
+            <div class="card-head">
+                <h2>Emails</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Emails.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Emails.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Emails[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Address</label>
+                            <InputText @bind-Value="model.Emails[idx].Address"
+                                       type="email" />
+                            <ValidationMessage For="() => model.Emails[idx].Address" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Emails.RemoveAt(idx)"
+                                aria-label="Remove email">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Emails.Count == 0)
+            {
+                <p class="hint">No email addresses yet.</p>
+            }
+        </section>
+
+        <!-- Phones -->
+        <section class="card">
+            <div class="card-head">
+                <h2>Phones</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Phones.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Phones.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Phones[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Number</label>
+                            <InputText @bind-Value="model.Phones[idx].Number"
+                                       type="tel" />
+                            <ValidationMessage For="() => model.Phones[idx].Number" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Phones.RemoveAt(idx)"
+                                aria-label="Remove phone">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Phones.Count == 0)
+            {
+                <p class="hint">No phone numbers yet.</p>
+            }
+        </section>
+
+        <!-- Addresses -->
+        <section class="card">
+            <div class="card-head">
+                <h2>Addresses</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Addresses.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Addresses.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Addresses[idx].Label" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Addresses.RemoveAt(idx)"
+                                aria-label="Remove address">✕</button>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>Street *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Street" />
+                            <ValidationMessage For="() => model.Addresses[idx].Street" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>City *</label>
+                            <InputText @bind-Value="model.Addresses[idx].City" />
+                            <ValidationMessage For="() => model.Addresses[idx].City" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>State</label>
+                            <InputText @bind-Value="model.Addresses[idx].State" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Postal Code *</label>
+                            <InputText @bind-Value="model.Addresses[idx].PostalCode" />
+                            <ValidationMessage For="() => model.Addresses[idx].PostalCode" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>Country *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Country" />
+                            <ValidationMessage For="() => model.Addresses[idx].Country" />
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (model.Addresses.Count == 0)
+            {
+                <p class="hint">No mailing addresses yet.</p>
+            }
+        </section>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" disabled="@saving">
+                @(saving ? "Saving..." : "Save")
+            </button>
+            @if (!IsNew)
+            {
+                <button type="button" class="btn btn-danger" disabled="@saving"
+                        @onclick="DeleteAsync">Delete</button>
+            }
+            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private bool IsNew => Id is null;
+    private ContactFormModel model = new();
+    private ContactDetailDto? detail;
+    private bool loading = true;
+    private bool notFound;
+    private bool saving;
+    private bool saved;
+    private string? error;
+    private int photoVer = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsNew)
+        {
+            detail = await ContactService.GetAsync(Id!.Value);
+            if (detail is null)
+            {
+                notFound = true;
+                loading = false;
+                return;
+            }
+            model = ContactFormModel.FromDetail(detail);
+        }
+        loading = false;
+    }
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        saved = false;
+        error = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var newId = await ContactService.CreateAsync(model);
+                Logger.LogInformation("Created contact {Id}", newId);
+                Nav.NavigateTo($"/contacts/{newId}");
+            }
+            else
+            {
+                await ContactService.UpdateAsync(Id!.Value, model);
+                detail = await ContactService.GetAsync(Id!.Value);
+                saved = true;
+                Logger.LogInformation("Updated contact {Id}", Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Save failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to save contact");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        saving = true;
+        error = null;
+
+        try
+        {
+            await ContactService.DeleteAsync(Id!.Value);
+            Logger.LogInformation("Deleted contact {Id}", Id);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            error = $"Delete failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to delete contact {Id}", Id);
+            saving = false;
+        }
+    }
+
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        error = null;
+        var file = e.File;
+        const int maxBytes = 2 * 1024 * 1024;
+
+        if (file.Size > maxBytes)
+        {
+            error = "Image must be under 2 MB.";
+            return;
+        }
+
+        if (file.ContentType is not ("image/jpeg" or "image/png" or "image/webp"))
+        {
+            error = "Only JPEG, PNG, and WebP images are supported.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            await ContactService.SetProfilePictureAsync(Id!.Value, ms.ToArray(), file.ContentType);
+            detail = await ContactService.GetAsync(Id!.Value);
+            photoVer++;
+        }
+        catch (Exception ex)
+        {
+            error = $"Upload failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to upload photo for contact {Id}", Id);
+        }
+    }
+
+    private async Task RemovePhoto()
+    {
+        error = null;
+        await ContactService.RemoveProfilePictureAsync(Id!.Value);
+        detail = await ContactService.GetAsync(Id!.Value);
+        photoVer++;
+    }
+
+    private void GoBack() => Nav.NavigateTo("/");
+}

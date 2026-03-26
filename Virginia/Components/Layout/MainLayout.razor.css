@@ -1,3 +1,55 @@
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border-bottom: 2px solid #16213e;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.app-logo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #e94560;
+    text-decoration: none;
+}
+
+.app-logo:hover {
+    color: #ff6b81;
+}
+
+.app-subtitle {
+    font-size: 0.85rem;
+    color: #8888a0;
+}
+
+.app-main {
+    flex: 1;
+    padding: 1.5rem;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.app-footer {
+    text-align: center;
+    padding: 1rem;
+    color: #999;
+    border-top: 1px solid #e0e0e0;
+    background: #fafafa;
+}
+
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;
@@ -12,9 +64,15 @@
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .app-main {
+        padding: 1rem 0.75rem;
     }
+}

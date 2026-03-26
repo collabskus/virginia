@@ -1,0 +1,228 @@
+@page "/"
+@page "/contacts"
+@rendermode InteractiveServer
+@inject IContactService ContactService
+@inject NavigationManager Nav
+@inject ILogger<ContactList> Logger
+
+<PageTitle>Contacts | Virginia</PageTitle>
+
+<div class="page">
+    <div class="page-header">
+        <h1>Contacts</h1>
+        <button class="btn btn-primary" @onclick="() => Nav.NavigateTo('/contacts/new')">
+            + New Contact
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <details class="filter-panel" open>
+        <summary class="filter-toggle">Filters</summary>
+        <div class="filter-grid">
+            <div class="field">
+                <label for="fn">Name</label>
+                <input id="fn" type="text" placeholder="First or last..."
+                       @bind="filterName" @bind:event="oninput"
+                       @bind:after="OnFilterChanged" />
+            </div>
+            <div class="field">
+                <label for="fe">Email</label>
+                <input id="fe" type="email" placeholder="Email..."
+                       @bind="filterEmail" @bind:event="oninput"
+                       @bind:after="OnFilterChanged" />
+            </div>
+            <div class="field">
+                <label for="fp">Phone</label>
+                <input id="fp" type="tel" placeholder="Phone..."
+                       @bind="filterPhone" @bind:event="oninput"
+                       @bind:after="OnFilterChanged" />
+            </div>
+            <div class="field">
+                <label for="fc">City</label>
+                <input id="fc" type="text" placeholder="City..."
+                       @bind="filterCity" @bind:event="oninput"
+                       @bind:after="OnFilterChanged" />
+            </div>
+            <div class="field">
+                <label for="fs">State</label>
+                <input id="fs" type="text" placeholder="State..."
+                       @bind="filterState" @bind:event="oninput"
+                       @bind:after="OnFilterChanged" />
+            </div>
+            <div class="field">
+                <label for="fh">Has Photo</label>
+                <select id="fh" @bind="filterHasPhoto" @bind:after="OnFilterChanged">
+                    <option value="">Any</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-text" @onclick="ClearFilters">Clear all filters</button>
+    </details>
+
+    <!-- Content -->
+    @if (isLoading)
+    {
+        <div class="status" aria-live="polite">Loading contacts...</div>
+    }
+    else if (result is null || result.TotalCount == 0)
+    {
+        <div class="status" aria-live="polite">
+            No contacts found.
+            @if (HasActiveFilters)
+            {
+                <button class="btn btn-text" @onclick="ClearFilters">Clear filters</button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive" role="grid" aria-label="Contact list">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th scope="col" class="col-avatar"></th>
+                        <th scope="col">Name</th>
+                        <th scope="col" class="hide-sm">Email</th>
+                        <th scope="col" class="hide-sm">Phone</th>
+                        <th scope="col" class="hide-md">City</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in result.Items)
+                    {
+                        <tr tabindex="0" class="row-link"
+                            @onclick="() => Nav.NavigateTo($"/contacts/{c.Id}")"
+                            @onkeydown="e => { if (e.Key == \"Enter\") Nav.NavigateTo($\"/contacts/{c.Id}\"); }">
+                            <td class="col-avatar">
+                                @if (c.HasPhoto)
+                                {
+                                    <img src="/api/contacts/@(c.Id)/photo"
+                                         alt="@c.FirstName @c.LastName"
+                                         class="avatar" loading="lazy" />
+                                }
+                                else
+                                {
+                                    <span class="avatar avatar-initials"
+                                          aria-label="@c.FirstName @c.LastName">
+                                        @Initials(c)
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <span class="name-primary">@c.LastName, @c.FirstName</span>
+                                <span class="name-secondary">@(c.PrimaryEmail ?? "")</span>
+                            </td>
+                            <td class="hide-sm">@(c.PrimaryEmail ?? "—")</td>
+                            <td class="hide-sm">@(c.PrimaryPhone ?? "—")</td>
+                            <td class="hide-md">@(c.PrimaryCity ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="pager" aria-label="Pagination">
+            <button class="btn btn-sm" disabled="@(!result.HasPrevious)" @onclick="PrevPage">
+                ← Prev
+            </button>
+            <span class="pager-info">
+                Page @result.Page of @result.TotalPages
+                <span class="hide-sm">(@result.TotalCount contacts)</span>
+            </span>
+            <button class="btn btn-sm" disabled="@(!result.HasNext)" @onclick="NextPage">
+                Next →
+            </button>
+        </nav>
+    }
+</div>
+
+@code {
+    private PagedResult<ContactListItem>? result;
+    private bool isLoading = true;
+    private int page = 1;
+    private const int PageSize = 25;
+
+    private string filterName = "";
+    private string filterEmail = "";
+    private string filterPhone = "";
+    private string filterCity = "";
+    private string filterState = "";
+    private string filterHasPhoto = "";
+
+    private CancellationTokenSource? _debounceCts;
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(filterName)
+        || !string.IsNullOrWhiteSpace(filterEmail)
+        || !string.IsNullOrWhiteSpace(filterPhone)
+        || !string.IsNullOrWhiteSpace(filterCity)
+        || !string.IsNullOrWhiteSpace(filterState)
+        || filterHasPhoto != "";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task OnFilterChanged()
+    {
+        // Debounce: cancel previous pending load, wait 300ms
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+            page = 1;
+            await LoadAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // Another keystroke came in — ignore
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        bool? hasPhoto = filterHasPhoto switch
+        {
+            "true" => true,
+            "false" => false,
+            _ => null
+        };
+
+        var filter = new ContactFilter(
+            Name: NullIfEmpty(filterName),
+            Email: NullIfEmpty(filterEmail),
+            Phone: NullIfEmpty(filterPhone),
+            City: NullIfEmpty(filterCity),
+            State: NullIfEmpty(filterState),
+            HasPhoto: hasPhoto);
+
+        result = await ContactService.ListAsync(filter, page, PageSize);
+        isLoading = false;
+    }
+
+    private async Task PrevPage() { page--; await LoadAsync(); }
+    private async Task NextPage() { page++; await LoadAsync(); }
+
+    private async Task ClearFilters()
+    {
+        filterName = filterEmail = filterPhone = filterCity = filterState = filterHasPhoto = "";
+        page = 1;
+        await LoadAsync();
+    }
+
+    private static string? NullIfEmpty(string s) =>
+        string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private static string Initials(ContactListItem c)
+    {
+        var f = c.FirstName.Length > 0 ? c.FirstName[0] : '?';
+        var l = c.LastName.Length > 0 ? c.LastName[0] : '?';
+        return $"{f}{l}";
+    }
+}

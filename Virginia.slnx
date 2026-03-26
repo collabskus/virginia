@@ -2,4 +2,5 @@
   <Project Path="Virginia.AppHost/Virginia.AppHost.csproj" />
   <Project Path="Virginia.ServiceDefaults/Virginia.ServiceDefaults.csproj" />
   <Project Path="Virginia/Virginia.csproj" />
+  <Project Path="Virginia.Tests/Virginia.Tests.csproj" />
 </Solution>

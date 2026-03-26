@@ -1,0 +1,36 @@
+<Project>
+
+  <!-- ── Version variables ─────────────────────────────────────────────── -->
+  <PropertyGroup>
+    <EfCoreVersion>10.0.0</EfCoreVersion>
+    <OpenTelemetryVersion>1.15.0</OpenTelemetryVersion>
+    <OpenTelemetryInstrumentationVersion>1.15.1</OpenTelemetryInstrumentationVersion>
+    <AspireExtensionsVersion>10.4.0</AspireExtensionsVersion>
+    <XUnitVersion>1.1.0</XUnitVersion>
+    <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
+    <TestSdkVersion>17.14.0</TestSdkVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- EF Core -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EfCoreVersion)" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfCoreVersion)" />
+
+    <!-- OpenTelemetry -->
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryInstrumentationVersion)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryVersion)" />
+
+    <!-- Aspire extensions (service discovery, resilience) -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="$(AspireExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(AspireExtensionsVersion)" />
+
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="$(XUnitVersion)" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+  </ItemGroup>
+
+</Project>
