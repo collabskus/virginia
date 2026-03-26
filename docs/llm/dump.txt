@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 19:31:26
+Generated: 03/26/2026 19:39:38
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -15,6 +15,7 @@ Directory.Packages.props
 docs/llm/claude.md
 docs/llm/dump.txt
 Export.ps1
+README.md
 Virginia.AppHost/AppHost.cs
 Virginia.AppHost/appsettings.Development.json
 Virginia.AppHost/appsettings.json
@@ -4973,7 +4974,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 19:31:26
+EXPORT COMPLETED: 03/26/2026 19:39:38
 Total Files Exported: 46
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
