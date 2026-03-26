@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Virginia.Data;
 using Virginia.Services;
+using Xunit;
 
 namespace Virginia.Tests;
 
