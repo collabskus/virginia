@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 18:45:00
+Generated: 03/26/2026 18:50:16
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -626,12 +626,11 @@ MODIFIED: 03/26/2026 16:10:37
 
 ================================================================================
 FILE: Directory.Packages.props
-SIZE: 1.97 KB
-MODIFIED: 03/26/2026 16:10:56
+SIZE: 1.9 KB
+MODIFIED: 03/26/2026 18:48:06
 ================================================================================
 
 <Project>
-
   <!-- ── Version variables ─────────────────────────────────────────────── -->
   <PropertyGroup>
     <EfCoreVersion>10.0.0</EfCoreVersion>
@@ -642,31 +641,25 @@ MODIFIED: 03/26/2026 16:10:56
     <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
     <TestSdkVersion>17.14.0</TestSdkVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <!-- EF Core -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="$(EfCoreVersion)" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="$(EfCoreVersion)" />
-
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5" />
     <!-- OpenTelemetry -->
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryInstrumentationVersion)" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="$(OpenTelemetryVersion)" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryVersion)" />
-
     <!-- Aspire extensions (service discovery, resilience) -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="$(AspireExtensionsVersion)" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(AspireExtensionsVersion)" />
-
     <!-- Testing -->
-    <PackageVersion Include="xunit.v3" Version="$(XUnitVersion)" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="$(XUnitRunnerVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="$(TestSdkVersion)" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
   </ItemGroup>
-
 </Project>
-
 
 
 ================================================================================
@@ -4726,7 +4719,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 18:45:01
+EXPORT COMPLETED: 03/26/2026 18:50:16
 Total Files Exported: 45
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
