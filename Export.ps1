@@ -1,220 +1,119 @@
-# Export ASP.NET Project Files to Single Text File
-# PowerShell 5 compatible script
-# Use this to create a comprehensive dump of your project for LLM code review
+# Export Git-tracked ASP.NET Project Files to Single Text File
+# Uses `git ls-files` so only committed/staged files are included.
 
 param(
     [string]$ProjectPath = ".",
     [string]$OutputFile = "docs/llm/dump.txt"
 )
 
-# Define file extensions to include
+# File extensions to include (without the leading dot)
 $IncludeExtensions = @(
-    "*.cs",           # C# files
-    "*.json",         # JSON configuration files
-    "*.xml",          # XML files
-    "*.csproj",       # C# project files
-    "*.sln",          # Solution files
-    "*.config",       # Configuration files
-    "*.cshtml",       # Razor views
-    "*.razor",        # Razor components
-    "*.js",           # JavaScript files
-    "*.css",          # CSS files
-    "*.scss",         # SCSS files
-    "*.html",         # HTML files
-    "*.yml",          # YAML files
-    "*.yaml",         # YAML files
-    "*.sql",          # SQL files
-    "*.props",        # MSBuild props files
-    "*.targets",      # MSBuild targets files
-    "*.sh"            # Shell scripts
+    "cs", "json", "xml", "csproj", "slnx", "sln", "config",
+    "cshtml", "razor", "js", "css", "scss", "html",
+    "yml", "yaml", "sql", "props", "targets", "sh",
+    "ps1"
 )
 
-# Specific files without extensions to include
+# Exact filenames (no extension match needed)
 $IncludeSpecificFiles = @(
-    "Dockerfile",
-    "Dockerfile.*",
-    ".dockerignore",
-    ".editorconfig",
-    ".gitignore",
-    ".gitattributes"
+    "Dockerfile", ".dockerignore", ".editorconfig",
+    ".gitignore", ".gitattributes"
 )
 
-# Directories to exclude
-$ExcludeDirectories = @(
-    "bin",
-    "obj",
-    ".vs",
-    ".git",
-    "node_modules",
-    "packages",
-    ".vscode",
-    ".idea",
-    "docs"            # Documentation folder
-)
-
-# Files to exclude
-$ExcludeFiles = @(
-    "*.exe",
-    "*.dll",
-    "*.pdb",
-    "*.cache",
-    "*.log",
-    "*.md",           # Markdown files
-    "*.txt",          # Text files (except specific ones)
-    "LICENSE*",       # License files
-    "LICENCE*"        # Alternative spelling
-)
+# Directories to skip even if tracked (e.g. this script's own output)
+$ExcludeDirectories = @("docs")
 
 Write-Host "Starting project export..." -ForegroundColor Green
 Write-Host "Project Path: $ProjectPath" -ForegroundColor Yellow
 Write-Host "Output File: $OutputFile" -ForegroundColor Yellow
 
-# Initialize output file
-$OutputPath = Join-Path $ProjectPath $OutputFile
-"" | Out-File -FilePath $OutputPath -Encoding UTF8
+# ── Resolve paths ────────────────────────────────────────────────────────────
+Push-Location $ProjectPath
+$ResolvedRoot = (Resolve-Path ".").Path
 
-# Add header
-$Header = @"
-===============================================================================
-ASP.NET PROJECT EXPORT
-Generated: $(Get-Date)
-Project Path: $((Resolve-Path $ProjectPath).Path)
-===============================================================================
+$OutputPath = Join-Path $ResolvedRoot $OutputFile
+$outputDir  = Split-Path $OutputPath -Parent
+if (!(Test-Path $outputDir)) { New-Item -ItemType Directory -Path $outputDir -Force | Out-Null }
 
-"@
+# ── Get tracked files from Git ───────────────────────────────────────────────
+Write-Host "Querying git for tracked files..." -ForegroundColor Cyan
 
-$Header | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-
-# Generate directory structure using tree command if available, otherwise use PowerShell
-Write-Host "Generating directory structure..." -ForegroundColor Cyan
-
-"DIRECTORY STRUCTURE:" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-"===================" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-"" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-
-# Try to use tree command first
-try {
-    $treeOutput = & tree $ProjectPath /F /A 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        $treeOutput | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-    } else {
-        throw "Tree command failed"
-    }
-} catch {
-    # Fallback to PowerShell-based tree
-    Write-Host "Tree command not available, using PowerShell alternative..." -ForegroundColor Yellow
-
-    function Get-DirectoryTree {
-        param([string]$Path, [string]$Prefix = "")
-
-        $items = Get-ChildItem -Path $Path -Force | Where-Object {
-            $_.Name -notin $ExcludeDirectories
-        } | Sort-Object @{Expression={$_.PSIsContainer}; Descending=$true}, Name
-
-        for ($i = 0; $i -lt $items.Count; $i++) {
-            $item = $items[$i]
-            $isLast = ($i -eq $items.Count - 1)
-            $connector = if ($isLast) { "+-- " } else { "+-- " }
-
-            "$Prefix$connector$($item.Name)" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-
-            if ($item.PSIsContainer) {
-                $newPrefix = if ($isLast) { "$Prefix    " } else { "$Prefix|   " }
-                Get-DirectoryTree -Path $item.FullName -Prefix $newPrefix
-            }
-        }
-    }
-
-    (Split-Path $ProjectPath -Leaf) | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-    Get-DirectoryTree -Path $ProjectPath
+$gitFiles = git ls-files --cached --others --exclude-standard 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: git ls-files failed. Are you inside a git repository?" -ForegroundColor Red
+    Pop-Location
+    exit 1
 }
 
-"" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-"" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+# Filter to desired extensions / specific filenames, and exclude dirs
+$AllFiles = $gitFiles | ForEach-Object {
+    $rel = $_
+    $name = Split-Path $rel -Leaf
+    $ext  = ($name -replace '^.*\.', '').ToLower()
 
-# Get all relevant files
-Write-Host "Collecting files..." -ForegroundColor Cyan
-
-$AllFiles = @()
-
-# Collect files by extension
-foreach ($extension in $IncludeExtensions) {
-    $files = Get-ChildItem -Path $ProjectPath -Recurse -Include $extension -File | Where-Object {
-        $exclude = $false
-        
-        # Check excluded directories
-        foreach ($excludeDir in $ExcludeDirectories) {
-            if ($_.FullName -like "*\$excludeDir\*") {
-                $exclude = $true
-                break
-            }
-        }
-        
-        # Check excluded files
-        if (-not $exclude) {
-            foreach ($excludeFile in $ExcludeFiles) {
-                if ($_.Name -like $excludeFile) {
-                    $exclude = $true
-                    break
-                }
-            }
-        }
-        
-        -not $exclude
+    # Skip excluded directories
+    $skip = $false
+    foreach ($d in $ExcludeDirectories) {
+        if ($rel -like "$d/*" -or $rel -like "$d\*") { $skip = $true; break }
     }
-    $AllFiles += $files
-}
+    if ($skip) { return }
 
-# Collect specific files without extensions (like Dockerfile)
-foreach ($specificFile in $IncludeSpecificFiles) {
-    $files = Get-ChildItem -Path $ProjectPath -Recurse -Include $specificFile -File | Where-Object {
-        $exclude = $false
-        
-        # Check excluded directories
-        foreach ($excludeDir in $ExcludeDirectories) {
-            if ($_.FullName -like "*\$excludeDir\*") {
-                $exclude = $true
-                break
-            }
+    # Match by extension or specific filename
+    if ($IncludeExtensions -contains $ext -or $IncludeSpecificFiles -contains $name) {
+        $fullPath = Join-Path $ResolvedRoot $rel
+        if (Test-Path $fullPath) {
+            [PSCustomObject]@{ Relative = $rel; Full = $fullPath }
         }
-        
-        -not $exclude
     }
-    $AllFiles += $files
-}
-
-# Remove duplicates and sort
-$AllFiles = $AllFiles | Sort-Object FullName -Unique
+} | Sort-Object Relative
 
 Write-Host "Found $($AllFiles.Count) files to export" -ForegroundColor Green
 
-# Export each file
-"FILE CONTENTS:" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-"==============" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-"" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
-
-$fileCount = 0
-foreach ($file in $AllFiles) {
-    $fileCount++
-    $relativePath = $file.FullName.Substring($ProjectPath.Length).TrimStart('\')
-
-    Write-Host "Processing ($fileCount/$($AllFiles.Count)): $relativePath" -ForegroundColor White
-
-    $separator = "=" * 80
-    $fileHeader = @"
-$separator
-FILE: $relativePath
-SIZE: $([math]::Round($file.Length / 1KB, 2)) KB
-MODIFIED: $($file.LastWriteTime)
-$separator
+# ── Write header ─────────────────────────────────────────────────────────────
+$header = @"
+===============================================================================
+ASP.NET PROJECT EXPORT  (git-tracked files only)
+Generated: $(Get-Date)
+Project Path: $ResolvedRoot
+===============================================================================
 
 "@
+$header | Out-File -FilePath $OutputPath -Encoding UTF8
 
-    $fileHeader | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+# ── Directory tree (git ls-tree) ─────────────────────────────────────────────
+"DIRECTORY STRUCTURE (tracked):" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+"==============================" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+# Show a compact tree of tracked paths
+$gitFiles | Sort-Object | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+# ── File contents ────────────────────────────────────────────────────────────
+"FILE CONTENTS:" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+"==============" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+""  | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+
+$i = 0
+foreach ($f in $AllFiles) {
+    $i++
+    $info = Get-Item $f.Full
+    Write-Host "Processing ($i/$($AllFiles.Count)): $($f.Relative)" -ForegroundColor White
+
+    $sep = "=" * 80
+    @"
+$sep
+FILE: $($f.Relative)
+SIZE: $([math]::Round($info.Length / 1KB, 2)) KB
+MODIFIED: $($info.LastWriteTime)
+$sep
+
+"@ | Out-File -FilePath $OutputPath -Append -Encoding UTF8
 
     try {
-        # Read file content with error handling
-        $content = Get-Content -Path $file.FullName -Raw -ErrorAction Stop
+        $content = Get-Content -Path $f.Full -Raw -ErrorAction Stop
         if ($content) {
             $content | Out-File -FilePath $OutputPath -Append -Encoding UTF8
         } else {
@@ -228,21 +127,17 @@ $separator
     "" | Out-File -FilePath $OutputPath -Append -Encoding UTF8
 }
 
-# Add footer
-$Footer = @"
+# ── Footer ───────────────────────────────────────────────────────────────────
+@"
 ===============================================================================
 EXPORT COMPLETED: $(Get-Date)
-Total Files Exported: $fileCount
+Total Files Exported: $i
 Output File: $OutputPath
 ===============================================================================
-"@
+"@ | Out-File -FilePath $OutputPath -Append -Encoding UTF8
 
-$Footer | Out-File -FilePath $OutputPath -Append -Encoding UTF8
+Pop-Location
 
-Write-Host "`nExport completed successfully!" -ForegroundColor Green
-Write-Host "Output file: $OutputPath" -ForegroundColor Yellow
-Write-Host "Total files exported: $fileCount" -ForegroundColor Green
-
-# Display file size
-$outputFileInfo = Get-Item $OutputPath
-Write-Host "Output file size: $([math]::Round($outputFileInfo.Length / 1MB, 2)) MB" -ForegroundColor Cyan
+Write-Host "`nExport completed!" -ForegroundColor Green
+Write-Host "Total files exported: $i" -ForegroundColor Green
+Write-Host "Output file size: $([math]::Round((Get-Item $OutputPath).Length / 1KB, 2)) KB" -ForegroundColor Cyan
