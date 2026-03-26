@@ -7824,3 +7824,406 @@ we should probably at least have a build and test pipeline
 give me the full yaml files 
 use the latest actions 
 do not use old actions 
+
+Good catch. The root cause is that SQLite's `instr()` function (what EF Core's `.Contains()` compiles to) is case-sensitive. Every string filter in `ContactService` has the same bug. Let me walk through everything I found and fix it all.
+
+**Defects identified:**
+
+1. **Case-sensitive filtering** — all five string filters (Name, Email, Phone, City, State) use `.Contains()` which translates to SQLite's case-sensitive `instr()`. Your Abraham Lincoln search proves it.
+2. **No page size cap** — a caller could request `pageSize=1000000` and dump the entire DB in one shot.
+3. **Memory leak** — `_debounceCts` in `ContactList.razor` is never disposed when the component is torn down.
+4. **No delete confirmation** — one mis-click and a contact is gone with no undo.
+5. **No `@key` on table rows** — Blazor's diffing algorithm can't efficiently reconcile the list, which causes flickering and wasted re-renders on filter/page changes.
+6. **No error handling on list load** — if `ListAsync` throws, the whole page goes to the error boundary instead of showing a recoverable message.
+7. **No CI pipeline** — building and testing are manual-only.
+
+**On authentication:** Yes, ASP.NET Core Blazor Server fully supports auth. You'd add ASP.NET Core Identity backed by your existing EF/SQLite setup, wire in cookie auth, and wrap pages with `[Authorize]` or `<AuthorizeView>`. It's a real feature though — new entities, login/register pages, middleware config — so I'd recommend tackling it as a dedicated next step rather than bundling it into these bug fixes. Happy to build it out when you're ready.
+
+Here are the fixes:
+
+---
+
+**ContactService.cs** — case-insensitive filters + page size cap:The key changes in that file: every string filter now does `.ToLower().Contains(term.ToLower())` so SQLite uses `lower()` instead of case-sensitive `instr()`. Phone is left as-is since digits don't have case. Page size is clamped to 1–100, and page is floored at 1.
+
+Note I intentionally left Phone filter without `.ToLower()` — phone numbers are digits/punctuation, no casing to worry about.
+
+---
+
+**ContactList.razor** — add `IDisposable`, `@key`, error handling:
+
+Replace the `@code` block and add the directive at the top:
+
+```razor
+@implements IDisposable
+```
+
+Then in the `@code` block, add the dispose method and wrap `LoadAsync` with try/catch:
+
+```csharp
+@code {
+    private PagedResult<ContactListItem>? result;
+    private bool isLoading = true;
+    private int page = 1;
+    private const int PageSize = 25;
+    private string? loadError;
+
+    private string filterName = "";
+    private string filterEmail = "";
+    private string filterPhone = "";
+    private string filterCity = "";
+    private string filterState = "";
+    private string filterHasPhoto = "";
+
+    private CancellationTokenSource? _debounceCts;
+
+    private bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(filterName)
+        || !string.IsNullOrWhiteSpace(filterEmail)
+        || !string.IsNullOrWhiteSpace(filterPhone)
+        || !string.IsNullOrWhiteSpace(filterCity)
+        || !string.IsNullOrWhiteSpace(filterState)
+        || filterHasPhoto != "";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task OnFilterChanged()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        try
+        {
+            await Task.Delay(300, token);
+            page = 1;
+            await LoadAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // Another keystroke came in — ignore
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        isLoading = true;
+        loadError = null;
+        StateHasChanged();
+
+        try
+        {
+            bool? hasPhoto = filterHasPhoto switch
+            {
+                "true" => true,
+                "false" => false,
+                _ => null
+            };
+
+            var filter = new ContactFilter(
+                Name: NullIfEmpty(filterName),
+                Email: NullIfEmpty(filterEmail),
+                Phone: NullIfEmpty(filterPhone),
+                City: NullIfEmpty(filterCity),
+                State: NullIfEmpty(filterState),
+                HasPhoto: hasPhoto);
+
+            result = await ContactService.ListAsync(filter, page, PageSize);
+        }
+        catch (Exception ex)
+        {
+            loadError = "Failed to load contacts. Please try again.";
+            Logger.LogError(ex, "Failed to load contact list");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task PrevPage() { page--; await LoadAsync(); }
+    private async Task NextPage() { page++; await LoadAsync(); }
+
+    private async Task ClearFilters()
+    {
+        filterName = filterEmail = filterPhone = filterCity = filterState = filterHasPhoto = "";
+        page = 1;
+        await LoadAsync();
+    }
+
+    private static string? NullIfEmpty(string s) =>
+        string.IsNullOrWhiteSpace(s) ? null : s;
+
+    private static string Initials(ContactListItem c)
+    {
+        var f = c.FirstName.Length > 0 ? c.FirstName[0] : '?';
+        var l = c.LastName.Length > 0 ? c.LastName[0] : '?';
+        return $"{f}{l}";
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
+}
+```
+
+In the markup, add a `loadError` banner right after the filter panel, and add `@key` to the table row:
+
+```razor
+@if (loadError is not null)
+{
+    <div class="banner banner-error" role="alert">@loadError</div>
+}
+```
+
+And change the `<tr>` in the foreach to:
+
+```razor
+<tr @key="c.Id" tabindex="0" class="row-link" ...>
+```
+
+---
+
+**ContactDetail.razor** — add delete confirmation:
+
+Add a `confirmingDelete` bool and swap the delete button for a two-step flow. In the actions section, replace the delete button with:
+
+```razor
+@if (!IsNew)
+{
+    @if (confirmingDelete)
+    {
+        <span class="confirm-delete">
+            Are you sure?
+            <button type="button" class="btn btn-danger" disabled="@saving"
+                    @onclick="DeleteAsync">Yes, delete</button>
+            <button type="button" class="btn btn-secondary"
+                    @onclick="() => confirmingDelete = false">Cancel</button>
+        </span>
+    }
+    else
+    {
+        <button type="button" class="btn btn-danger" disabled="@saving"
+                @onclick="() => confirmingDelete = true">Delete</button>
+    }
+}
+```
+
+Add to the `@code` block:
+
+```csharp
+private bool confirmingDelete;
+```
+
+And in `ContactDetail.razor.css` add:
+
+```css
+.confirm-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #c62828;
+    font-weight: 500;
+}
+```
+
+---
+
+**ContactServiceTests.cs** — add these tests at the end of the class for case-insensitivity and edge cases:
+
+```csharp
+// ─── Case-insensitive filtering ──────────────────────────────────────
+
+[Theory]
+[InlineData("linc")]
+[InlineData("LINC")]
+[InlineData("Linc")]
+[InlineData("lInC")]
+public async Task List_FilterByName_CaseInsensitive(string term)
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(
+        new() { FirstName = "Abraham", LastName = "Lincoln" }, CT);
+
+    var result = await h.Service.ListAsync(new(Name: term), 1, 50, CT);
+
+    Assert.Single(result.Items);
+}
+
+[Fact]
+public async Task List_FilterByEmail_CaseInsensitive()
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(new()
+    {
+        FirstName = "A", LastName = "B",
+        Emails = [new() { Label = "W", Address = "Alice@Example.COM" }]
+    }, CT);
+
+    var result = await h.Service.ListAsync(new(Email: "alice@example"), 1, 50, CT);
+
+    Assert.Single(result.Items);
+}
+
+[Fact]
+public async Task List_FilterByCity_CaseInsensitive()
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(new()
+    {
+        FirstName = "A", LastName = "B",
+        Addresses =
+        [
+            new()
+            {
+                Label = "H", Street = "1 St", City = "Newport News",
+                State = "VA", PostalCode = "23601", Country = "US"
+            }
+        ]
+    }, CT);
+
+    var result = await h.Service.ListAsync(new(City: "newport news"), 1, 50, CT);
+
+    Assert.Single(result.Items);
+}
+
+[Fact]
+public async Task List_FilterByState_CaseInsensitive()
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(new()
+    {
+        FirstName = "A", LastName = "B",
+        Addresses =
+        [
+            new()
+            {
+                Label = "H", Street = "1 St", City = "X",
+                State = "VA", PostalCode = "23601", Country = "US"
+            }
+        ]
+    }, CT);
+
+    var result = await h.Service.ListAsync(new(State: "va"), 1, 50, CT);
+
+    Assert.Single(result.Items);
+}
+
+// ─── Page size clamping ──────────────────────────────────────────────
+
+[Fact]
+public async Task List_HugePageSize_ClampedToMax()
+{
+    await using var h = await TestHarness.CreateAsync();
+    for (var i = 0; i < 5; i++)
+        await h.Service.CreateAsync(
+            new() { FirstName = $"U{i}", LastName = "T" }, CT);
+
+    var result = await h.Service.ListAsync(new(), 1, 999999, CT);
+
+    // Should still work, just clamped — all 5 returned since 5 < MaxPageSize
+    Assert.Equal(5, result.Items.Count);
+    Assert.Equal(5, result.TotalCount);
+}
+
+[Fact]
+public async Task List_ZeroPageSize_ClampedToOne()
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(
+        new() { FirstName = "A", LastName = "B" }, CT);
+
+    var result = await h.Service.ListAsync(new(), 1, 0, CT);
+
+    Assert.Single(result.Items);
+}
+
+// ─── Edge cases ──────────────────────────────────────────────────────
+
+[Fact]
+public async Task List_EmptyDatabase_ReturnsEmpty()
+{
+    await using var h = await TestHarness.CreateAsync();
+
+    var result = await h.Service.ListAsync(new(), 1, 25, CT);
+
+    Assert.Empty(result.Items);
+    Assert.Equal(0, result.TotalCount);
+    Assert.Equal(0, result.TotalPages);
+}
+
+[Fact]
+public async Task List_PageBeyondRange_ReturnsEmpty()
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(
+        new() { FirstName = "A", LastName = "B" }, CT);
+
+    var result = await h.Service.ListAsync(new(), 999, 25, CT);
+
+    Assert.Empty(result.Items);
+    Assert.Equal(1, result.TotalCount);
+}
+
+[Fact]
+public async Task List_WhitespaceOnlyFilter_TreatedAsNoFilter()
+{
+    await using var h = await TestHarness.CreateAsync();
+    await h.Service.CreateAsync(
+        new() { FirstName = "A", LastName = "B" }, CT);
+
+    var result = await h.Service.ListAsync(new(Name: "   "), 1, 50, CT);
+
+    Assert.Single(result.Items);
+}
+```
+
+---
+
+**`.github/workflows/ci.yml`** — build and test pipeline:
+
+```yaml
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Virginia.slnx
+
+      - name: Build
+        run: dotnet build Virginia.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Virginia.slnx --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/*.trx"
+          retention-days: 7
+```
+
+This uses `actions/checkout@v4`, `actions/setup-dotnet@v4`, and `actions/upload-artifact@v4` — all current. It restores, builds in Release, runs xUnit tests, and uploads the `.trx` result files as a build artifact so you can inspect failures from the Actions UI. The `if: always()` on the upload step ensures you get test results even when tests fail.
+

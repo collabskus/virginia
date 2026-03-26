@@ -4,6 +4,7 @@
 @inject IContactService ContactService
 @inject NavigationManager Nav
 @inject ILogger<ContactList> Logger
+@implements IDisposable
 
 <PageTitle>Contacts | Virginia</PageTitle>
 
@@ -61,6 +62,11 @@
         <button class="btn btn-text" @onclick="ClearFilters">Clear all filters</button>
     </details>
 
+    @if (loadError is not null)
+    {
+        <div class="banner banner-error" role="alert">@loadError</div>
+    }
+
     <!-- Content -->
     @if (isLoading)
     {
@@ -92,7 +98,7 @@
                 <tbody>
                     @foreach (var c in result.Items)
                     {
-                        <tr tabindex="0" class="row-link"
+                        <tr @key="c.Id" tabindex="0" class="row-link"
                             @onclick='() => Nav.NavigateTo($"/contacts/{c.Id}")'
                             @onkeydown='e => { if (e.Key == "Enter") Nav.NavigateTo($"/contacts/{c.Id}"); }'>
                             <td class="col-avatar">
@@ -143,6 +149,7 @@
     private bool isLoading = true;
     private int page = 1;
     private const int PageSize = 25;
+    private string? loadError;
 
     private string filterName = "";
     private string filterEmail = "";
@@ -165,7 +172,6 @@
 
     private async Task OnFilterChanged()
     {
-        // Debounce: cancel previous pending load, wait 300ms
         _debounceCts?.Cancel();
         _debounceCts = new CancellationTokenSource();
         var token = _debounceCts.Token;
@@ -185,25 +191,37 @@
     private async Task LoadAsync()
     {
         isLoading = true;
+        loadError = null;
         StateHasChanged();
 
-        bool? hasPhoto = filterHasPhoto switch
+        try
         {
-            "true" => true,
-            "false" => false,
-            _ => null
-        };
+            bool? hasPhoto = filterHasPhoto switch
+            {
+                "true" => true,
+                "false" => false,
+                _ => null
+            };
 
-        var filter = new ContactFilter(
-            Name: NullIfEmpty(filterName),
-            Email: NullIfEmpty(filterEmail),
-            Phone: NullIfEmpty(filterPhone),
-            City: NullIfEmpty(filterCity),
-            State: NullIfEmpty(filterState),
-            HasPhoto: hasPhoto);
+            var filter = new ContactFilter(
+                Name: NullIfEmpty(filterName),
+                Email: NullIfEmpty(filterEmail),
+                Phone: NullIfEmpty(filterPhone),
+                City: NullIfEmpty(filterCity),
+                State: NullIfEmpty(filterState),
+                HasPhoto: hasPhoto);
 
-        result = await ContactService.ListAsync(filter, page, PageSize);
-        isLoading = false;
+            result = await ContactService.ListAsync(filter, page, PageSize);
+        }
+        catch (Exception ex)
+        {
+            loadError = "Failed to load contacts. Please try again.";
+            Logger.LogError(ex, "Failed to load contact list");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task PrevPage() { page--; await LoadAsync(); }
@@ -224,5 +242,11 @@
         var f = c.FirstName.Length > 0 ? c.FirstName[0] : '?';
         var l = c.LastName.Length > 0 ? c.LastName[0] : '?';
         return $"{f}{l}";
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
     }
 }

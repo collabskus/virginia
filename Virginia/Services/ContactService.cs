@@ -9,6 +9,8 @@ public sealed partial class ContactService(
     ILogger<ContactService> logger,
     ContactTelemetry telemetry) : IContactService
 {
+    private const int MaxPageSize = 100;
+
     // ─── List ────────────────────────────────────────────────────────────
 
     public async Task<PagedResult<ContactListItem>> ListAsync(
@@ -21,22 +23,30 @@ public sealed partial class ContactService(
         activity?.SetTag("page", page);
         activity?.SetTag("pageSize", pageSize);
 
+        // Clamp inputs to sane ranges
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
         var sw = Stopwatch.StartNew();
 
         var query = db.Contacts.AsNoTracking().AsQueryable();
 
+        // All string filters use ToLower() for case-insensitive matching.
+        // SQLite translates this to lower(), avoiding the case-sensitive instr() bug.
+
         if (!string.IsNullOrWhiteSpace(filter.Name))
         {
-            var term = filter.Name.Trim();
+            var term = filter.Name.Trim().ToLower();
             query = query.Where(c =>
-                c.FirstName.Contains(term) || c.LastName.Contains(term));
+                c.FirstName.ToLower().Contains(term)
+                || c.LastName.ToLower().Contains(term));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
         {
-            var term = filter.Email.Trim();
+            var term = filter.Email.Trim().ToLower();
             query = query.Where(c =>
-                c.Emails.Any(e => e.Address.Contains(term)));
+                c.Emails.Any(e => e.Address.ToLower().Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Phone))
@@ -48,16 +58,16 @@ public sealed partial class ContactService(
 
         if (!string.IsNullOrWhiteSpace(filter.City))
         {
-            var term = filter.City.Trim();
+            var term = filter.City.Trim().ToLower();
             query = query.Where(c =>
-                c.Addresses.Any(a => a.City.Contains(term)));
+                c.Addresses.Any(a => a.City.ToLower().Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.State))
         {
-            var term = filter.State.Trim();
+            var term = filter.State.Trim().ToLower();
             query = query.Where(c =>
-                c.Addresses.Any(a => a.State.Contains(term)));
+                c.Addresses.Any(a => a.State.ToLower().Contains(term)));
         }
 
         if (filter.HasPhoto == true)
