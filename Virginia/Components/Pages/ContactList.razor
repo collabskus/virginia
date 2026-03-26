@@ -10,7 +10,7 @@
 <div class="page">
     <div class="page-header">
         <h1>Contacts</h1>
-        <button class="btn btn-primary" @onclick="() => Nav.NavigateTo('/contacts/new')">
+        <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/contacts/new")'>
             + New Contact
         </button>
     </div>
@@ -93,8 +93,8 @@
                     @foreach (var c in result.Items)
                     {
                         <tr tabindex="0" class="row-link"
-                            @onclick="() => Nav.NavigateTo($"/contacts/{c.Id}")"
-                            @onkeydown="e => { if (e.Key == \"Enter\") Nav.NavigateTo($\"/contacts/{c.Id}\"); }">
+                            @onclick='() => Nav.NavigateTo($"/contacts/{c.Id}")'
+                            @onkeydown='e => { if (e.Key == "Enter") Nav.NavigateTo($"/contacts/{c.Id}"); }'>
                             <td class="col-avatar">
                                 @if (c.HasPhoto)
                                 {
