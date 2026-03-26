@@ -4,7 +4,7 @@ using Virginia.Data;
 
 namespace Virginia.Services;
 
-public sealed class ContactService(
+public sealed partial class ContactService(
     AppDbContext db,
     ILogger<ContactService> logger,
     ContactTelemetry telemetry) : IContactService
@@ -89,9 +89,7 @@ public sealed class ContactService(
         activity?.SetTag("result.totalCount", totalCount);
         telemetry.RecordQueryDuration(sw.Elapsed.TotalMilliseconds);
 
-        logger.LogInformation(
-            "Listed {Count}/{Total} contacts in {ElapsedMs:F1}ms (page {Page})",
-            items.Count, totalCount, sw.Elapsed.TotalMilliseconds, page);
+        Log.ListedContacts(logger, items.Count, totalCount, sw.Elapsed.TotalMilliseconds, page);
 
         return new PagedResult<ContactListItem>(items, totalCount, page, pageSize);
     }
@@ -117,11 +115,11 @@ public sealed class ContactService(
 
         if (c is null)
         {
-            logger.LogWarning("Contact {Id} not found ({ElapsedMs:F1}ms)", id, sw.Elapsed.TotalMilliseconds);
+            Log.ContactNotFound(logger, id, sw.Elapsed.TotalMilliseconds);
             return null;
         }
 
-        logger.LogInformation("Retrieved contact {Id} in {ElapsedMs:F1}ms", id, sw.Elapsed.TotalMilliseconds);
+        Log.RetrievedContact(logger, id, sw.Elapsed.TotalMilliseconds);
 
         return new ContactDetailDto(
             c.Id, c.FirstName, c.LastName,
@@ -180,9 +178,7 @@ public sealed class ContactService(
             telemetry.RecordContactCreated();
             telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
 
-            logger.LogInformation(
-                "Created contact {Id} ({Name}) with {Emails}e/{Phones}p/{Addresses}a in {ElapsedMs:F1}ms",
-                contact.Id, contact.FullName,
+            Log.CreatedContact(logger, contact.Id, contact.FullName,
                 contact.Emails.Count, contact.Phones.Count, contact.Addresses.Count,
                 sw.Elapsed.TotalMilliseconds);
 
@@ -191,7 +187,7 @@ public sealed class ContactService(
         catch (Exception ex)
         {
             await tx.RollbackAsync(ct);
-            logger.LogError(ex, "Failed to create contact");
+            Log.FailedToCreateContact(logger, ex);
             throw;
         }
     }
@@ -223,7 +219,9 @@ public sealed class ContactService(
                 (e, m) => { e.Label = m.Label.Trim(); e.Address = m.Address.Trim(); },
                 m => new ContactEmail
                 {
-                    ContactId = id, Label = m.Label.Trim(), Address = m.Address.Trim()
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Address = m.Address.Trim()
                 });
 
             SyncChildren(contact.Phones, form.Phones,
@@ -231,7 +229,9 @@ public sealed class ContactService(
                 (e, m) => { e.Label = m.Label.Trim(); e.Number = m.Number.Trim(); },
                 m => new ContactPhone
                 {
-                    ContactId = id, Label = m.Label.Trim(), Number = m.Number.Trim()
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Number = m.Number.Trim()
                 });
 
             SyncChildren(contact.Addresses, form.Addresses,
@@ -247,9 +247,13 @@ public sealed class ContactService(
                 },
                 m => new ContactAddress
                 {
-                    ContactId = id, Label = m.Label.Trim(), Street = m.Street.Trim(),
-                    City = m.City.Trim(), State = m.State.Trim(),
-                    PostalCode = m.PostalCode.Trim(), Country = m.Country.Trim()
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Street = m.Street.Trim(),
+                    City = m.City.Trim(),
+                    State = m.State.Trim(),
+                    PostalCode = m.PostalCode.Trim(),
+                    Country = m.Country.Trim()
                 });
 
             await db.SaveChangesAsync(ct);
@@ -259,14 +263,12 @@ public sealed class ContactService(
             telemetry.RecordContactUpdated();
             telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
 
-            logger.LogInformation(
-                "Updated contact {Id} ({Name}) in {ElapsedMs:F1}ms",
-                id, contact.FullName, sw.Elapsed.TotalMilliseconds);
+            Log.UpdatedContact(logger, id, contact.FullName, sw.Elapsed.TotalMilliseconds);
         }
         catch (Exception ex) when (ex is not InvalidOperationException)
         {
             await tx.RollbackAsync(ct);
-            logger.LogError(ex, "Failed to update contact {Id}", id);
+            Log.FailedToUpdateContact(logger, id, ex);
             throw;
         }
     }
@@ -285,13 +287,13 @@ public sealed class ContactService(
 
         if (rows == 0)
         {
-            logger.LogWarning("Delete: contact {Id} not found", id);
+            Log.DeleteContactNotFound(logger, id);
             return;
         }
 
         telemetry.RecordContactDeleted();
         telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
-        logger.LogInformation("Deleted contact {Id} in {ElapsedMs:F1}ms", id, sw.Elapsed.TotalMilliseconds);
+        Log.DeletedContact(logger, id, sw.Elapsed.TotalMilliseconds);
     }
 
     // ─── Profile picture ─────────────────────────────────────────────────
@@ -316,9 +318,7 @@ public sealed class ContactService(
         if (rows == 0)
             throw new InvalidOperationException($"Contact {id} not found.");
 
-        logger.LogInformation(
-            "Set profile picture for contact {Id} ({Bytes} bytes) in {ElapsedMs:F1}ms",
-            id, data.Length, sw.Elapsed.TotalMilliseconds);
+        Log.SetProfilePicture(logger, id, data.Length, sw.Elapsed.TotalMilliseconds);
     }
 
     public async Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct)
@@ -350,9 +350,7 @@ public sealed class ContactService(
                 .SetProperty(c => c.UpdatedAtUtc, DateTime.UtcNow), ct);
 
         sw.Stop();
-        logger.LogInformation(
-            "Removed profile picture for contact {Id} in {ElapsedMs:F1}ms",
-            id, sw.Elapsed.TotalMilliseconds);
+        Log.RemovedProfilePicture(logger, id, sw.Elapsed.TotalMilliseconds);
     }
 
     // ─── Private helper ──────────────────────────────────────────────────
@@ -379,5 +377,66 @@ public sealed class ContactService(
             else
                 entities.Add(create(model));
         }
+    }
+
+    // ─── Source-generated log messages (CA1848 / CA1873 compliant) ────────
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Listed {Count}/{Total} contacts in {ElapsedMs:F1}ms (page {Page})")]
+        public static partial void ListedContacts(
+            ILogger logger, int count, int total, double elapsedMs, int page);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Contact {Id} not found ({ElapsedMs:F1}ms)")]
+        public static partial void ContactNotFound(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Retrieved contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void RetrievedContact(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Created contact {Id} ({Name}) with {Emails}e/{Phones}p/{Addresses}a in {ElapsedMs:F1}ms")]
+        public static partial void CreatedContact(
+            ILogger logger, int id, string name,
+            int emails, int phones, int addresses, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Failed to create contact")]
+        public static partial void FailedToCreateContact(
+            ILogger logger, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Updated contact {Id} ({Name}) in {ElapsedMs:F1}ms")]
+        public static partial void UpdatedContact(
+            ILogger logger, int id, string name, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Failed to update contact {Id}")]
+        public static partial void FailedToUpdateContact(
+            ILogger logger, int id, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Delete: contact {Id} not found")]
+        public static partial void DeleteContactNotFound(
+            ILogger logger, int id);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Deleted contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void DeletedContact(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Set profile picture for contact {Id} ({Bytes} bytes) in {ElapsedMs:F1}ms")]
+        public static partial void SetProfilePicture(
+            ILogger logger, int id, int bytes, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Removed profile picture for contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void RemovedProfilePicture(
+            ILogger logger, int id, double elapsedMs);
     }
 }
