@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 19:01:37
+Generated: 03/26/2026 19:02:45
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -3993,8 +3993,8 @@ public sealed class AddressFormModel
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 2.99 KB
-MODIFIED: 03/26/2026 17:56:11
+SIZE: 2.76 KB
+MODIFIED: 03/26/2026 19:02:24
 ================================================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -4028,13 +4028,10 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-// ── Auto-create DB in development ────────────────────────────────────────────
-if (app.Environment.IsDevelopment())
-{
-    await using var scope = app.Services.CreateAsyncScope();
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
-}
+
+await using var scope = app.Services.CreateAsyncScope();
+var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await db.Database.EnsureCreatedAsync();
 
 app.MapDefaultEndpoints();
 
@@ -4719,7 +4716,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 19:01:37
+EXPORT COMPLETED: 03/26/2026 19:02:45
 Total Files Exported: 45
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
