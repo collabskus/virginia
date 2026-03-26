@@ -1,0 +1,68 @@
+﻿@page "/"
+@using Microsoft.Extensions.Logging
+@using System.Threading
+@rendermode InteractiveServer
+@inject ILogger<Home> Logger
+
+<PageTitle>Home | @appName</PageTitle>
+
+<h1>Hello, @appName!</h1>
+<p>Welcome to your new app.</p>
+
+<button @onclick="HandleClick">Click this button!</button>
+<button @onclick="IncrementAutomatically" disabled="@isIncrementing">Start Auto</button>
+<button @onclick="StopIncrementingAutomatically" disabled="@(!isIncrementing)">Stop Auto</button>
+
+<p>Count is now <strong>@counter</strong></p>
+
+@code {
+    private string? appName = "Virginia";
+    private int counter = 0;
+    private bool isIncrementing = false;
+    private CancellationTokenSource? _cts;
+    private static readonly System.Diagnostics.ActivitySource MyActivitySource = new("MyCompany.MyApp");
+
+    private void HandleClick()
+    {
+        using var activity = MyActivitySource.StartActivity("ButtonClick");
+        counter++;
+        activity?.SetTag("click.count", counter);
+    }
+
+    private async Task IncrementAutomatically()
+    {
+        isIncrementing = true;
+        _cts = new CancellationTokenSource();
+
+        Logger.LogInformation("Auto-increment started.");
+
+        try
+        {
+            while (!_cts.Token.IsCancellationRequested)
+            {
+                counter++;
+
+                // Tell Blazor to update the UI
+                StateHasChanged();
+
+                // Use a small delay so the UI stays responsive
+                // and the "Stop" button click can be processed.
+                await Task.Delay(100, _cts.Token);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal behavior when cancelled
+        }
+        finally
+        {
+            isIncrementing = false;
+            Logger.LogInformation("Auto-increment stopped at {FinalCount}", counter);
+        }
+    }
+
+    private void StopIncrementingAutomatically()
+    {
+        _cts?.Cancel();
+    }
+}

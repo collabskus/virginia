@@ -1,0 +1,11 @@
+﻿body {
+    background-color: aquamarine;
+}
+
+h1 {
+    border: 1px solid red;
+}
+
+p {
+    border: 1px dotted blue;
+}

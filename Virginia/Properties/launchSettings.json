@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+    "profiles": {
+      "http": {
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": true,
+        "applicationUrl": "http://virginia.dev.localhost:5193",
+        "environmentVariables": {
+          "ASPNETCORE_ENVIRONMENT": "Development"
+        }
+      },
+      "https": {
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": true,
+        "applicationUrl": "https://virginia.dev.localhost:7140;http://virginia.dev.localhost:5193",
+        "environmentVariables": {
+          "ASPNETCORE_ENVIRONMENT": "Development"
+        }
+      }
+    }
+  }
