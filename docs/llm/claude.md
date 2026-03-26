@@ -7712,3 +7712,5 @@ An error occurred while processing your request.
 Request ID: 00-b08e570095b055194995538af5089680-388450049e5c4fd7-01
 
 © 2026 Virginia — Built with .NET 10, Aspire & Blazor
+Why? 
+How can I fix it? 
