@@ -165,6 +165,18 @@
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+/* ── Delete confirmation ─────────────────────────────────────────────────── */
+
+.confirm-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #c62828;
+    font-weight: 500;
 }
 
 /* ── Buttons (scoped) ────────────────────────────────────────────────────── */
@@ -284,5 +296,9 @@
     .group-sm {
         flex: 1;
         min-width: 100%;
+    }
+
+    .confirm-delete {
+        flex-wrap: wrap;
     }
 }

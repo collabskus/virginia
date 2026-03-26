@@ -511,4 +511,149 @@ public sealed class ContactServiceTests
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             h.Service.SetProfilePictureAsync(9999, [0xFF], "image/jpeg", CT));
     }
+
+    // ─── Case-insensitive filtering ──────────────────────────────────────
+
+    [Theory]
+    [InlineData("linc")]
+    [InlineData("LINC")]
+    [InlineData("Linc")]
+    [InlineData("lInC")]
+    public async Task List_FilterByName_CaseInsensitive(string term)
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "Abraham", LastName = "Lincoln" }, CT);
+
+        var result = await h.Service.ListAsync(new(Name: term), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByEmail_CaseInsensitive()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Emails = [new() { Label = "W", Address = "Alice@Example.COM" }]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(Email: "alice@example"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByCity_CaseInsensitive()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "Newport News",
+                    State = "VA", PostalCode = "23601", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(City: "newport news"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByState_CaseInsensitive()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "X",
+                    State = "VA", PostalCode = "23601", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(State: "va"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    // ─── Page size clamping ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_HugePageSize_ClampedToMax()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        for (var i = 0; i < 5; i++)
+            await h.Service.CreateAsync(
+                new() { FirstName = $"U{i}", LastName = "T" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 999999, CT);
+
+        // Should still work, just clamped — all 5 returned since 5 < MaxPageSize
+        Assert.Equal(5, result.Items.Count);
+        Assert.Equal(5, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task List_ZeroPageSize_ClampedToOne()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 0, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    // ─── Edge cases ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_EmptyDatabase_ReturnsEmpty()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        var result = await h.Service.ListAsync(new(), 1, 25, CT);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task List_PageBeyondRange_ReturnsEmpty()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 999, 25, CT);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task List_WhitespaceOnlyFilter_TreatedAsNoFilter()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(Name: "   "), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
 }

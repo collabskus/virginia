@@ -215,8 +215,21 @@
             </button>
             @if (!IsNew)
             {
-                <button type="button" class="btn btn-danger" disabled="@saving"
-                        @onclick="DeleteAsync">Delete</button>
+                @if (confirmingDelete)
+                {
+                    <span class="confirm-delete">
+                        Are you sure?
+                        <button type="button" class="btn btn-danger" disabled="@saving"
+                                @onclick="DeleteAsync">Yes, delete</button>
+                        <button type="button" class="btn btn-secondary"
+                                @onclick="() => confirmingDelete = false">Cancel</button>
+                    </span>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" disabled="@saving"
+                            @onclick="() => confirmingDelete = true">Delete</button>
+                }
             }
             <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
         </div>
