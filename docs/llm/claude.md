@@ -8560,3 +8560,37 @@ we need to make sure security is tight
 no information should leak to unauthenticated users 
 GIVE ME FULL FILES FOR ALL FILES THAT CHANGED. 
 I need to be able to easily copy paste everything. 
+also looks like visual studio screwed up the props file when updating nuget packages. 
+please give me full fixed file with the updated packages 
+```xml
+<Project>
+  <!-- ── Version variables ─────────────────────────────────────────────── -->
+  <PropertyGroup>
+    <EfCoreVersion>10.0.0</EfCoreVersion>
+    <OpenTelemetryVersion>1.15.0</OpenTelemetryVersion>
+    <OpenTelemetryInstrumentationVersion>1.15.1</OpenTelemetryInstrumentationVersion>
+    <AspireExtensionsVersion>10.4.0</AspireExtensionsVersion>
+    <XUnitVersion>1.1.0</XUnitVersion>
+    <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
+    <TestSdkVersion>17.14.0</TestSdkVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- EF Core -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5" />
+    <!-- OpenTelemetry -->
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryInstrumentationVersion)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryVersion)" />
+    <!-- Aspire extensions (service discovery, resilience) -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="$(AspireExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(AspireExtensionsVersion)" />
+    <!-- Testing -->
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+  </ItemGroup>
+</Project>
+```
