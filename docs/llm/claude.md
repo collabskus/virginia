@@ -7714,3 +7714,87 @@ Request ID: 00-b08e570095b055194995538af5089680-388450049e5c4fd7-01
 © 2026 Virginia — Built with .NET 10, Aspire & Blazor
 Why? 
 How can I fix it? 
+
+The deployed site is returning a 500 error. Since you're seeing the generic error page (not the detailed developer exception page), the exact cause is hidden. Based on your project setup, here are the most likely causes and how to diagnose them:
+
+**Most likely culprit: a missing database or connection string.** If your Address Book feature uses a database (SQLite, SQL Server, etc.), the connection that works locally probably doesn't exist on runasp.net. For example, a SQLite file path like `Data Source=addressbook.db` would fail because the file doesn't exist on the server, or the app doesn't have write permissions to create it.
+
+**Second suspect: Aspire ServiceDefaults.** Your `Program.cs` calls `builder.AddServiceDefaults()` and `app.MapDefaultEndpoints()`. These register OpenTelemetry exporters, service discovery, and health checks designed to run under the Aspire orchestrator. When you deploy standalone to runasp.net without an Aspire AppHost, some of those registrations may throw if expected environment variables or endpoints aren't available.
+
+**How to diagnose — get the real error message:**
+
+1. **Temporarily enable detailed errors** by setting the environment variable on runasp.net:
+   `ASPNETCORE_ENVIRONMENT=Development`
+   Then redeploy and revisit the site — you'll see the actual exception with stack trace instead of the generic error page. **Remember to turn this off afterward.**
+
+2. **Check the deployment logs** in your runasp.net dashboard for any startup exceptions.
+
+**How to fix the most common issues:**
+
+For a **database problem**, make sure your connection string is configured for the deployed environment (in `appsettings.json` or via environment variables on runasp.net), and that any migrations have been applied. If you're using SQLite, ensure the path is writable — or better yet, use a relative path in the app's content root.
+
+For the **Aspire ServiceDefaults issue**, you can make the OpenTelemetry/service discovery registrations conditional. In `Extensions.cs`, the `AddServiceDefaults` method registers OTLP exporters that may fail without an Aspire dashboard. A quick fix is to wrap the OTLP exporter in a check:
+
+```csharp
+// In your Program.cs, you could conditionally add defaults:
+if (builder.Environment.IsDevelopment())
+{
+    builder.AddServiceDefaults();
+}
+else
+{
+    // Add only what you need for production
+    builder.Services.AddHealthChecks();
+}
+```
+
+Or keep `AddServiceDefaults()` but ensure the OTLP exporter doesn't throw by setting `OTEL_EXPORTER_OTLP_ENDPOINT` to empty or removing it.
+
+The fastest path forward: enable the Development environment on runasp.net temporarily, reproduce the error, and share the full exception details. That will tell us exactly what's failing.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
