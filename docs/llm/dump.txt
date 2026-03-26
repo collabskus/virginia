@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 19:17:59
+Generated: 03/26/2026 19:27:26
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -8,6 +8,7 @@ DIRECTORY STRUCTURE (tracked):
 ==============================
 
 .editorconfig
+.github/workflows/ci.yml
 .gitignore
 Directory.Build.props
 Directory.Packages.props
@@ -108,6 +109,53 @@ csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
 csharp_new_line_before_catch = true
 csharp_new_line_before_finally = true
+
+
+
+================================================================================
+FILE: .github/workflows/ci.yml
+SIZE: 0.83 KB
+MODIFIED: 03/26/2026 19:27:18
+================================================================================
+
+name: Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore Virginia.slnx
+
+      - name: Build
+        run: dotnet build Virginia.slnx --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test Virginia.slnx --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/*.trx"
+          retention-days: 7
 
 
 
@@ -2440,8 +2488,8 @@ async function retryWhenDocumentBecomesVisible() {
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactDetail.razor
-SIZE: 12.37 KB
-MODIFIED: 03/26/2026 18:00:06
+SIZE: 12.4 KB
+MODIFIED: 03/26/2026 19:26:49
 ================================================================================
 
 @page "/contacts/new"
@@ -2681,6 +2729,7 @@ MODIFIED: 03/26/2026 18:00:06
     private bool saved;
     private string? error;
     private int photoVer = 1;
+    private bool confirmingDelete;
 
     protected override async Task OnInitializedAsync()
     {
@@ -2795,7 +2844,6 @@ MODIFIED: 03/26/2026 18:00:06
 
     private void GoBack() => Nav.NavigateTo("/");
 }
-
 
 
 ================================================================================
@@ -3097,8 +3145,8 @@ MODIFIED: 03/26/2026 18:00:39
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactList.razor
-SIZE: 8.39 KB
-MODIFIED: 03/26/2026 18:10:58
+SIZE: 8.96 KB
+MODIFIED: 03/26/2026 19:24:29
 ================================================================================
 
 @page "/"
@@ -3107,6 +3155,7 @@ MODIFIED: 03/26/2026 18:10:58
 @inject IContactService ContactService
 @inject NavigationManager Nav
 @inject ILogger<ContactList> Logger
+@implements IDisposable
 
 <PageTitle>Contacts | Virginia</PageTitle>
 
@@ -3164,6 +3213,11 @@ MODIFIED: 03/26/2026 18:10:58
         <button class="btn btn-text" @onclick="ClearFilters">Clear all filters</button>
     </details>
 
+    @if (loadError is not null)
+    {
+        <div class="banner banner-error" role="alert">@loadError</div>
+    }
+
     <!-- Content -->
     @if (isLoading)
     {
@@ -3195,7 +3249,7 @@ MODIFIED: 03/26/2026 18:10:58
                 <tbody>
                     @foreach (var c in result.Items)
                     {
-                        <tr tabindex="0" class="row-link"
+                        <tr @key="c.Id" tabindex="0" class="row-link"
                             @onclick='() => Nav.NavigateTo($"/contacts/{c.Id}")'
                             @onkeydown='e => { if (e.Key == "Enter") Nav.NavigateTo($"/contacts/{c.Id}"); }'>
                             <td class="col-avatar">
@@ -3246,6 +3300,7 @@ MODIFIED: 03/26/2026 18:10:58
     private bool isLoading = true;
     private int page = 1;
     private const int PageSize = 25;
+    private string? loadError;
 
     private string filterName = "";
     private string filterEmail = "";
@@ -3268,7 +3323,6 @@ MODIFIED: 03/26/2026 18:10:58
 
     private async Task OnFilterChanged()
     {
-        // Debounce: cancel previous pending load, wait 300ms
         _debounceCts?.Cancel();
         _debounceCts = new CancellationTokenSource();
         var token = _debounceCts.Token;
@@ -3288,25 +3342,37 @@ MODIFIED: 03/26/2026 18:10:58
     private async Task LoadAsync()
     {
         isLoading = true;
+        loadError = null;
         StateHasChanged();
 
-        bool? hasPhoto = filterHasPhoto switch
+        try
         {
-            "true" => true,
-            "false" => false,
-            _ => null
-        };
+            bool? hasPhoto = filterHasPhoto switch
+            {
+                "true" => true,
+                "false" => false,
+                _ => null
+            };
 
-        var filter = new ContactFilter(
-            Name: NullIfEmpty(filterName),
-            Email: NullIfEmpty(filterEmail),
-            Phone: NullIfEmpty(filterPhone),
-            City: NullIfEmpty(filterCity),
-            State: NullIfEmpty(filterState),
-            HasPhoto: hasPhoto);
+            var filter = new ContactFilter(
+                Name: NullIfEmpty(filterName),
+                Email: NullIfEmpty(filterEmail),
+                Phone: NullIfEmpty(filterPhone),
+                City: NullIfEmpty(filterCity),
+                State: NullIfEmpty(filterState),
+                HasPhoto: hasPhoto);
 
-        result = await ContactService.ListAsync(filter, page, PageSize);
-        isLoading = false;
+            result = await ContactService.ListAsync(filter, page, PageSize);
+        }
+        catch (Exception ex)
+        {
+            loadError = "Failed to load contacts. Please try again.";
+            Logger.LogError(ex, "Failed to load contact list");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private async Task PrevPage() { page--; await LoadAsync(); }
@@ -3327,6 +3393,12 @@ MODIFIED: 03/26/2026 18:10:58
         var f = c.FirstName.Length > 0 ? c.FirstName[0] : '?';
         var l = c.LastName.Length > 0 ? c.LastName[0] : '?';
         return $"{f}{l}";
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
     }
 }
 
@@ -4099,8 +4171,8 @@ MODIFIED: 03/26/2026 17:51:25
 
 ================================================================================
 FILE: Virginia/Services/ContactService.cs
-SIZE: 17.54 KB
-MODIFIED: 03/26/2026 18:23:19
+SIZE: 17.99 KB
+MODIFIED: 03/26/2026 19:22:30
 ================================================================================
 
 using System.Diagnostics;
@@ -4114,6 +4186,8 @@ public sealed partial class ContactService(
     ILogger<ContactService> logger,
     ContactTelemetry telemetry) : IContactService
 {
+    private const int MaxPageSize = 100;
+
     // ─── List ────────────────────────────────────────────────────────────
 
     public async Task<PagedResult<ContactListItem>> ListAsync(
@@ -4126,22 +4200,30 @@ public sealed partial class ContactService(
         activity?.SetTag("page", page);
         activity?.SetTag("pageSize", pageSize);
 
+        // Clamp inputs to sane ranges
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
         var sw = Stopwatch.StartNew();
 
         var query = db.Contacts.AsNoTracking().AsQueryable();
 
+        // All string filters use ToLower() for case-insensitive matching.
+        // SQLite translates this to lower(), avoiding the case-sensitive instr() bug.
+
         if (!string.IsNullOrWhiteSpace(filter.Name))
         {
-            var term = filter.Name.Trim();
+            var term = filter.Name.Trim().ToLower();
             query = query.Where(c =>
-                c.FirstName.Contains(term) || c.LastName.Contains(term));
+                c.FirstName.ToLower().Contains(term)
+                || c.LastName.ToLower().Contains(term));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
         {
-            var term = filter.Email.Trim();
+            var term = filter.Email.Trim().ToLower();
             query = query.Where(c =>
-                c.Emails.Any(e => e.Address.Contains(term)));
+                c.Emails.Any(e => e.Address.ToLower().Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Phone))
@@ -4153,16 +4235,16 @@ public sealed partial class ContactService(
 
         if (!string.IsNullOrWhiteSpace(filter.City))
         {
-            var term = filter.City.Trim();
+            var term = filter.City.Trim().ToLower();
             query = query.Where(c =>
-                c.Addresses.Any(a => a.City.Contains(term)));
+                c.Addresses.Any(a => a.City.ToLower().Contains(term)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.State))
         {
-            var term = filter.State.Trim();
+            var term = filter.State.Trim().ToLower();
             query = query.Where(c =>
-                c.Addresses.Any(a => a.State.Contains(term)));
+                c.Addresses.Any(a => a.State.ToLower().Contains(term)));
         }
 
         if (filter.HasPhoto == true)
@@ -4716,7 +4798,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 19:17:59
-Total Files Exported: 45
+EXPORT COMPLETED: 03/26/2026 19:27:26
+Total Files Exported: 46
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
