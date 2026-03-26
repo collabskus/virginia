@@ -6699,3 +6699,206 @@ public sealed partial class ContactService(
 
 **The CS0006 error** in Virginia.Tests is a cascading failure — it can't find `Virginia.dll` because Virginia failed to build. Once the CA1848/CA1873 errors are fixed, the test project will build too.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Dear lord there are so many errors. 
+Please fix them all. 
+Please give me full file for all files that have changed. 
+And for crying out loud, fix your markup so I can copy the answers properly. 
+What is wrong with you? 
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Phone_EmptyNumber_Fails() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	72	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	12	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	16	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	23	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	46	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	58	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	62	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	73	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	82	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	92	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	97	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	109	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.GetAsync(int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	113	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	119	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	122	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	133	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	145	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	169	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.UpdateAsync(int, ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	174	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	179	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	182	
+Error (active)	xUnit1051	Calls to methods which accept CancellationToken should use TestContext.Current.CancellationToken to allow test cancellation to be more responsive.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	186	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	197	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	200	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	209	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	226	
+Error (active)	xUnit1051	Calls to methods which accept CancellationToken should use TestContext.Current.CancellationToken to allow test cancellation to be more responsive.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	230	
+Error (active)	xUnit1051	Calls to methods which accept CancellationToken should use TestContext.Current.CancellationToken to allow test cancellation to be more responsive.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	231	
+Error (active)	xUnit1051	Calls to methods which accept CancellationToken should use TestContext.Current.CancellationToken to allow test cancellation to be more responsive.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	232	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	236	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.DeleteAsync(int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	241	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	247	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	250	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	251	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	252	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	254	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	260	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	263	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	268	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	270	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	277	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	280	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	285	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	287	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	293	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	296	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	308	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	321	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	327	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	330	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	342	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	355	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	362	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	365	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	366	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	369	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	376	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	379	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	380	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	383	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	390	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	393	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	405	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	418	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	428	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	432	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	434	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	435	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	436	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	453	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	456	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	457	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	458	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.ListAsync(ContactFilter, int, int, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	460	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	470	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	473	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	485	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	488	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	497	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.CreateAsync(ContactFormModel, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	500	
+Error (active)	CA1707	By convention, identifier names do not contain the underscore (_) character. This rule checks namespaces, types, members, and parameters.	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	506	
+Error (active)	CS7036	There is no argument given that corresponds to the required parameter 'ct' of 'ContactService.SetProfilePictureAsync(int, byte[], string, CancellationToken)'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	511	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.DtoMappingTests.ContactFormModel_FromDetail_MapsCorrectly() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\DtoMappingTests.cs	9	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.DtoMappingTests.PagedResult_CalculatesProperties() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\DtoMappingTests.cs	35	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.DtoMappingTests.PagedResult_FirstPage_NoPrevious() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\DtoMappingTests.cs	45	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Contact_RequiresFirstAndLastName() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	21	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Contact_ValidForm_Passes() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	29	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Contact_MaxLength_Enforced() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	36	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Email_RequiresValidAddress() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	49	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Email_ValidAddress_Passes() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	56	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Email_EmptyLabel_Fails() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	63	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Phone_ValidFormats_Pass(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	83	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Phone_InvalidFormats_Fail(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	93	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_RequiredFieldsMissing_Fails() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	102	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_ValidData_Passes() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	117	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_StateOptional() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	128	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_ValidPostalCodes_Pass(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	143	
+Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_InvalidPostalCodes_Fail(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	157	
