@@ -127,10 +127,10 @@ public sealed class ContactService(
             c.Id, c.FirstName, c.LastName,
             c.ProfilePicture is not null, c.ProfilePictureContentType,
             c.CreatedAtUtc, c.UpdatedAtUtc,
-            c.Emails.Select(e => new EmailDto(e.Id, e.Label, e.Address)).ToList(),
-            c.Phones.Select(p => new PhoneDto(p.Id, p.Label, p.Number)).ToList(),
-            c.Addresses.Select(a => new AddressDto(
-                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country)).ToList());
+            [.. c.Emails.Select(e => new EmailDto(e.Id, e.Label, e.Address))],
+            [.. c.Phones.Select(p => new PhoneDto(p.Id, p.Label, p.Number))],
+            [.. c.Addresses.Select(a => new AddressDto(
+                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))]);
     }
 
     // ─── Create ──────────────────────────────────────────────────────────
@@ -150,17 +150,17 @@ public sealed class ContactService(
                 LastName = form.LastName.Trim(),
                 CreatedAtUtc = now,
                 UpdatedAtUtc = now,
-                Emails = form.Emails.Select(e => new ContactEmail
+                Emails = [.. form.Emails.Select(e => new ContactEmail
                 {
                     Label = e.Label.Trim(),
                     Address = e.Address.Trim()
-                }).ToList(),
-                Phones = form.Phones.Select(p => new ContactPhone
+                })],
+                Phones = [.. form.Phones.Select(p => new ContactPhone
                 {
                     Label = p.Label.Trim(),
                     Number = p.Number.Trim()
-                }).ToList(),
-                Addresses = form.Addresses.Select(a => new ContactAddress
+                })],
+                Addresses = [.. form.Addresses.Select(a => new ContactAddress
                 {
                     Label = a.Label.Trim(),
                     Street = a.Street.Trim(),
@@ -168,7 +168,7 @@ public sealed class ContactService(
                     State = a.State.Trim(),
                     PostalCode = a.PostalCode.Trim(),
                     Country = a.Country.Trim()
-                }).ToList()
+                })]
             };
 
             db.Contacts.Add(contact);

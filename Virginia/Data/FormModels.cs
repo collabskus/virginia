@@ -22,20 +22,15 @@ public sealed class ContactFormModel
     {
         FirstName = dto.FirstName,
         LastName = dto.LastName,
-        Emails = dto.Emails
-            .Select(e => new EmailFormModel { Id = e.Id, Label = e.Label, Address = e.Address })
-            .ToList(),
-        Phones = dto.Phones
-            .Select(p => new PhoneFormModel { Id = p.Id, Label = p.Label, Number = p.Number })
-            .ToList(),
-        Addresses = dto.Addresses
+        Emails = [.. dto.Emails.Select(e => new EmailFormModel { Id = e.Id, Label = e.Label, Address = e.Address })],
+        Phones = [.. dto.Phones.Select(p => new PhoneFormModel { Id = p.Id, Label = p.Label, Number = p.Number })],
+        Addresses = [.. dto.Addresses
             .Select(a => new AddressFormModel
             {
                 Id = a.Id, Label = a.Label, Street = a.Street,
                 City = a.City, State = a.State,
                 PostalCode = a.PostalCode, Country = a.Country
-            })
-            .ToList()
+            })]
     };
 }
 
