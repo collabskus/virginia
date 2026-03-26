@@ -7632,3 +7632,83 @@ Two files both have `@page "/"` — your old `Home.razor` and the new `ContactLi
 - `Virginia/Components/Pages/Home.razor.css`
 
 That's it. They're left over from the original scaffold and conflict with the `ContactList.razor` route.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Thank you. 
+The app now works when debugging locally. 
+However, 
+when deployed to 
+https://virginia.runasp.net/
+I still get an error 
+Virginia
+Address Book
+Error
+An error occurred while processing your request.
+
+Request ID: 00-b08e570095b055194995538af5089680-388450049e5c4fd7-01
+
+© 2026 Virginia — Built with .NET 10, Aspire & Blazor
