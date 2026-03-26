@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 18:35:29
+Generated: 03/26/2026 18:45:00
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -41,8 +41,6 @@ Virginia/Components/Pages/ContactDetail.razor.css
 Virginia/Components/Pages/ContactList.razor
 Virginia/Components/Pages/ContactList.razor.css
 Virginia/Components/Pages/Error.razor
-Virginia/Components/Pages/Home.razor
-Virginia/Components/Pages/Home.razor.css
 Virginia/Components/Pages/NotFound.razor
 Virginia/Components/Routes.razor
 Virginia/Data/AppDbContext.cs
@@ -3635,103 +3633,6 @@ MODIFIED: 03/26/2026 17:58:04
 
 
 ================================================================================
-FILE: Virginia/Components/Pages/Home.razor
-SIZE: 1.9 KB
-MODIFIED: 03/26/2026 14:00:19
-================================================================================
-
-@page "/"
-@using Microsoft.Extensions.Logging
-@using System.Threading
-@rendermode InteractiveServer
-@inject ILogger<Home> Logger
-
-<PageTitle>Home | @appName</PageTitle>
-
-<h1>Hello, @appName!</h1>
-<p>Welcome to your new app.</p>
-
-<button @onclick="HandleClick">Click this button!</button>
-<button @onclick="IncrementAutomatically" disabled="@isIncrementing">Start Auto</button>
-<button @onclick="StopIncrementingAutomatically" disabled="@(!isIncrementing)">Stop Auto</button>
-
-<p>Count is now <strong>@counter</strong></p>
-
-@code {
-    private string? appName = "Virginia";
-    private int counter = 0;
-    private bool isIncrementing = false;
-    private CancellationTokenSource? _cts;
-    private static readonly System.Diagnostics.ActivitySource MyActivitySource = new("MyCompany.MyApp");
-
-    private void HandleClick()
-    {
-        using var activity = MyActivitySource.StartActivity("ButtonClick");
-        counter++;
-        activity?.SetTag("click.count", counter);
-    }
-
-    private async Task IncrementAutomatically()
-    {
-        isIncrementing = true;
-        _cts = new CancellationTokenSource();
-
-        Logger.LogInformation("Auto-increment started.");
-
-        try
-        {
-            while (!_cts.Token.IsCancellationRequested)
-            {
-                counter++;
-
-                // Tell Blazor to update the UI
-                StateHasChanged();
-
-                // Use a small delay so the UI stays responsive
-                // and the "Stop" button click can be processed.
-                await Task.Delay(100, _cts.Token);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Normal behavior when cancelled
-        }
-        finally
-        {
-            isIncrementing = false;
-            Logger.LogInformation("Auto-increment stopped at {FinalCount}", counter);
-        }
-    }
-
-    private void StopIncrementingAutomatically()
-    {
-        _cts?.Cancel();
-    }
-}
-
-
-
-================================================================================
-FILE: Virginia/Components/Pages/Home.razor.css
-SIZE: 0.12 KB
-MODIFIED: 03/26/2026 10:24:49
-================================================================================
-
-body {
-    background-color: aquamarine;
-}
-
-h1 {
-    border: 1px solid red;
-}
-
-p {
-    border: 1px dotted blue;
-}
-
-
-
-================================================================================
 FILE: Virginia/Components/Pages/NotFound.razor
 SIZE: 0.21 KB
 MODIFIED: 03/26/2026 17:57:42
@@ -4825,7 +4726,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 18:35:29
-Total Files Exported: 47
+EXPORT COMPLETED: 03/26/2026 18:45:01
+Total Files Exported: 45
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
