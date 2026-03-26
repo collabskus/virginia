@@ -7798,3 +7798,29 @@ The fastest path forward: enable the Development environment on runasp.net tempo
 
 
 
+bruh, is the name filter case sensitive? 
+what other such defects do you have? 
+please fix them all 
+also do a very sweeping test to make sure the site survives in the real world
+what are we missing here? 
+fix every problem 
+don't wait for me to tell you what the defect is 
+use your infinite wisdom. 
+I added one contact btw, 
+Abraham Lincoln 
+I set the email as abrahamlincoln@example.com
+Mobile number as 9995550101 
+home address as 1600 Pennsylvania Ave NW Washington DC 20500 US 
+It saved ok 
+however when I searched `linc` all lower case I got no results 
+searching `Linc` I got the result 
+so think everything through. 
+Authentication and authorization? 
+is it even possible on monster asp? 
+if so fix everything properly 
+if not, explain why it is not possible. 
+remember, we deploy from visual studio so there is no pipeline available yet. 
+we should probably at least have a build and test pipeline 
+give me the full yaml files 
+use the latest actions 
+do not use old actions 
