@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 19:28:29
+Generated: 03/26/2026 19:31:26
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -114,17 +114,17 @@ csharp_new_line_before_finally = true
 
 ================================================================================
 FILE: .github/workflows/ci.yml
-SIZE: 0.83 KB
-MODIFIED: 03/26/2026 19:27:18
+SIZE: 0.87 KB
+MODIFIED: 03/26/2026 19:30:37
 ================================================================================
 
 name: Build & Test
 
 on:
   push:
-    branches: [main]
+    branches: [main, master, development]
   pull_request:
-    branches: [main]
+    branches: [main, master, development]
 
 permissions:
   contents: read
@@ -1127,8 +1127,8 @@ MODIFIED: 03/26/2026 16:11:46
 
 ================================================================================
 FILE: Virginia.Tests/ContactServiceTests.cs
-SIZE: 18.07 KB
-MODIFIED: 03/26/2026 18:34:51
+SIZE: 22.79 KB
+MODIFIED: 03/26/2026 19:31:20
 ================================================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -1643,6 +1643,151 @@ public sealed class ContactServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             h.Service.SetProfilePictureAsync(9999, [0xFF], "image/jpeg", CT));
+    }
+
+    // ─── Case-insensitive filtering ──────────────────────────────────────
+
+    [Theory]
+    [InlineData("linc")]
+    [InlineData("LINC")]
+    [InlineData("Linc")]
+    [InlineData("lInC")]
+    public async Task List_FilterByName_CaseInsensitive(string term)
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "Abraham", LastName = "Lincoln" }, CT);
+
+        var result = await h.Service.ListAsync(new(Name: term), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByEmail_CaseInsensitive()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Emails = [new() { Label = "W", Address = "Alice@Example.COM" }]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(Email: "alice@example"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByCity_CaseInsensitive()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "Newport News",
+                    State = "VA", PostalCode = "23601", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(City: "newport news"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByState_CaseInsensitive()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "X",
+                    State = "VA", PostalCode = "23601", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(State: "va"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    // ─── Page size clamping ──────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_HugePageSize_ClampedToMax()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        for (var i = 0; i < 5; i++)
+            await h.Service.CreateAsync(
+                new() { FirstName = $"U{i}", LastName = "T" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 999999, CT);
+
+        // Should still work, just clamped — all 5 returned since 5 < MaxPageSize
+        Assert.Equal(5, result.Items.Count);
+        Assert.Equal(5, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task List_ZeroPageSize_ClampedToOne()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 0, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    // ─── Edge cases ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_EmptyDatabase_ReturnsEmpty()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        var result = await h.Service.ListAsync(new(), 1, 25, CT);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(0, result.TotalCount);
+        Assert.Equal(0, result.TotalPages);
+    }
+
+    [Fact]
+    public async Task List_PageBeyondRange_ReturnsEmpty()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 999, 25, CT);
+
+        Assert.Empty(result.Items);
+        Assert.Equal(1, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task List_WhitespaceOnlyFilter_TreatedAsNoFilter()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(Name: "   "), 1, 50, CT);
+
+        Assert.Single(result.Items);
     }
 }
 
@@ -2488,8 +2633,8 @@ async function retryWhenDocumentBecomesVisible() {
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactDetail.razor
-SIZE: 12.4 KB
-MODIFIED: 03/26/2026 19:26:49
+SIZE: 13 KB
+MODIFIED: 03/26/2026 19:29:19
 ================================================================================
 
 @page "/contacts/new"
@@ -2709,8 +2854,21 @@ MODIFIED: 03/26/2026 19:26:49
             </button>
             @if (!IsNew)
             {
-                <button type="button" class="btn btn-danger" disabled="@saving"
-                        @onclick="DeleteAsync">Delete</button>
+                @if (confirmingDelete)
+                {
+                    <span class="confirm-delete">
+                        Are you sure?
+                        <button type="button" class="btn btn-danger" disabled="@saving"
+                                @onclick="DeleteAsync">Yes, delete</button>
+                        <button type="button" class="btn btn-secondary"
+                                @onclick="() => confirmingDelete = false">Cancel</button>
+                    </span>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" disabled="@saving"
+                            @onclick="() => confirmingDelete = true">Delete</button>
+                }
             }
             <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
         </div>
@@ -2846,10 +3004,11 @@ MODIFIED: 03/26/2026 19:26:49
 }
 
 
+
 ================================================================================
 FILE: Virginia/Components/Pages/ContactDetail.razor.css
-SIZE: 5.45 KB
-MODIFIED: 03/26/2026 18:00:39
+SIZE: 5.88 KB
+MODIFIED: 03/26/2026 19:29:45
 ================================================================================
 
 .detail {
@@ -3019,6 +3178,18 @@ MODIFIED: 03/26/2026 18:00:39
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
+    align-items: center;
+}
+
+/* ── Delete confirmation ─────────────────────────────────────────────────── */
+
+.confirm-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #c62828;
+    font-weight: 500;
 }
 
 /* ── Buttons (scoped) ────────────────────────────────────────────────────── */
@@ -3138,6 +3309,10 @@ MODIFIED: 03/26/2026 18:00:39
     .group-sm {
         flex: 1;
         min-width: 100%;
+    }
+
+    .confirm-delete {
+        flex-wrap: wrap;
     }
 }
 
@@ -4798,7 +4973,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 19:28:29
+EXPORT COMPLETED: 03/26/2026 19:31:26
 Total Files Exported: 46
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
