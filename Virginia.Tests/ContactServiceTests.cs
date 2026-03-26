@@ -6,6 +6,8 @@ namespace Virginia.Tests;
 
 public sealed class ContactServiceTests
 {
+    private static CancellationToken CT => TestContext.Current.CancellationToken;
+
     // ─── Create ──────────────────────────────────────────────────────────
 
     [Fact]
@@ -14,7 +16,7 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
 
         var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "Jane", LastName = "Doe" });
+            new ContactFormModel { FirstName = "Jane", LastName = "Doe" }, CT);
 
         Assert.True(id > 0);
     }
@@ -43,8 +45,8 @@ public sealed class ContactServiceTests
             ]
         };
 
-        var id = await h.Service.CreateAsync(form);
-        var detail = await h.Service.GetAsync(id);
+        var id = await h.Service.CreateAsync(form, CT);
+        var detail = await h.Service.GetAsync(id, CT);
 
         Assert.NotNull(detail);
         Assert.Equal("John", detail.FirstName);
@@ -60,8 +62,8 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
 
         var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "Solo", LastName = "Contact" });
-        var detail = await h.Service.GetAsync(id);
+            new ContactFormModel { FirstName = "Solo", LastName = "Contact" }, CT);
+        var detail = await h.Service.GetAsync(id, CT);
 
         Assert.NotNull(detail);
         Assert.Empty(detail.Emails);
@@ -79,8 +81,8 @@ public sealed class ContactServiceTests
             Emails = [new() { Label = " Work ", Address = " a@b.com " }]
         };
 
-        var id = await h.Service.CreateAsync(form);
-        var detail = await h.Service.GetAsync(id);
+        var id = await h.Service.CreateAsync(form, CT);
+        var detail = await h.Service.GetAsync(id, CT);
 
         Assert.Equal("Alice", detail!.FirstName);
         Assert.Equal("Smith", detail.LastName);
@@ -95,8 +97,8 @@ public sealed class ContactServiceTests
         var before = DateTime.UtcNow;
 
         var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "T", LastName = "S" });
-        var detail = await h.Service.GetAsync(id);
+            new ContactFormModel { FirstName = "T", LastName = "S" }, CT);
+        var detail = await h.Service.GetAsync(id, CT);
 
         Assert.True(detail!.CreatedAtUtc >= before);
         Assert.True(detail.UpdatedAtUtc >= before);
@@ -110,7 +112,7 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
 
-        Assert.Null(await h.Service.GetAsync(9999));
+        Assert.Null(await h.Service.GetAsync(9999, CT));
     }
 
     // ─── Update ──────────────────────────────────────────────────────────
@@ -120,12 +122,12 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
         var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "Old", LastName = "Name" });
+            new ContactFormModel { FirstName = "Old", LastName = "Name" }, CT);
 
         await h.Service.UpdateAsync(id,
-            new ContactFormModel { FirstName = "New", LastName = "Name" });
+            new ContactFormModel { FirstName = "New", LastName = "Name" }, CT);
 
-        var detail = await h.Service.GetAsync(id);
+        var detail = await h.Service.GetAsync(id, CT);
         Assert.Equal("New", detail!.FirstName);
     }
 
@@ -142,8 +144,8 @@ public sealed class ContactServiceTests
                 new() { Label = "B", Address = "b@t.com" }
             ]
         };
-        var id = await h.Service.CreateAsync(form);
-        var detail = await h.Service.GetAsync(id);
+        var id = await h.Service.CreateAsync(form, CT);
+        var detail = await h.Service.GetAsync(id, CT);
 
         // Keep email A (by ID), remove B, add C
         var updateForm = new ContactFormModel
@@ -156,8 +158,8 @@ public sealed class ContactServiceTests
             ]
         };
 
-        await h.Service.UpdateAsync(id, updateForm);
-        var updated = await h.Service.GetAsync(id);
+        await h.Service.UpdateAsync(id, updateForm, CT);
+        var updated = await h.Service.GetAsync(id, CT);
 
         Assert.Equal(2, updated!.Emails.Count);
         Assert.Contains(updated.Emails, e => e.Address == "a2@t.com");
@@ -172,7 +174,7 @@ public sealed class ContactServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             h.Service.UpdateAsync(9999,
-                new ContactFormModel { FirstName = "X", LastName = "Y" }));
+                new ContactFormModel { FirstName = "X", LastName = "Y" }, CT));
     }
 
     [Fact]
@@ -180,14 +182,14 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
         var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "T", LastName = "S" });
-        var before = (await h.Service.GetAsync(id))!.UpdatedAtUtc;
+            new ContactFormModel { FirstName = "T", LastName = "S" }, CT);
+        var before = (await h.Service.GetAsync(id, CT))!.UpdatedAtUtc;
 
-        await Task.Delay(50); // ensure clock ticks
+        await Task.Delay(50, CT);
         await h.Service.UpdateAsync(id,
-            new ContactFormModel { FirstName = "T2", LastName = "S" });
+            new ContactFormModel { FirstName = "T2", LastName = "S" }, CT);
 
-        var after = (await h.Service.GetAsync(id))!.UpdatedAtUtc;
+        var after = (await h.Service.GetAsync(id, CT))!.UpdatedAtUtc;
         Assert.True(after > before);
     }
 
@@ -198,11 +200,11 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
         var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "Gone", LastName = "Soon" });
+            new ContactFormModel { FirstName = "Gone", LastName = "Soon" }, CT);
 
-        await h.Service.DeleteAsync(id);
+        await h.Service.DeleteAsync(id, CT);
 
-        Assert.Null(await h.Service.GetAsync(id));
+        Assert.Null(await h.Service.GetAsync(id, CT));
     }
 
     [Fact]
@@ -223,13 +225,13 @@ public sealed class ContactServiceTests
                 }
             ]
         };
-        var id = await h.Service.CreateAsync(form);
+        var id = await h.Service.CreateAsync(form, CT);
 
-        await h.Service.DeleteAsync(id);
+        await h.Service.DeleteAsync(id, CT);
 
-        Assert.Equal(0, await h.Db.ContactEmails.CountAsync());
-        Assert.Equal(0, await h.Db.ContactPhones.CountAsync());
-        Assert.Equal(0, await h.Db.ContactAddresses.CountAsync());
+        Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactAddresses.CountAsync(CT));
     }
 
     [Fact]
@@ -237,8 +239,7 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
 
-        // Should not throw
-        await h.Service.DeleteAsync(9999);
+        await h.Service.DeleteAsync(9999, CT);
     }
 
     // ─── List / Filtering ────────────────────────────────────────────────
@@ -247,11 +248,11 @@ public sealed class ContactServiceTests
     public async Task List_FilterByName_MatchesPartial()
     {
         await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new() { FirstName = "Alice", LastName = "Johnson" });
-        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Jones" });
-        await h.Service.CreateAsync(new() { FirstName = "Charlie", LastName = "Brown" });
+        await h.Service.CreateAsync(new() { FirstName = "Alice", LastName = "Johnson" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Jones" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Charlie", LastName = "Brown" }, CT);
 
-        var result = await h.Service.ListAsync(new(Name: "Jo"), 1, 50);
+        var result = await h.Service.ListAsync(new(Name: "Jo"), 1, 50, CT);
 
         Assert.Equal(2, result.TotalCount);
     }
@@ -264,10 +265,10 @@ public sealed class ContactServiceTests
         {
             FirstName = "A", LastName = "B",
             Emails = [new() { Label = "W", Address = "alice@example.com" }]
-        });
-        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" });
+        }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
 
-        var result = await h.Service.ListAsync(new(Email: "alice"), 1, 50);
+        var result = await h.Service.ListAsync(new(Email: "alice"), 1, 50, CT);
 
         Assert.Single(result.Items);
         Assert.Equal("A", result.Items[0].FirstName);
@@ -281,10 +282,10 @@ public sealed class ContactServiceTests
         {
             FirstName = "A", LastName = "B",
             Phones = [new() { Label = "M", Number = "757-555-0199" }]
-        });
-        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" });
+        }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
 
-        var result = await h.Service.ListAsync(new(Phone: "0199"), 1, 50);
+        var result = await h.Service.ListAsync(new(Phone: "0199"), 1, 50, CT);
 
         Assert.Single(result.Items);
     }
@@ -304,7 +305,7 @@ public sealed class ContactServiceTests
                     State = "VA", PostalCode = "23601", Country = "US"
                 }
             ]
-        });
+        }, CT);
         await h.Service.CreateAsync(new()
         {
             FirstName = "C", LastName = "D",
@@ -316,9 +317,9 @@ public sealed class ContactServiceTests
                     State = "VA", PostalCode = "23220", Country = "US"
                 }
             ]
-        });
+        }, CT);
 
-        var result = await h.Service.ListAsync(new(City: "Newport"), 1, 50);
+        var result = await h.Service.ListAsync(new(City: "Newport"), 1, 50, CT);
 
         Assert.Single(result.Items);
     }
@@ -338,7 +339,7 @@ public sealed class ContactServiceTests
                     State = "VA", PostalCode = "23601", Country = "US"
                 }
             ]
-        });
+        }, CT);
         await h.Service.CreateAsync(new()
         {
             FirstName = "CA", LastName = "Person",
@@ -350,9 +351,9 @@ public sealed class ContactServiceTests
                     State = "CA", PostalCode = "90210", Country = "US"
                 }
             ]
-        });
+        }, CT);
 
-        var result = await h.Service.ListAsync(new(State: "VA"), 1, 50);
+        var result = await h.Service.ListAsync(new(State: "VA"), 1, 50, CT);
 
         Assert.Single(result.Items);
         Assert.Equal("VA", result.Items[0].FirstName);
@@ -362,11 +363,11 @@ public sealed class ContactServiceTests
     public async Task List_FilterHasPhoto_True()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" });
-        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" });
-        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg");
+        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" }, CT);
+        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg", CT);
 
-        var result = await h.Service.ListAsync(new(HasPhoto: true), 1, 50);
+        var result = await h.Service.ListAsync(new(HasPhoto: true), 1, 50, CT);
 
         Assert.Single(result.Items);
         Assert.Equal("With", result.Items[0].FirstName);
@@ -376,11 +377,11 @@ public sealed class ContactServiceTests
     public async Task List_FilterHasPhoto_False()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" });
-        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" });
-        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg");
+        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" }, CT);
+        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg", CT);
 
-        var result = await h.Service.ListAsync(new(HasPhoto: false), 1, 50);
+        var result = await h.Service.ListAsync(new(HasPhoto: false), 1, 50, CT);
 
         Assert.Single(result.Items);
         Assert.Equal("No", result.Items[0].FirstName);
@@ -401,7 +402,7 @@ public sealed class ContactServiceTests
                     State = "VA", PostalCode = "23220", Country = "US"
                 }
             ]
-        });
+        }, CT);
         await h.Service.CreateAsync(new()
         {
             FirstName = "Alice", LastName = "Jones",
@@ -413,10 +414,10 @@ public sealed class ContactServiceTests
                     State = "VA", PostalCode = "23510", Country = "US"
                 }
             ]
-        });
+        }, CT);
 
         var result = await h.Service.ListAsync(
-            new(Name: "Alice", City: "Richmond"), 1, 50);
+            new(Name: "Alice", City: "Richmond"), 1, 50, CT);
 
         Assert.Single(result.Items);
         Assert.Equal("Johnson", result.Items[0].LastName);
@@ -429,11 +430,11 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
         for (var i = 0; i < 25; i++)
-            await h.Service.CreateAsync(new() { FirstName = $"U{i:D2}", LastName = "Test" });
+            await h.Service.CreateAsync(new() { FirstName = $"U{i:D2}", LastName = "Test" }, CT);
 
-        var p1 = await h.Service.ListAsync(new(), 1, 10);
-        var p2 = await h.Service.ListAsync(new(), 2, 10);
-        var p3 = await h.Service.ListAsync(new(), 3, 10);
+        var p1 = await h.Service.ListAsync(new(), 1, 10, CT);
+        var p2 = await h.Service.ListAsync(new(), 2, 10, CT);
+        var p3 = await h.Service.ListAsync(new(), 3, 10, CT);
 
         Assert.Equal(25, p1.TotalCount);
         Assert.Equal(3, p1.TotalPages);
@@ -453,11 +454,11 @@ public sealed class ContactServiceTests
     public async Task List_OrdersByLastNameThenFirst()
     {
         await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new() { FirstName = "Zoe", LastName = "Adams" });
-        await h.Service.CreateAsync(new() { FirstName = "Amy", LastName = "Adams" });
-        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Baker" });
+        await h.Service.CreateAsync(new() { FirstName = "Zoe", LastName = "Adams" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Amy", LastName = "Adams" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Baker" }, CT);
 
-        var result = await h.Service.ListAsync(new(), 1, 50);
+        var result = await h.Service.ListAsync(new(), 1, 50, CT);
 
         Assert.Equal("Amy", result.Items[0].FirstName);
         Assert.Equal("Zoe", result.Items[1].FirstName);
@@ -470,11 +471,11 @@ public sealed class ContactServiceTests
     public async Task ProfilePicture_SetAndRetrieve()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" });
+        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
         byte[] data = [0x89, 0x50, 0x4E, 0x47];
 
-        await h.Service.SetProfilePictureAsync(id, data, "image/png");
-        var photo = await h.Service.GetProfilePictureAsync(id);
+        await h.Service.SetProfilePictureAsync(id, data, "image/png", CT);
+        var photo = await h.Service.GetProfilePictureAsync(id, CT);
 
         Assert.NotNull(photo);
         Assert.Equal(data, photo.Data);
@@ -485,21 +486,21 @@ public sealed class ContactServiceTests
     public async Task ProfilePicture_Remove()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" });
-        await h.Service.SetProfilePictureAsync(id, [0xFF], "image/jpeg");
+        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
+        await h.Service.SetProfilePictureAsync(id, [0xFF], "image/jpeg", CT);
 
-        await h.Service.RemoveProfilePictureAsync(id);
+        await h.Service.RemoveProfilePictureAsync(id, CT);
 
-        Assert.Null(await h.Service.GetProfilePictureAsync(id));
+        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
     }
 
     [Fact]
     public async Task ProfilePicture_GetNonExistent_ReturnsNull()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" });
+        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
 
-        Assert.Null(await h.Service.GetProfilePictureAsync(id));
+        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
     }
 
     [Fact]
@@ -508,6 +509,6 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            h.Service.SetProfilePictureAsync(9999, [0xFF], "image/jpeg"));
+            h.Service.SetProfilePictureAsync(9999, [0xFF], "image/jpeg", CT));
     }
 }

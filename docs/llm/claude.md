@@ -6902,3 +6902,679 @@ Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.For
 Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_StateOptional() (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	128	
 Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_ValidPostalCodes_Pass(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	143	
 Error (active)	CA1707	Remove the underscores from member name Virginia.Tests.FormValidationTests.Address_InvalidPostalCodes_Fail(string) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1707)	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\FormValidationTests.cs	157	
+
+Three issues to fix:
+
+1. **CA1707**: Underscores in test method names — suppress in test project only (universally accepted convention)
+2. **CS7036**: Missing `CancellationToken` — the default is on the interface, not the concrete class. Tests use the concrete type.
+3. **xUnit1051**: Must use `TestContext.Current.CancellationToken`
+
+Four files change:Three files actually change. Here's the summary:
+
+**Virginia.Tests/Virginia.Tests.csproj** — Added `<NoWarn>CA1707</NoWarn>`. This is the correct fix for CA1707 in test projects. Underscores in test method names is the universal convention and Microsoft's own analyzer documentation explicitly says to suppress this rule for test code.
+
+**Virginia.Tests/TestInfrastructure.cs** — Changed `Service` property type from `ContactService` to `IContactService`. The interface has `CancellationToken ct = default` on every method, but the concrete class does not. By exposing the interface, the default parameter values are available to callers. Also added `TestContext.Current.CancellationToken` to the `OpenAsync` and `EnsureCreatedAsync` calls.
+
+**Virginia.Tests/ContactServiceTests.cs** — Added a `private static CancellationToken CT => TestContext.Current.CancellationToken;` convenience property and passed `CT` to every single service method call. This satisfies both CS7036 (missing argument) and xUnit1051 (use `TestContext.Current.CancellationToken`).
+
+**DtoMappingTests.cs and FormValidationTests.cs** — No code changes needed. The CA1707 errors on those files are handled by the `<NoWarn>` in the csproj.
+
+// ============================================================================
+// FILE: Virginia.Tests/Virginia.Tests.csproj
+// ============================================================================
+// Suppress CA1707 (underscore naming) for the test project only.
+// Test method naming with underscores is universally accepted best practice.
+// ============================================================================
+
+/*
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <NoWarn>CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Virginia\Virginia.csproj" />
+  </ItemGroup>
+
+</Project>
+*/
+
+
+// ============================================================================
+// FILE: Virginia.Tests/TestInfrastructure.cs
+// ============================================================================
+// Changed: Service exposed as IContactService (has default CancellationToken).
+// ============================================================================
+
+using System.Diagnostics.Metrics;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Virginia.Data;
+using Virginia.Services;
+
+namespace Virginia.Tests;
+
+/// <summary>
+/// Creates a fresh in-memory SQLite database and wired-up service for each test.
+/// Implements IAsyncDisposable for proper cleanup.
+/// </summary>
+public sealed class TestHarness : IAsyncDisposable
+{
+    private readonly SqliteConnection _connection;
+
+    public AppDbContext Db { get; }
+    public IContactService Service { get; }
+
+    private TestHarness(SqliteConnection connection, AppDbContext db, IContactService service)
+    {
+        _connection = connection;
+        Db = db;
+        Service = service;
+    }
+
+    public static async Task<TestHarness> CreateAsync()
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        var db = new AppDbContext(options);
+        await db.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
+
+        var meterFactory = new TestMeterFactory();
+        var telemetry = new ContactTelemetry(meterFactory);
+        IContactService service = new ContactService(
+            db,
+            NullLogger<ContactService>.Instance,
+            telemetry);
+
+        return new TestHarness(connection, db, service);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Db.DisposeAsync();
+        await _connection.DisposeAsync();
+    }
+}
+
+/// <summary>
+/// Minimal IMeterFactory for unit tests — no telemetry collection needed.
+/// </summary>
+internal sealed class TestMeterFactory : IMeterFactory
+{
+    private readonly List<Meter> _meters = [];
+
+    public Meter Create(MeterOptions options)
+    {
+        var meter = new Meter(options);
+        _meters.Add(meter);
+        return meter;
+    }
+
+    public void Dispose()
+    {
+        foreach (var m in _meters) m.Dispose();
+    }
+}
+
+
+// ============================================================================
+// FILE: Virginia.Tests/ContactServiceTests.cs
+// ============================================================================
+// Fixed: All service calls pass TestContext.Current.CancellationToken.
+// CA1707 suppressed at project level via csproj NoWarn.
+// ============================================================================
+
+using Microsoft.EntityFrameworkCore;
+using Virginia.Data;
+using Xunit;
+
+namespace Virginia.Tests;
+
+public sealed class ContactServiceTests
+{
+    private static CancellationToken CT => TestContext.Current.CancellationToken;
+
+    // ─── Create ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Create_ReturnsPositiveId()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Jane", LastName = "Doe" }, CT);
+
+        Assert.True(id > 0);
+    }
+
+    [Fact]
+    public async Task Create_WithChildren_PersistsAll()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var form = new ContactFormModel
+        {
+            FirstName = "John", LastName = "Smith",
+            Emails =
+            [
+                new() { Label = "Work", Address = "john@work.com" },
+                new() { Label = "Home", Address = "john@home.com" }
+            ],
+            Phones = [new() { Label = "Mobile", Number = "555-0100" }],
+            Addresses =
+            [
+                new()
+                {
+                    Label = "Office", Street = "123 Main St",
+                    City = "Richmond", State = "VA",
+                    PostalCode = "23220", Country = "US"
+                }
+            ]
+        };
+
+        var id = await h.Service.CreateAsync(form, CT);
+        var detail = await h.Service.GetAsync(id, CT);
+
+        Assert.NotNull(detail);
+        Assert.Equal("John", detail.FirstName);
+        Assert.Equal(2, detail.Emails.Count);
+        Assert.Single(detail.Phones);
+        Assert.Single(detail.Addresses);
+        Assert.Equal("Richmond", detail.Addresses[0].City);
+    }
+
+    [Fact]
+    public async Task Create_WithZeroChildren_Succeeds()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Solo", LastName = "Contact" }, CT);
+        var detail = await h.Service.GetAsync(id, CT);
+
+        Assert.NotNull(detail);
+        Assert.Empty(detail.Emails);
+        Assert.Empty(detail.Phones);
+        Assert.Empty(detail.Addresses);
+    }
+
+    [Fact]
+    public async Task Create_TrimsWhitespace()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var form = new ContactFormModel
+        {
+            FirstName = "  Alice  ", LastName = "  Smith  ",
+            Emails = [new() { Label = " Work ", Address = " a@b.com " }]
+        };
+
+        var id = await h.Service.CreateAsync(form, CT);
+        var detail = await h.Service.GetAsync(id, CT);
+
+        Assert.Equal("Alice", detail!.FirstName);
+        Assert.Equal("Smith", detail.LastName);
+        Assert.Equal("Work", detail.Emails[0].Label);
+        Assert.Equal("a@b.com", detail.Emails[0].Address);
+    }
+
+    [Fact]
+    public async Task Create_SetsTimestamps()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var before = DateTime.UtcNow;
+
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "T", LastName = "S" }, CT);
+        var detail = await h.Service.GetAsync(id, CT);
+
+        Assert.True(detail!.CreatedAtUtc >= before);
+        Assert.True(detail.UpdatedAtUtc >= before);
+        Assert.Equal(detail.CreatedAtUtc, detail.UpdatedAtUtc);
+    }
+
+    // ─── Get ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Get_NonExistent_ReturnsNull()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        Assert.Null(await h.Service.GetAsync(9999, CT));
+    }
+
+    // ─── Update ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Update_ChangesName()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Old", LastName = "Name" }, CT);
+
+        await h.Service.UpdateAsync(id,
+            new ContactFormModel { FirstName = "New", LastName = "Name" }, CT);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Equal("New", detail!.FirstName);
+    }
+
+    [Fact]
+    public async Task Update_AddsAndRemovesEmails()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var form = new ContactFormModel
+        {
+            FirstName = "Test", LastName = "User",
+            Emails =
+            [
+                new() { Label = "A", Address = "a@t.com" },
+                new() { Label = "B", Address = "b@t.com" }
+            ]
+        };
+        var id = await h.Service.CreateAsync(form, CT);
+        var detail = await h.Service.GetAsync(id, CT);
+
+        // Keep email A (by ID), remove B, add C
+        var updateForm = new ContactFormModel
+        {
+            FirstName = "Test", LastName = "User",
+            Emails =
+            [
+                new() { Id = detail!.Emails[0].Id, Label = "A2", Address = "a2@t.com" },
+                new() { Label = "C", Address = "c@t.com" }
+            ]
+        };
+
+        await h.Service.UpdateAsync(id, updateForm, CT);
+        var updated = await h.Service.GetAsync(id, CT);
+
+        Assert.Equal(2, updated!.Emails.Count);
+        Assert.Contains(updated.Emails, e => e.Address == "a2@t.com");
+        Assert.Contains(updated.Emails, e => e.Address == "c@t.com");
+        Assert.DoesNotContain(updated.Emails, e => e.Address == "b@t.com");
+    }
+
+    [Fact]
+    public async Task Update_NonExistent_Throws()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            h.Service.UpdateAsync(9999,
+                new ContactFormModel { FirstName = "X", LastName = "Y" }, CT));
+    }
+
+    [Fact]
+    public async Task Update_BumpsTimestamp()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "T", LastName = "S" }, CT);
+        var before = (await h.Service.GetAsync(id, CT))!.UpdatedAtUtc;
+
+        await Task.Delay(50, CT);
+        await h.Service.UpdateAsync(id,
+            new ContactFormModel { FirstName = "T2", LastName = "S" }, CT);
+
+        var after = (await h.Service.GetAsync(id, CT))!.UpdatedAtUtc;
+        Assert.True(after > before);
+    }
+
+    // ─── Delete ──────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Delete_RemovesContact()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Gone", LastName = "Soon" }, CT);
+
+        await h.Service.DeleteAsync(id, CT);
+
+        Assert.Null(await h.Service.GetAsync(id, CT));
+    }
+
+    [Fact]
+    public async Task Delete_CascadesChildren()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var form = new ContactFormModel
+        {
+            FirstName = "P", LastName = "C",
+            Emails = [new() { Label = "W", Address = "w@t.com" }],
+            Phones = [new() { Label = "M", Number = "555-0001" }],
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "X",
+                    PostalCode = "12345", Country = "US"
+                }
+            ]
+        };
+        var id = await h.Service.CreateAsync(form, CT);
+
+        await h.Service.DeleteAsync(id, CT);
+
+        Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactAddresses.CountAsync(CT));
+    }
+
+    [Fact]
+    public async Task Delete_NonExistent_DoesNotThrow()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await h.Service.DeleteAsync(9999, CT);
+    }
+
+    // ─── List / Filtering ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_FilterByName_MatchesPartial()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new() { FirstName = "Alice", LastName = "Johnson" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Jones" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Charlie", LastName = "Brown" }, CT);
+
+        var result = await h.Service.ListAsync(new(Name: "Jo"), 1, 50, CT);
+
+        Assert.Equal(2, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task List_FilterByEmail()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Emails = [new() { Label = "W", Address = "alice@example.com" }]
+        }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
+
+        var result = await h.Service.ListAsync(new(Email: "alice"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+        Assert.Equal("A", result.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task List_FilterByPhone()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Phones = [new() { Label = "M", Number = "757-555-0199" }]
+        }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
+
+        var result = await h.Service.ListAsync(new(Phone: "0199"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByCity()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "A", LastName = "B",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "Newport News",
+                    State = "VA", PostalCode = "23601", Country = "US"
+                }
+            ]
+        }, CT);
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "C", LastName = "D",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "2 St", City = "Richmond",
+                    State = "VA", PostalCode = "23220", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(City: "Newport"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+    }
+
+    [Fact]
+    public async Task List_FilterByState()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "VA", LastName = "Person",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "A",
+                    State = "VA", PostalCode = "23601", Country = "US"
+                }
+            ]
+        }, CT);
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "CA", LastName = "Person",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "2 St", City = "B",
+                    State = "CA", PostalCode = "90210", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(new(State: "VA"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+        Assert.Equal("VA", result.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task List_FilterHasPhoto_True()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" }, CT);
+        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg", CT);
+
+        var result = await h.Service.ListAsync(new(HasPhoto: true), 1, 50, CT);
+
+        Assert.Single(result.Items);
+        Assert.Equal("With", result.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task List_FilterHasPhoto_False()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" }, CT);
+        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg", CT);
+
+        var result = await h.Service.ListAsync(new(HasPhoto: false), 1, 50, CT);
+
+        Assert.Single(result.Items);
+        Assert.Equal("No", result.Items[0].FirstName);
+    }
+
+    [Fact]
+    public async Task List_CombinedFilters()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "Alice", LastName = "Johnson",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "Richmond",
+                    State = "VA", PostalCode = "23220", Country = "US"
+                }
+            ]
+        }, CT);
+        await h.Service.CreateAsync(new()
+        {
+            FirstName = "Alice", LastName = "Jones",
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "2 St", City = "Norfolk",
+                    State = "VA", PostalCode = "23510", Country = "US"
+                }
+            ]
+        }, CT);
+
+        var result = await h.Service.ListAsync(
+            new(Name: "Alice", City: "Richmond"), 1, 50, CT);
+
+        Assert.Single(result.Items);
+        Assert.Equal("Johnson", result.Items[0].LastName);
+    }
+
+    // ─── Pagination ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_Pagination_WorksCorrectly()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        for (var i = 0; i < 25; i++)
+            await h.Service.CreateAsync(new() { FirstName = $"U{i:D2}", LastName = "Test" }, CT);
+
+        var p1 = await h.Service.ListAsync(new(), 1, 10, CT);
+        var p2 = await h.Service.ListAsync(new(), 2, 10, CT);
+        var p3 = await h.Service.ListAsync(new(), 3, 10, CT);
+
+        Assert.Equal(25, p1.TotalCount);
+        Assert.Equal(3, p1.TotalPages);
+        Assert.Equal(10, p1.Items.Count);
+        Assert.Equal(10, p2.Items.Count);
+        Assert.Equal(5, p3.Items.Count);
+
+        Assert.True(p1.HasNext);
+        Assert.False(p1.HasPrevious);
+        Assert.True(p2.HasPrevious);
+        Assert.True(p2.HasNext);
+        Assert.True(p3.HasPrevious);
+        Assert.False(p3.HasNext);
+    }
+
+    [Fact]
+    public async Task List_OrdersByLastNameThenFirst()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new() { FirstName = "Zoe", LastName = "Adams" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Amy", LastName = "Adams" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Baker" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 50, CT);
+
+        Assert.Equal("Amy", result.Items[0].FirstName);
+        Assert.Equal("Zoe", result.Items[1].FirstName);
+        Assert.Equal("Bob", result.Items[2].FirstName);
+    }
+
+    // ─── Profile pictures ────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ProfilePicture_SetAndRetrieve()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
+        byte[] data = [0x89, 0x50, 0x4E, 0x47];
+
+        await h.Service.SetProfilePictureAsync(id, data, "image/png", CT);
+        var photo = await h.Service.GetProfilePictureAsync(id, CT);
+
+        Assert.NotNull(photo);
+        Assert.Equal(data, photo.Data);
+        Assert.Equal("image/png", photo.ContentType);
+    }
+
+    [Fact]
+    public async Task ProfilePicture_Remove()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
+        await h.Service.SetProfilePictureAsync(id, [0xFF], "image/jpeg", CT);
+
+        await h.Service.RemoveProfilePictureAsync(id, CT);
+
+        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
+    }
+
+    [Fact]
+    public async Task ProfilePicture_GetNonExistent_ReturnsNull()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
+
+        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
+    }
+
+    [Fact]
+    public async Task ProfilePicture_SetForNonExistent_Throws()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            h.Service.SetProfilePictureAsync(9999, [0xFF], "image/jpeg", CT));
+    }
+}
+
+
+// ============================================================================
+// FILE: Virginia.Tests/DtoMappingTests.cs
+// ============================================================================
+// No code changes needed — CA1707 suppressed at project level.
+// Included here for completeness to confirm it's unchanged.
+// ============================================================================
+
+// (NO CHANGES — keep your existing file as-is)
+
+
+// ============================================================================
+// FILE: Virginia.Tests/FormValidationTests.cs
+// ============================================================================
+// No code changes needed — CA1707 suppressed at project level.
+// Included here for completeness to confirm it's unchanged.
+// ============================================================================
+
+// (NO CHANGES — keep your existing file as-is)
+

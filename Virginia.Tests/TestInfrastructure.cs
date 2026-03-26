@@ -16,9 +16,9 @@ public sealed class TestHarness : IAsyncDisposable
     private readonly SqliteConnection _connection;
 
     public AppDbContext Db { get; }
-    public ContactService Service { get; }
+    public IContactService Service { get; }
 
-    private TestHarness(SqliteConnection connection, AppDbContext db, ContactService service)
+    private TestHarness(SqliteConnection connection, AppDbContext db, IContactService service)
     {
         _connection = connection;
         Db = db;
@@ -28,18 +28,18 @@ public sealed class TestHarness : IAsyncDisposable
     public static async Task<TestHarness> CreateAsync()
     {
         var connection = new SqliteConnection("Data Source=:memory:");
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
 
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlite(connection)
             .Options;
 
         var db = new AppDbContext(options);
-        await db.Database.EnsureCreatedAsync();
+        await db.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
 
         var meterFactory = new TestMeterFactory();
         var telemetry = new ContactTelemetry(meterFactory);
-        var service = new ContactService(
+        IContactService service = new ContactService(
             db,
             NullLogger<ContactService>.Instance,
             telemetry);
