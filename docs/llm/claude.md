@@ -13808,3 +13808,108 @@ Microsoft.AspNetCore.Components.NavigationException
    at Microsoft.AspNetCore.Components.NavigationManager.NavigateToCore(String uri, Boolean forceLoad)
    at Virginia.Components.Pages.Account.Login.<LoginAsync>d__15.MoveNext() in D:\DEV\personal\Virginia\Virginia\Components\Pages\Account\Login.razor:line 80
    at Microsoft.AspNetCore.Components.ComponentBase.<CallStateHasChangedOnAsyncCompletion>d__30.MoveNext()
+
+The issue is that Login.razor is a static SSR page (no `@rendermode`), but `NavigateTo` with `forceLoad: true` throws `NavigationException` during static rendering — this is actually expected behavior in Blazor SSR. The framework catches it internally to perform the redirect. However, if you're seeing it break in the debugger, it's because Visual Studio is breaking on all exceptions.
+
+The real problem is the login page is doing an async `SignInManager.PasswordSignInAsync` call during a static SSR form post, then trying to navigate. The `NavigationException` is how Blazor SSR handles redirects — it's thrown intentionally and caught by the framework. But the debugger stops on it.
+
+The clean fix: don't catch this exception. Just let it propagate. But to avoid the debugger noise and make it work cleanly, the simplest approach is to handle the redirect properly by not catching the `NavigationException`:
+
+**FILE: Virginia/Components/Pages/Account/Login.razor**
+
+```razor
+@page "/account/login"
+@using Microsoft.AspNetCore.Identity
+@attribute [AllowAnonymous]
+@layout MainLayout
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
+
+<PageTitle>Login | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Sign In</h1>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="banner banner-error" role="alert">@errorMessage</div>
+        }
+
+        @if (showRegistered)
+        {
+            <div class="banner banner-success" role="status">
+                Account created. Please wait for an administrator to approve your account, then sign in.
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="LoginAsync" FormName="login">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText id="email" @bind-Value="model.Email" type="email" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="() => model.Password" />
+            </div>
+            <div class="field-check">
+                <InputCheckbox id="remember" @bind-Value="model.RememberMe" />
+                <label for="remember">Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </EditForm>
+
+        <p class="auth-link">
+            Don't have an account? <a href="/account/register">Register</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    private LoginFormModel model { get; set; } = null!;
+
+    [SupplyParameterFromQuery(Name = "registered")]
+    private bool showRegistered { get; set; }
+
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        model ??= new();
+
+        if (HttpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        if (HttpContext is null) return;
+
+        var result = await SignInManager.PasswordSignInAsync(
+            model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            // Use HttpContext redirect instead of NavigateTo to avoid NavigationException in SSR
+            HttpContext.Response.Redirect("/");
+        }
+        else
+        {
+            errorMessage = "Invalid email or password.";
+        }
+    }
+}
+```
+
+The key change: replaced `Nav.NavigateTo("/", forceLoad: true)` in `LoginAsync` with `HttpContext.Response.Redirect("/")`. This does a proper HTTP 302 redirect during the SSR form post, which is the correct way to redirect after a form submission in static rendering. The `NavigateTo` approach works but throws `NavigationException` as its mechanism, which is noisy in development.
+
+Also added `if (HttpContext is null) return;` as a guard since `HttpContext` is only available during SSR, not during interactive rendering.

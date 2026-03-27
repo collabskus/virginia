@@ -72,12 +72,15 @@
 
     private async Task LoginAsync()
     {
+        if (HttpContext is null) return;
+
         var result = await SignInManager.PasswordSignInAsync(
             model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
-            Nav.NavigateTo("/", forceLoad: true);
+            // Use HttpContext redirect instead of NavigateTo to avoid NavigationException in SSR
+            HttpContext.Response.Redirect("/");
         }
         else
         {
