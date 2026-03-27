@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 20:37:25
+Generated: 03/26/2026 20:41:55
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -2320,8 +2320,8 @@ MODIFIED: 03/26/2026 20:18:34
 
 ================================================================================
 FILE: Virginia/Components/Layout/MainLayout.razor
-SIZE: 1.36 KB
-MODIFIED: 03/26/2026 20:19:12
+SIZE: 1.41 KB
+MODIFIED: 03/26/2026 20:41:06
 ================================================================================
 
 @inherits LayoutComponentBase
@@ -2335,8 +2335,8 @@ MODIFIED: 03/26/2026 20:19:12
         <AuthorizeView>
             <Authorized>
                 <span class="app-user">@context.User.Identity?.Name</span>
-                <AuthorizeView Roles="Admin">
-                    <Authorized>
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <Authorized Context="adminInner">
                         <a href="/admin/users" class="header-link">Users</a>
                     </Authorized>
                 </AuthorizeView>
@@ -2868,8 +2868,8 @@ MODIFIED: 03/26/2026 20:24:19
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Login.razor
-SIZE: 2.65 KB
-MODIFIED: 03/26/2026 20:24:30
+SIZE: 2.68 KB
+MODIFIED: 03/26/2026 20:41:28
 ================================================================================
 
 @page "/account/login"
@@ -2927,7 +2927,7 @@ MODIFIED: 03/26/2026 20:24:30
     private HttpContext? HttpContext { get; set; }
 
     [SupplyParameterFromForm]
-    private LoginFormModel model { get; set; } = new();
+    private LoginFormModel model { get; set; } = null!;
 
     [SupplyParameterFromQuery(Name = "registered")]
     private bool showRegistered { get; set; }
@@ -2936,6 +2936,8 @@ MODIFIED: 03/26/2026 20:24:30
 
     protected override void OnInitialized()
     {
+        model ??= new();
+
         if (HttpContext?.User.Identity?.IsAuthenticated == true)
         {
             Nav.NavigateTo("/", forceLoad: true);
@@ -2962,8 +2964,8 @@ MODIFIED: 03/26/2026 20:24:30
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Register.razor
-SIZE: 2.5 KB
-MODIFIED: 03/26/2026 20:24:54
+SIZE: 2.59 KB
+MODIFIED: 03/26/2026 20:41:15
 ================================================================================
 
 @page "/account/register"
@@ -3017,9 +3019,14 @@ MODIFIED: 03/26/2026 20:24:54
 
 @code {
     [SupplyParameterFromForm]
-    private RegisterFormModel model { get; set; } = new();
+    private RegisterFormModel model { get; set; } = null!;
 
     private List<string> errors = [];
+
+    protected override void OnInitialized()
+    {
+        model ??= new();
+    }
 
     private async Task RegisterAsync()
     {
@@ -4642,8 +4649,8 @@ MODIFIED: 03/26/2026 20:18:42
 
 ================================================================================
 FILE: Virginia/Data/AppDbContext.cs
-SIZE: 2.15 KB
-MODIFIED: 03/26/2026 20:16:36
+SIZE: 2.11 KB
+MODIFIED: 03/26/2026 20:41:42
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -4661,11 +4668,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ContactAddress> ContactAddresses => Set<ContactAddress>();
     public DbSet<ContactNote> ContactNotes => Set<ContactNote>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(modelBuilder);
+        base.OnModelCreating(builder);
 
-        modelBuilder.Entity<Contact>(entity =>
+        builder.Entity<Contact>(entity =>
         {
             entity.HasIndex(c => new { c.LastName, c.FirstName });
 
@@ -4690,22 +4697,22 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<ContactEmail>(entity =>
+        builder.Entity<ContactEmail>(entity =>
         {
             entity.HasIndex(e => e.Address);
         });
 
-        modelBuilder.Entity<ContactPhone>(entity =>
+        builder.Entity<ContactPhone>(entity =>
         {
             entity.HasIndex(p => p.Number);
         });
 
-        modelBuilder.Entity<ContactAddress>(entity =>
+        builder.Entity<ContactAddress>(entity =>
         {
             entity.HasIndex(a => new { a.City, a.State });
         });
 
-        modelBuilder.Entity<ContactNote>(entity =>
+        builder.Entity<ContactNote>(entity =>
         {
             entity.HasIndex(n => n.ContactId);
         });
@@ -5084,8 +5091,8 @@ public sealed class ChangePasswordFormModel
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 6.31 KB
-MODIFIED: 03/26/2026 20:26:00
+SIZE: 7.43 KB
+MODIFIED: 03/26/2026 20:40:54
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -5131,10 +5138,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // ── Authorization policies ───────────────────────────────────────────────────
 builder.Services.AddAuthorizationBuilder()
-// ── Authorization policies ───────────────────────────────────────────────────
-.AddPolicy("Admin", policy => policy.RequireRole("Admin"))
-// ── Authorization policies ───────────────────────────────────────────────────
-.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+    .AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
 
 builder.Services.AddCascadingAuthenticationState();
 
@@ -5152,6 +5157,22 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  ONE-TIME DEPLOYMENT: Delete this entire block after successful deploy  ██
+// ══════════════════════════════════════════════════════════════════════════════
+{
+    var connStr = app.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=virginia.db";
+    var dbPath = connStr.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
+    if (File.Exists(dbPath))
+    {
+        File.Delete(dbPath);
+        Console.WriteLine($"*** ONE-TIME: Deleted existing database at {dbPath} ***");
+    }
+}
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
+// ══════════════════════════════════════════════════════════════════════════════
 
 // ── Apply migrations + seed ──────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
@@ -6196,7 +6217,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 20:37:25
+EXPORT COMPLETED: 03/26/2026 20:41:56
 Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
