@@ -9,8 +9,8 @@
         <AuthorizeView>
             <Authorized>
                 <span class="app-user">@context.User.Identity?.Name</span>
-                <AuthorizeView Roles="Admin">
-                    <Authorized>
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <Authorized Context="adminInner">
                         <a href="/admin/users" class="header-link">Users</a>
                     </Authorized>
                 </AuthorizeView>

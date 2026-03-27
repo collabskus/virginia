@@ -49,9 +49,14 @@
 
 @code {
     [SupplyParameterFromForm]
-    private RegisterFormModel model { get; set; } = new();
+    private RegisterFormModel model { get; set; } = null!;
 
     private List<string> errors = [];
+
+    protected override void OnInitialized()
+    {
+        model ??= new();
+    }
 
     private async Task RegisterAsync()
     {

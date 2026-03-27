@@ -13,11 +13,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ContactAddress> ContactAddresses => Set<ContactAddress>();
     public DbSet<ContactNote> ContactNotes => Set<ContactNote>();
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        base.OnModelCreating(modelBuilder);
+        base.OnModelCreating(builder);
 
-        modelBuilder.Entity<Contact>(entity =>
+        builder.Entity<Contact>(entity =>
         {
             entity.HasIndex(c => new { c.LastName, c.FirstName });
 
@@ -42,22 +42,22 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<ContactEmail>(entity =>
+        builder.Entity<ContactEmail>(entity =>
         {
             entity.HasIndex(e => e.Address);
         });
 
-        modelBuilder.Entity<ContactPhone>(entity =>
+        builder.Entity<ContactPhone>(entity =>
         {
             entity.HasIndex(p => p.Number);
         });
 
-        modelBuilder.Entity<ContactAddress>(entity =>
+        builder.Entity<ContactAddress>(entity =>
         {
             entity.HasIndex(a => new { a.City, a.State });
         });
 
-        modelBuilder.Entity<ContactNote>(entity =>
+        builder.Entity<ContactNote>(entity =>
         {
             entity.HasIndex(n => n.ContactId);
         });

@@ -13010,3 +13010,495 @@ Error (active)	CA1725	In member void AppDbContext.OnModelCreating(ModelBuilder m
 I am sure I am forgetting other things. 
 If you see anything please fix that too 
 and please return FULL files for easy copy pasting. 
+
+Here are the fixes. I spotted additional issues beyond what you listed — the Login.razor has the same BL0008 problem, and Program.cs has duplicate comment lines in the authorization builder section.
+
+**Files that need changes:**
+
+1. `Virginia/Program.cs` — DB deletion, duplicate comments cleanup
+2. `Virginia/Components/Layout/MainLayout.razor` — nested AuthorizeView context ambiguity
+3. `Virginia/Components/Pages/Account/Register.razor` — BL0008
+4. `Virginia/Components/Pages/Account/Login.razor` — BL0008 (same issue)
+5. `Virginia/Data/AppDbContext.cs` — CA1725 parameter name
+
+---
+
+**FILE: Virginia/Program.cs**
+
+```csharp
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Virginia.Components;
+using Virginia.Data;
+using Virginia.ServiceDefaults;
+using Virginia.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Aspire service defaults (OTEL, health checks, resilience, discovery) ─────
+builder.AddServiceDefaults();
+
+// ── EF Core + SQLite ─────────────────────────────────────────────────────────
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=virginia.db"));
+
+// ── ASP.NET Core Identity ────────────────────────────────────────────────────
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AppClaimsPrincipalFactory>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.AccessDeniedPath = "/account/login";
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
+});
+
+// ── Authorization policies ───────────────────────────────────────────────────
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+    .AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
+
+builder.Services.AddCascadingAuthenticationState();
+
+// ── Application services ─────────────────────────────────────────────────────
+builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddSingleton<ContactTelemetry>();
+
+// ── Register custom OTEL sources/meters ──────────────────────────────────────
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddSource(ContactTelemetry.ServiceName))
+    .WithMetrics(metrics => metrics.AddMeter(ContactTelemetry.ServiceName));
+
+// ── Blazor ───────────────────────────────────────────────────────────────────
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+var app = builder.Build();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  ONE-TIME DEPLOYMENT: Delete this entire block after successful deploy  ██
+// ══════════════════════════════════════════════════════════════════════════════
+{
+    var connStr = app.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=virginia.db";
+    var dbPath = connStr.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
+    if (File.Exists(dbPath))
+    {
+        File.Delete(dbPath);
+        Console.WriteLine($"*** ONE-TIME: Deleted existing database at {dbPath} ***");
+    }
+}
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Apply migrations + seed ──────────────────────────────────────────────────
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roles = ["Admin", "User"];
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+    }
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var adminSection = app.Configuration.GetSection("AdminUser");
+    var adminEmail = adminSection["Email"] ?? "admin@virginia.local";
+    var adminPassword = adminSection["Password"] ?? "Admin123!";
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser is null)
+    {
+        adminUser = new AppUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+            IsApproved = true,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+        if (createResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+}
+
+app.MapDefaultEndpoints();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseHsts();
+}
+
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
+
+// ── Minimal API: profile photo endpoint (authenticated) ──────────────────────
+app.MapGet("/api/contacts/{id:int}/photo", async (
+    int id,
+    IContactService svc,
+    CancellationToken ct) =>
+{
+    var result = await svc.GetProfilePictureAsync(id, ct);
+    return result is null
+        ? Results.NotFound()
+        : Results.File(result.Data, result.ContentType);
+})
+.RequireAuthorization("Approved")
+.CacheOutput(p => p.Expire(TimeSpan.FromMinutes(5)).SetVaryByRouteValue("id"));
+
+// ── Minimal API: logout ──────────────────────────────────────────────────────
+app.MapPost("/account/perform-logout", async (
+    SignInManager<AppUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/account/login");
+});
+
+app.MapStaticAssets();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();
+```
+
+---
+
+**FILE: Virginia/Components/Layout/MainLayout.razor**
+
+```razor
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="app-shell">
+    <header class="app-header">
+        <a href="/" class="app-logo">Virginia</a>
+        <span class="app-subtitle">Address Book</span>
+        <div class="app-header-spacer"></div>
+        <AuthorizeView>
+            <Authorized>
+                <span class="app-user">@context.User.Identity?.Name</span>
+                <AuthorizeView Roles="Admin" Context="adminContext">
+                    <Authorized Context="adminInner">
+                        <a href="/admin/users" class="header-link">Users</a>
+                    </Authorized>
+                </AuthorizeView>
+                <a href="/account/change-password" class="header-link">Password</a>
+                <form method="post" action="/account/perform-logout">
+                    <AntiforgeryToken />
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            </Authorized>
+        </AuthorizeView>
+    </header>
+    <main class="app-main">
+        @Body
+    </main>
+    <footer class="app-footer">
+        <small>&copy; @DateTime.UtcNow.Year Virginia — Built with .NET 10, Aspire &amp; Blazor</small>
+    </footer>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+```
+
+---
+
+**FILE: Virginia/Components/Pages/Account/Register.razor**
+
+```razor
+@page "/account/register"
+@using Microsoft.AspNetCore.Identity
+@attribute [AllowAnonymous]
+@layout MainLayout
+@inject UserManager<AppUser> UserManager
+@inject NavigationManager Nav
+
+<PageTitle>Register | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Register</h1>
+
+        @if (errors.Count > 0)
+        {
+            <div class="banner banner-error" role="alert">
+                @foreach (var err in errors)
+                {
+                    <div>@err</div>
+                }
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="RegisterAsync" FormName="register">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText id="email" @bind-Value="model.Email" type="email" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="() => model.Password" />
+            </div>
+            <div class="field">
+                <label for="confirm">Confirm Password</label>
+                <InputText id="confirm" @bind-Value="model.ConfirmPassword" type="password" />
+                <ValidationMessage For="() => model.ConfirmPassword" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </EditForm>
+
+        <p class="auth-link">
+            Already have an account? <a href="/account/login">Sign in</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private RegisterFormModel model { get; set; } = null!;
+
+    private List<string> errors = [];
+
+    protected override void OnInitialized()
+    {
+        model ??= new();
+    }
+
+    private async Task RegisterAsync()
+    {
+        errors.Clear();
+
+        var user = new AppUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            IsApproved = false,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            await UserManager.AddToRoleAsync(user, "User");
+            Nav.NavigateTo("/account/login?registered=true", forceLoad: true);
+        }
+        else
+        {
+            errors.AddRange(result.Errors.Select(e => e.Description));
+        }
+    }
+}
+```
+
+---
+
+**FILE: Virginia/Components/Pages/Account/Login.razor**
+
+```razor
+@page "/account/login"
+@using Microsoft.AspNetCore.Identity
+@attribute [AllowAnonymous]
+@layout MainLayout
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
+
+<PageTitle>Login | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Sign In</h1>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="banner banner-error" role="alert">@errorMessage</div>
+        }
+
+        @if (showRegistered)
+        {
+            <div class="banner banner-success" role="status">
+                Account created. Please wait for an administrator to approve your account, then sign in.
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="LoginAsync" FormName="login">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText id="email" @bind-Value="model.Email" type="email" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="() => model.Password" />
+            </div>
+            <div class="field-check">
+                <InputCheckbox id="remember" @bind-Value="model.RememberMe" />
+                <label for="remember">Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </EditForm>
+
+        <p class="auth-link">
+            Don't have an account? <a href="/account/register">Register</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    private LoginFormModel model { get; set; } = null!;
+
+    [SupplyParameterFromQuery(Name = "registered")]
+    private bool showRegistered { get; set; }
+
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        model ??= new();
+
+        if (HttpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        var result = await SignInManager.PasswordSignInAsync(
+            model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = "Invalid email or password.";
+        }
+    }
+}
+```
+
+---
+
+**FILE: Virginia/Data/AppDbContext.cs**
+
+```csharp
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace Virginia.Data;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<AppUser, IdentityRole, string>(options)
+{
+    public DbSet<Contact> Contacts => Set<Contact>();
+    public DbSet<ContactEmail> ContactEmails => Set<ContactEmail>();
+    public DbSet<ContactPhone> ContactPhones => Set<ContactPhone>();
+    public DbSet<ContactAddress> ContactAddresses => Set<ContactAddress>();
+    public DbSet<ContactNote> ContactNotes => Set<ContactNote>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        builder.Entity<Contact>(entity =>
+        {
+            entity.HasIndex(c => new { c.LastName, c.FirstName });
+
+            entity.HasMany(c => c.Emails)
+                .WithOne(e => e.Contact)
+                .HasForeignKey(e => e.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(c => c.Phones)
+                .WithOne(p => p.Contact)
+                .HasForeignKey(p => p.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(c => c.Addresses)
+                .WithOne(a => a.Contact)
+                .HasForeignKey(a => a.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(c => c.Notes)
+                .WithOne(n => n.Contact)
+                .HasForeignKey(n => n.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<ContactEmail>(entity =>
+        {
+            entity.HasIndex(e => e.Address);
+        });
+
+        builder.Entity<ContactPhone>(entity =>
+        {
+            entity.HasIndex(p => p.Number);
+        });
+
+        builder.Entity<ContactAddress>(entity =>
+        {
+            entity.HasIndex(a => new { a.City, a.State });
+        });
+
+        builder.Entity<ContactNote>(entity =>
+        {
+            entity.HasIndex(n => n.ContactId);
+        });
+    }
+}
+```
+
+---
+
+That's all five files. Quick summary of what each fix addresses:
+
+**Program.cs** — Added the one-time DB deletion block (clearly marked with big ASCII banners so it's impossible to miss), and cleaned up the triple-duplicated authorization comment lines.
+
+**MainLayout.razor** — The nested `<AuthorizeView>` inside `<Authorized>` both generated a `context` parameter with the same name. Fixed by adding explicit `Context="adminContext"` and `Context="adminInner"` to disambiguate.
+
+**Register.razor & Login.razor** — `[SupplyParameterFromForm]` with `= new()` initializer triggers BL0008 because the framework can overwrite that value with null during parameter binding. Fixed by initializing to `null!` and using `model ??= new()` in `OnInitialized()`.
+
+**AppDbContext.cs** — Renamed `modelBuilder` parameter to `builder` to match the base class declaration (CA1725).
+
+The CS0006 error about the missing DLL is a cascading build failure — once the other errors in the Virginia project are fixed, it will compile and the test project will find the DLL.

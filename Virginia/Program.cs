@@ -41,10 +41,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // ── Authorization policies ───────────────────────────────────────────────────
 builder.Services.AddAuthorizationBuilder()
-// ── Authorization policies ───────────────────────────────────────────────────
-.AddPolicy("Admin", policy => policy.RequireRole("Admin"))
-// ── Authorization policies ───────────────────────────────────────────────────
-.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+    .AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
 
 builder.Services.AddCascadingAuthenticationState();
 
@@ -62,6 +60,22 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  ONE-TIME DEPLOYMENT: Delete this entire block after successful deploy  ██
+// ══════════════════════════════════════════════════════════════════════════════
+{
+    var connStr = app.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=virginia.db";
+    var dbPath = connStr.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
+    if (File.Exists(dbPath))
+    {
+        File.Delete(dbPath);
+        Console.WriteLine($"*** ONE-TIME: Deleted existing database at {dbPath} ***");
+    }
+}
+// ══════════════════════════════════════════════════════════════════════════════
+// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
+// ══════════════════════════════════════════════════════════════════════════════
 
 // ── Apply migrations + seed ──────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
