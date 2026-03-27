@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 19:55:08
+Generated: 03/26/2026 20:23:32
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -38,19 +38,26 @@ Virginia/Components/Layout/MainLayout.razor.css
 Virginia/Components/Layout/ReconnectModal.razor
 Virginia/Components/Layout/ReconnectModal.razor.css
 Virginia/Components/Layout/ReconnectModal.razor.js
+Virginia/Components/Pages/Account/ChangePassword.razor
+Virginia/Components/Pages/Account/Login.razor
+Virginia/Components/Pages/Account/Register.razor
+Virginia/Components/Pages/Admin/UserManagement.razor
 Virginia/Components/Pages/ContactDetail.razor
 Virginia/Components/Pages/ContactDetail.razor.css
 Virginia/Components/Pages/ContactList.razor
 Virginia/Components/Pages/ContactList.razor.css
 Virginia/Components/Pages/Error.razor
 Virginia/Components/Pages/NotFound.razor
+Virginia/Components/RedirectToLogin.razor
 Virginia/Components/Routes.razor
 Virginia/Data/AppDbContext.cs
+Virginia/Data/AppUser.cs
 Virginia/Data/Dtos.cs
 Virginia/Data/Entities.cs
 Virginia/Data/FormModels.cs
 Virginia/Program.cs
 Virginia/Properties/launchSettings.json
+Virginia/Services/AppClaimsPrincipalFactory.cs
 Virginia/Services/ContactService.cs
 Virginia/Services/ContactTelemetry.cs
 Virginia/Services/IContactService.cs
@@ -115,8 +122,8 @@ csharp_new_line_before_finally = true
 
 ================================================================================
 FILE: .github/workflows/ci.yml
-SIZE: 0.87 KB
-MODIFIED: 03/26/2026 19:30:37
+SIZE: 1 KB
+MODIFIED: 03/26/2026 20:14:56
 ================================================================================
 
 name: Build & Test
@@ -129,6 +136,9 @@ on:
 
 permissions:
   contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-test:
@@ -148,15 +158,16 @@ jobs:
         run: dotnet build Virginia.slnx --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test Virginia.slnx --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=results.trx"
+        run: dotnet test Virginia.slnx --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=results.trx" --results-directory ./TestResults
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: "**/*.trx"
+          path: TestResults/**/*.trx
           retention-days: 7
+          if-no-files-found: ignore
 
 
 
@@ -675,40 +686,33 @@ MODIFIED: 03/26/2026 16:10:37
 
 ================================================================================
 FILE: Directory.Packages.props
-SIZE: 1.9 KB
-MODIFIED: 03/26/2026 18:48:06
+SIZE: 1.29 KB
+MODIFIED: 03/26/2026 20:14:43
 ================================================================================
 
 <Project>
-  <!-- ── Version variables ─────────────────────────────────────────────── -->
-  <PropertyGroup>
-    <EfCoreVersion>10.0.0</EfCoreVersion>
-    <OpenTelemetryVersion>1.15.0</OpenTelemetryVersion>
-    <OpenTelemetryInstrumentationVersion>1.15.1</OpenTelemetryInstrumentationVersion>
-    <AspireExtensionsVersion>10.4.0</AspireExtensionsVersion>
-    <XUnitVersion>1.1.0</XUnitVersion>
-    <XUnitRunnerVersion>3.1.0</XUnitRunnerVersion>
-    <TestSdkVersion>17.14.0</TestSdkVersion>
-  </PropertyGroup>
   <ItemGroup>
     <!-- EF Core -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.5" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5" />
+    <!-- Identity -->
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.5" />
     <!-- OpenTelemetry -->
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="$(OpenTelemetryVersion)" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="$(OpenTelemetryVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="$(OpenTelemetryInstrumentationVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="$(OpenTelemetryVersion)" />
-    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="$(OpenTelemetryVersion)" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
     <!-- Aspire extensions (service discovery, resilience) -->
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="$(AspireExtensionsVersion)" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="$(AspireExtensionsVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.4.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.4.0" />
     <!-- Testing -->
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
   </ItemGroup>
 </Project>
+
 
 
 ================================================================================
@@ -1128,8 +1132,8 @@ MODIFIED: 03/26/2026 16:11:46
 
 ================================================================================
 FILE: Virginia.Tests/ContactServiceTests.cs
-SIZE: 22.79 KB
-MODIFIED: 03/26/2026 19:31:20
+SIZE: 25.06 KB
+MODIFIED: 03/26/2026 20:23:19
 ================================================================================
 
 using Microsoft.EntityFrameworkCore;
@@ -1203,6 +1207,7 @@ public sealed class ContactServiceTests
         Assert.Empty(detail.Emails);
         Assert.Empty(detail.Phones);
         Assert.Empty(detail.Addresses);
+        Assert.Empty(detail.Notes);
     }
 
     [Fact]
@@ -1281,7 +1286,6 @@ public sealed class ContactServiceTests
         var id = await h.Service.CreateAsync(form, CT);
         var detail = await h.Service.GetAsync(id, CT);
 
-        // Keep email A (by ID), remove B, add C
         var updateForm = new ContactFormModel
         {
             FirstName = "Test", LastName = "User",
@@ -1360,12 +1364,14 @@ public sealed class ContactServiceTests
             ]
         };
         var id = await h.Service.CreateAsync(form, CT);
+        await h.Service.AddNoteAsync(id, "test note", "user1", "user@test.com", CT);
 
         await h.Service.DeleteAsync(id, CT);
 
         Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactAddresses.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactNotes.CountAsync(CT));
     }
 
     [Fact]
@@ -1735,7 +1741,6 @@ public sealed class ContactServiceTests
 
         var result = await h.Service.ListAsync(new(), 1, 999999, CT);
 
-        // Should still work, just clamped — all 5 returned since 5 < MaxPageSize
         Assert.Equal(5, result.Items.Count);
         Assert.Equal(5, result.TotalCount);
     }
@@ -1790,14 +1795,73 @@ public sealed class ContactServiceTests
 
         Assert.Single(result.Items);
     }
+
+    // ─── Notes ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AddNote_PersistsAndReturnsInDetail()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var noteId = await h.Service.AddNoteAsync(
+            id, "Hello world", "user-1", "admin@test.com", CT);
+
+        Assert.True(noteId > 0);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Single(detail!.Notes);
+        Assert.Equal("Hello world", detail.Notes[0].Content);
+        Assert.Equal("admin@test.com", detail.Notes[0].CreatedByUserName);
+    }
+
+    [Fact]
+    public async Task AddNote_MultipleNotes_OrderedByNewest()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        await h.Service.AddNoteAsync(id, "First", "u1", "user1@test.com", CT);
+        await Task.Delay(50, CT);
+        await h.Service.AddNoteAsync(id, "Second", "u2", "user2@test.com", CT);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Equal(2, detail!.Notes.Count);
+        Assert.Equal("Second", detail.Notes[0].Content);
+        Assert.Equal("First", detail.Notes[1].Content);
+    }
+
+    [Fact]
+    public async Task AddNote_NonExistentContact_Throws()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            h.Service.AddNoteAsync(9999, "Note", "u1", "user@test.com", CT));
+    }
+
+    [Fact]
+    public async Task AddNote_TrimsContent()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        await h.Service.AddNoteAsync(id, "  Trimmed  ", "u1", "user@test.com", CT);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Equal("Trimmed", detail!.Notes[0].Content);
+    }
 }
 
 
 
 ================================================================================
 FILE: Virginia.Tests/DtoMappingTests.cs
-SIZE: 1.65 KB
-MODIFIED: 03/26/2026 18:02:53
+SIZE: 1.77 KB
+MODIFIED: 03/26/2026 20:23:06
 ================================================================================
 
 using Virginia.Data;
@@ -1819,6 +1883,10 @@ public sealed class DtoMappingTests
             Addresses:
             [
                 new(1, "Home", "123 Main", "Richmond", "VA", "23220", "US")
+            ],
+            Notes:
+            [
+                new(1, "Test note", "admin@test.com", DateTime.UtcNow)
             ]);
 
         var form = ContactFormModel.FromDetail(dto);
@@ -2032,8 +2100,8 @@ public sealed class FormValidationTests
 
 ================================================================================
 FILE: Virginia.Tests/TestInfrastructure.cs
-SIZE: 2.16 KB
-MODIFIED: 03/26/2026 18:35:19
+SIZE: 2.07 KB
+MODIFIED: 03/26/2026 20:22:55
 ================================================================================
 
 using System.Diagnostics.Metrics;
@@ -2048,7 +2116,6 @@ namespace Virginia.Tests;
 
 /// <summary>
 /// Creates a fresh in-memory SQLite database and wired-up service for each test.
-/// Implements IAsyncDisposable for proper cleanup.
 /// </summary>
 public sealed class TestHarness : IAsyncDisposable
 {
@@ -2094,7 +2161,7 @@ public sealed class TestHarness : IAsyncDisposable
 }
 
 /// <summary>
-/// Minimal IMeterFactory for unit tests — no telemetry collection needed.
+/// Minimal IMeterFactory for unit tests.
 /// </summary>
 internal sealed class TestMeterFactory : IMeterFactory
 {
@@ -2117,8 +2184,8 @@ internal sealed class TestMeterFactory : IMeterFactory
 
 ================================================================================
 FILE: Virginia.Tests/Virginia.Tests.csproj
-SIZE: 0.7 KB
-MODIFIED: 03/26/2026 18:33:31
+SIZE: 0.79 KB
+MODIFIED: 03/26/2026 20:15:29
 ================================================================================
 
 <Project Sdk="Microsoft.NET.Sdk">
@@ -2128,6 +2195,10 @@ MODIFIED: 03/26/2026 18:33:31
     <IsTestProject>true</IsTestProject>
     <NoWarn>CA1707</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
@@ -2166,8 +2237,8 @@ MODIFIED: 03/26/2026 17:51:05
 
 ================================================================================
 FILE: Virginia/appsettings.json
-SIZE: 0.41 KB
-MODIFIED: 03/26/2026 17:50:52
+SIZE: 0.5 KB
+MODIFIED: 03/26/2026 20:15:50
 ================================================================================
 
 {
@@ -2185,18 +2256,26 @@ MODIFIED: 03/26/2026 17:50:52
   "ProfilePicture": {
     "MaxSizeBytes": 2097152,
     "AllowedContentTypes": [ "image/jpeg", "image/png", "image/webp" ]
+  },
+  "AdminUser": {
+    "Email": "admin@virginia.local",
+    "Password": "Admin123!"
   }
 }
 
 
+
 ================================================================================
 FILE: Virginia/Components/_Imports.razor
-SIZE: 0.46 KB
-MODIFIED: 03/26/2026 17:56:23
+SIZE: 0.58 KB
+MODIFIED: 03/26/2026 20:18:25
 ================================================================================
 
 @using System.Net.Http
 @using System.Net.Http.Json
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
@@ -2214,7 +2293,7 @@ MODIFIED: 03/26/2026 17:56:23
 ================================================================================
 FILE: Virginia/Components/App.razor
 SIZE: 0.5 KB
-MODIFIED: 03/26/2026 17:56:35
+MODIFIED: 03/26/2026 20:18:34
 ================================================================================
 
 <!DOCTYPE html>
@@ -2240,16 +2319,33 @@ MODIFIED: 03/26/2026 17:56:35
 
 ================================================================================
 FILE: Virginia/Components/Layout/MainLayout.razor
-SIZE: 0.59 KB
-MODIFIED: 03/26/2026 17:56:57
+SIZE: 1.36 KB
+MODIFIED: 03/26/2026 20:19:12
 ================================================================================
 
 @inherits LayoutComponentBase
+@inject NavigationManager Nav
 
 <div class="app-shell">
     <header class="app-header">
         <a href="/" class="app-logo">Virginia</a>
         <span class="app-subtitle">Address Book</span>
+        <div class="app-header-spacer"></div>
+        <AuthorizeView>
+            <Authorized>
+                <span class="app-user">@context.User.Identity?.Name</span>
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+                        <a href="/admin/users" class="header-link">Users</a>
+                    </Authorized>
+                </AuthorizeView>
+                <a href="/account/change-password" class="header-link">Password</a>
+                <form method="post" action="/account/perform-logout">
+                    <AntiforgeryToken />
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            </Authorized>
+        </AuthorizeView>
     </header>
     <main class="app-main">
         @Body
@@ -2269,8 +2365,8 @@ MODIFIED: 03/26/2026 17:56:57
 
 ================================================================================
 FILE: Virginia/Components/Layout/MainLayout.razor.css
-SIZE: 1.36 KB
-MODIFIED: 03/26/2026 17:57:30
+SIZE: 1.9 KB
+MODIFIED: 03/26/2026 20:19:23
 ================================================================================
 
 .app-shell {
@@ -2290,6 +2386,7 @@ MODIFIED: 03/26/2026 17:57:30
     position: sticky;
     top: 0;
     z-index: 100;
+    flex-wrap: wrap;
 }
 
 .app-logo {
@@ -2306,6 +2403,41 @@ MODIFIED: 03/26/2026 17:57:30
 .app-subtitle {
     font-size: 0.85rem;
     color: #8888a0;
+}
+
+.app-header-spacer {
+    flex: 1;
+}
+
+.app-user {
+    font-size: 0.8rem;
+    color: #aab;
+}
+
+.header-link {
+    font-size: 0.8rem;
+    color: #8ba8d9;
+    text-decoration: none;
+}
+
+.header-link:hover {
+    color: #c0d0f0;
+    text-decoration: underline;
+}
+
+.btn-logout {
+    background: none;
+    border: 1px solid #555;
+    color: #ccc;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.78rem;
+}
+
+.btn-logout:hover {
+    background: #333;
+    color: #fff;
 }
 
 .app-main {
@@ -2633,17 +2765,473 @@ async function retryWhenDocumentBecomesVisible() {
 
 
 ================================================================================
+FILE: Virginia/Components/Pages/Account/ChangePassword.razor
+SIZE: 2.94 KB
+MODIFIED: 03/26/2026 20:20:26
+================================================================================
+
+@page "/account/change-password"
+@attribute [Authorize]
+@rendermode InteractiveServer
+@inject UserManager<AppUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<PageTitle>Change Password | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Change Password</h1>
+
+        @if (success)
+        {
+            <div class="banner banner-success" role="status">Password changed successfully.</div>
+        }
+
+        @if (errors.Count > 0)
+        {
+            <div class="banner banner-error" role="alert">
+                @foreach (var err in errors)
+                {
+                    <div>@err</div>
+                }
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="ChangeAsync" FormName="changepassword">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="current">Current Password</label>
+                <InputText id="current" @bind-Value="model.CurrentPassword" type="password" />
+                <ValidationMessage For="() => model.CurrentPassword" />
+            </div>
+            <div class="field">
+                <label for="newpw">New Password</label>
+                <InputText id="newpw" @bind-Value="model.NewPassword" type="password" />
+                <ValidationMessage For="() => model.NewPassword" />
+            </div>
+            <div class="field">
+                <label for="confirmpw">Confirm New Password</label>
+                <InputText id="confirmpw" @bind-Value="model.ConfirmNewPassword" type="password" />
+                <ValidationMessage For="() => model.ConfirmNewPassword" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Change Password</button>
+        </EditForm>
+
+        <p class="auth-link">
+            <a href="/">Back to contacts</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private ChangePasswordFormModel model = new();
+    private List<string> errors = [];
+    private bool success;
+
+    private async Task ChangeAsync()
+    {
+        errors.Clear();
+        success = false;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId is null)
+        {
+            errors.Add("Unable to determine current user.");
+            return;
+        }
+
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null)
+        {
+            errors.Add("User not found.");
+            return;
+        }
+
+        var result = await UserManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (result.Succeeded)
+        {
+            success = true;
+            model = new();
+        }
+        else
+        {
+            errors.AddRange(result.Errors.Select(e => e.Description));
+        }
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Account/Login.razor
+SIZE: 2.62 KB
+MODIFIED: 03/26/2026 20:19:43
+================================================================================
+
+@page "/account/login"
+@attribute [AllowAnonymous]
+@layout MainLayout
+@inject SignInManager<AppUser> SignInManager
+@inject NavigationManager Nav
+
+<PageTitle>Login | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Sign In</h1>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="banner banner-error" role="alert">@errorMessage</div>
+        }
+
+        @if (showRegistered)
+        {
+            <div class="banner banner-success" role="status">
+                Account created. Please wait for an administrator to approve your account, then sign in.
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="LoginAsync" FormName="login">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText id="email" @bind-Value="model.Email" type="email" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="() => model.Password" />
+            </div>
+            <div class="field-check">
+                <InputCheckbox id="remember" @bind-Value="model.RememberMe" />
+                <label for="remember">Remember me</label>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </EditForm>
+
+        <p class="auth-link">
+            Don't have an account? <a href="/account/register">Register</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    [SupplyParameterFromForm]
+    private LoginFormModel model { get; set; } = new();
+
+    [SupplyParameterFromQuery(Name = "registered")]
+    private bool showRegistered { get; set; }
+
+    private string? errorMessage;
+
+    protected override void OnInitialized()
+    {
+        if (HttpContext?.User.Identity?.IsAuthenticated == true)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        var result = await SignInManager.PasswordSignInAsync(
+            model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            Nav.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = "Invalid email or password.";
+        }
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Account/Register.razor
+SIZE: 2.46 KB
+MODIFIED: 03/26/2026 20:20:05
+================================================================================
+
+@page "/account/register"
+@attribute [AllowAnonymous]
+@layout MainLayout
+@inject UserManager<AppUser> UserManager
+@inject NavigationManager Nav
+
+<PageTitle>Register | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Register</h1>
+
+        @if (errors.Count > 0)
+        {
+            <div class="banner banner-error" role="alert">
+                @foreach (var err in errors)
+                {
+                    <div>@err</div>
+                }
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="RegisterAsync" FormName="register">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText id="email" @bind-Value="model.Email" type="email" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="() => model.Password" />
+            </div>
+            <div class="field">
+                <label for="confirm">Confirm Password</label>
+                <InputText id="confirm" @bind-Value="model.ConfirmPassword" type="password" />
+                <ValidationMessage For="() => model.ConfirmPassword" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </EditForm>
+
+        <p class="auth-link">
+            Already have an account? <a href="/account/login">Sign in</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private RegisterFormModel model { get; set; } = new();
+
+    private List<string> errors = [];
+
+    private async Task RegisterAsync()
+    {
+        errors.Clear();
+
+        var user = new AppUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            IsApproved = false,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            await UserManager.AddToRoleAsync(user, "User");
+            Nav.NavigateTo("/account/login?registered=true", forceLoad: true);
+        }
+        else
+        {
+            errors.AddRange(result.Errors.Select(e => e.Description));
+        }
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Admin/UserManagement.razor
+SIZE: 5.85 KB
+MODIFIED: 03/26/2026 20:20:46
+================================================================================
+
+@page "/admin/users"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject UserManager<AppUser> UserManager
+@inject ILogger<UserManagement> Logger
+
+<PageTitle>User Management | Virginia</PageTitle>
+
+<div class="page">
+    <div class="page-header">
+        <h1>User Management</h1>
+    </div>
+
+    @if (error is not null)
+    {
+        <div class="banner banner-error" role="alert">@error</div>
+    }
+
+    @if (success is not null)
+    {
+        <div class="banner banner-success" role="status">@success</div>
+    }
+
+    @if (users is null)
+    {
+        <div class="status">Loading users...</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Approved</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in users)
+                    {
+                        <tr @key="u.Id">
+                            <td>@u.Email</td>
+                            <td>@u.Role</td>
+                            <td>
+                                @if (u.IsApproved)
+                                {
+                                    <span class="badge badge-ok">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-pending">Pending</span>
+                                }
+                            </td>
+                            <td>@u.CreatedAtUtc.ToString("yyyy-MM-dd")</td>
+                            <td class="actions-cell">
+                                @if (!u.IsApproved)
+                                {
+                                    <button class="btn btn-sm btn-approve"
+                                            @onclick="() => ApproveAsync(u.Id)">Approve</button>
+                                }
+                                else if (u.Role != "Admin")
+                                {
+                                    <button class="btn btn-sm btn-revoke"
+                                            @onclick="() => RevokeAsync(u.Id)">Revoke</button>
+                                }
+
+                                @if (u.Role != "Admin")
+                                {
+                                    <button class="btn btn-sm btn-promote"
+                                            @onclick="() => PromoteAsync(u.Id)">Make Admin</button>
+                                }
+
+                                @if (u.Role != "Admin")
+                                {
+                                    <button class="btn btn-sm btn-delete"
+                                            @onclick="() => DeleteAsync(u.Id)">Delete</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<UserRow>? users;
+    private string? error;
+    private string? success;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        var allUsers = UserManager.Users.OrderBy(u => u.Email).ToList();
+        var rows = new List<UserRow>();
+        foreach (var u in allUsers)
+        {
+            var roles = await UserManager.GetRolesAsync(u);
+            rows.Add(new UserRow(
+                u.Id, u.Email ?? "", roles.Contains("Admin") ? "Admin" : "User",
+                u.IsApproved, u.CreatedAtUtc));
+        }
+        users = rows;
+    }
+
+    private async Task ApproveAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        user.IsApproved = true;
+        await UserManager.UpdateAsync(user);
+        success = $"Approved {user.Email}.";
+        Logger.LogInformation("Approved user {Email}", user.Email);
+        await LoadAsync();
+    }
+
+    private async Task RevokeAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        user.IsApproved = false;
+        await UserManager.UpdateAsync(user);
+        success = $"Revoked approval for {user.Email}.";
+        Logger.LogInformation("Revoked approval for user {Email}", user.Email);
+        await LoadAsync();
+    }
+
+    private async Task PromoteAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        await UserManager.RemoveFromRoleAsync(user, "User");
+        await UserManager.AddToRoleAsync(user, "Admin");
+        user.IsApproved = true;
+        await UserManager.UpdateAsync(user);
+        success = $"Promoted {user.Email} to Admin.";
+        Logger.LogInformation("Promoted user {Email} to Admin", user.Email);
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        var email = user.Email;
+        await UserManager.DeleteAsync(user);
+        success = $"Deleted {email}.";
+        Logger.LogInformation("Deleted user {Email}", email);
+        await LoadAsync();
+    }
+
+    private sealed record UserRow(
+        string Id, string Email, string Role, bool IsApproved, DateTime CreatedAtUtc);
+}
+
+
+
+================================================================================
 FILE: Virginia/Components/Pages/ContactDetail.razor
-SIZE: 13 KB
-MODIFIED: 03/26/2026 19:29:19
+SIZE: 15.38 KB
+MODIFIED: 03/26/2026 20:21:52
 ================================================================================
 
 @page "/contacts/new"
 @page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
 @rendermode InteractiveServer
 @inject IContactService ContactService
 @inject NavigationManager Nav
 @inject ILogger<ContactDetail> Logger
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
 
@@ -2874,6 +3462,46 @@ MODIFIED: 03/26/2026 19:29:19
             <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
         </div>
     </EditForm>
+
+    <!-- Notes (edit mode only) -->
+    @if (!IsNew && detail is not null)
+    {
+        <section class="card">
+            <div class="card-head">
+                <h2>Notes</h2>
+            </div>
+
+            <div class="note-input">
+                <textarea @bind="newNoteContent" placeholder="Add a note..."
+                          rows="3" class="note-textarea"></textarea>
+                <button type="button" class="btn btn-add"
+                        @onclick="AddNoteAsync"
+                        disabled="@(string.IsNullOrWhiteSpace(newNoteContent))">
+                    Save Note
+                </button>
+            </div>
+
+            @if (detail.Notes.Count > 0)
+            {
+                <div class="notes-list">
+                    @foreach (var note in detail.Notes)
+                    {
+                        <div class="note-item" @key="note.Id">
+                            <div class="note-meta">
+                                <strong>@note.CreatedByUserName</strong>
+                                <span class="note-date">@note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC</span>
+                            </div>
+                            <div class="note-content">@note.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="hint">No notes yet.</p>
+            }
+        </section>
+    }
 </div>
 
 @code {
@@ -2889,6 +3517,7 @@ MODIFIED: 03/26/2026 19:29:19
     private string? error;
     private int photoVer = 1;
     private bool confirmingDelete;
+    private string newNoteContent = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -3001,6 +3630,28 @@ MODIFIED: 03/26/2026 19:29:19
         photoVer++;
     }
 
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent)) return;
+        error = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+            var userName = authState.User.Identity?.Name ?? "unknown";
+
+            await ContactService.AddNoteAsync(Id!.Value, newNoteContent, userId, userName);
+            newNoteContent = "";
+            detail = await ContactService.GetAsync(Id!.Value);
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to add note: {ex.Message}";
+            Logger.LogError(ex, "Failed to add note to contact {Id}", Id);
+        }
+    }
+
     private void GoBack() => Nav.NavigateTo("/");
 }
 
@@ -3008,8 +3659,8 @@ MODIFIED: 03/26/2026 19:29:19
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactDetail.razor.css
-SIZE: 5.88 KB
-MODIFIED: 03/26/2026 19:29:45
+SIZE: 6.68 KB
+MODIFIED: 03/26/2026 20:22:20
 ================================================================================
 
 .detail {
@@ -3182,8 +3833,6 @@ MODIFIED: 03/26/2026 19:29:45
     align-items: center;
 }
 
-/* ── Delete confirmation ─────────────────────────────────────────────────── */
-
 .confirm-delete {
     display: inline-flex;
     align-items: center;
@@ -3191,6 +3840,64 @@ MODIFIED: 03/26/2026 19:29:45
     font-size: 0.875rem;
     color: #c62828;
     font-weight: 500;
+}
+
+/* ── Notes ────────────────────────────────────────────────────────────────── */
+
+.note-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.note-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.note-textarea:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.note-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    color: #666;
+}
+
+.note-date {
+    color: #999;
+}
+
+.note-content {
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    line-height: 1.5;
 }
 
 /* ── Buttons (scoped) ────────────────────────────────────────────────────── */
@@ -3287,19 +3994,6 @@ MODIFIED: 03/26/2026 19:29:45
     color: #e53935;
 }
 
-.btn-text {
-    background: none;
-    border: none;
-    color: #4a90d9;
-    cursor: pointer;
-    font-size: 0.8rem;
-    padding: 0;
-}
-
-.btn-text:hover {
-    text-decoration: underline;
-}
-
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
@@ -3321,12 +4015,13 @@ MODIFIED: 03/26/2026 19:29:45
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactList.razor
-SIZE: 8.96 KB
-MODIFIED: 03/26/2026 19:24:29
+SIZE: 9.33 KB
+MODIFIED: 03/26/2026 20:21:24
 ================================================================================
 
 @page "/"
 @page "/contacts"
+@attribute [Authorize]
 @rendermode InteractiveServer
 @inject IContactService ContactService
 @inject NavigationManager Nav
@@ -3334,6 +4029,16 @@ MODIFIED: 03/26/2026 19:24:29
 @implements IDisposable
 
 <PageTitle>Contacts | Virginia</PageTitle>
+
+<AuthorizeView Policy="Approved">
+    <NotAuthorized>
+        <div class="status" style="padding:4rem 1rem;">
+            <h2>Account Pending Approval</h2>
+            <p>Your account has been created but is waiting for administrator approval.</p>
+            <p>Please check back later or contact your administrator.</p>
+        </div>
+    </NotAuthorized>
+    <Authorized>
 
 <div class="page">
     <div class="page-header">
@@ -3394,7 +4099,6 @@ MODIFIED: 03/26/2026 19:24:29
         <div class="banner banner-error" role="alert">@loadError</div>
     }
 
-    <!-- Content -->
     @if (isLoading)
     {
         <div class="status" aria-live="polite">Loading contacts...</div>
@@ -3471,6 +4175,9 @@ MODIFIED: 03/26/2026 19:24:29
     }
 </div>
 
+    </Authorized>
+</AuthorizeView>
+
 @code {
     private PagedResult<ContactListItem>? result;
     private bool isLoading = true;
@@ -3511,7 +4218,6 @@ MODIFIED: 03/26/2026 19:24:29
         }
         catch (TaskCanceledException)
         {
-            // Another keystroke came in — ignore
         }
     }
 
@@ -3891,14 +4597,38 @@ MODIFIED: 03/26/2026 17:57:42
 
 
 ================================================================================
+FILE: Virginia/Components/RedirectToLogin.razor
+SIZE: 0.16 KB
+MODIFIED: 03/26/2026 20:18:59
+================================================================================
+
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo("/account/login", forceLoad: true);
+    }
+}
+
+
+
+================================================================================
 FILE: Virginia/Components/Routes.razor
-SIZE: 0.29 KB
-MODIFIED: 03/26/2026 17:56:45
+SIZE: 0.57 KB
+MODIFIED: 03/26/2026 20:18:42
 ================================================================================
 
 <Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+            <Authorizing>
+                <div style="text-align:center; padding:3rem; color:#888;">Authorizing...</div>
+            </Authorizing>
+        </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
@@ -3907,23 +4637,29 @@ MODIFIED: 03/26/2026 17:56:45
 
 ================================================================================
 FILE: Virginia/Data/AppDbContext.cs
-SIZE: 1.59 KB
-MODIFIED: 03/26/2026 17:52:49
+SIZE: 2.15 KB
+MODIFIED: 03/26/2026 20:16:36
 ================================================================================
 
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Virginia.Data;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<AppUser, IdentityRole, string>(options)
 {
     public DbSet<Contact> Contacts => Set<Contact>();
     public DbSet<ContactEmail> ContactEmails => Set<ContactEmail>();
     public DbSet<ContactPhone> ContactPhones => Set<ContactPhone>();
     public DbSet<ContactAddress> ContactAddresses => Set<ContactAddress>();
+    public DbSet<ContactNote> ContactNotes => Set<ContactNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Contact>(entity =>
         {
             entity.HasIndex(c => new { c.LastName, c.FirstName });
@@ -3942,6 +4678,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .WithOne(a => a.Contact)
                 .HasForeignKey(a => a.ContactId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(c => c.Notes)
+                .WithOne(n => n.Contact)
+                .HasForeignKey(n => n.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ContactEmail>(entity =>
@@ -3958,15 +4699,38 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         {
             entity.HasIndex(a => new { a.City, a.State });
         });
+
+        modelBuilder.Entity<ContactNote>(entity =>
+        {
+            entity.HasIndex(n => n.ContactId);
+        });
     }
 }
 
 
 
 ================================================================================
+FILE: Virginia/Data/AppUser.cs
+SIZE: 0.2 KB
+MODIFIED: 03/26/2026 20:16:13
+================================================================================
+
+using Microsoft.AspNetCore.Identity;
+
+namespace Virginia.Data;
+
+public sealed class AppUser : IdentityUser
+{
+    public bool IsApproved { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+
+
+================================================================================
 FILE: Virginia/Data/Dtos.cs
-SIZE: 2.4 KB
-MODIFIED: 03/26/2026 17:53:21
+SIZE: 2.53 KB
+MODIFIED: 03/26/2026 20:16:46
 ================================================================================
 
 namespace Virginia.Data;
@@ -3995,7 +4759,8 @@ public sealed record ContactDetailDto(
     DateTime UpdatedAtUtc,
     List<EmailDto> Emails,
     List<PhoneDto> Phones,
-    List<AddressDto> Addresses);
+    List<AddressDto> Addresses,
+    List<NoteDto> Notes);
 
 public sealed record EmailDto(int Id, string Label, string Address);
 public sealed record PhoneDto(int Id, string Label, string Number);
@@ -4003,6 +4768,9 @@ public sealed record PhoneDto(int Id, string Label, string Number);
 public sealed record AddressDto(
     int Id, string Label, string Street,
     string City, string State, string PostalCode, string Country);
+
+public sealed record NoteDto(
+    int Id, string Content, string CreatedByUserName, DateTime CreatedAtUtc);
 
 // ─── Paging ──────────────────────────────────────────────────────────────────
 
@@ -4035,8 +4803,8 @@ public sealed record ProfilePictureResult(byte[] Data, string ContentType);
 
 ================================================================================
 FILE: Virginia/Data/Entities.cs
-SIZE: 2.36 KB
-MODIFIED: 03/26/2026 17:53:29
+SIZE: 2.86 KB
+MODIFIED: 03/26/2026 20:16:25
 ================================================================================
 
 using System.ComponentModel.DataAnnotations;
@@ -4066,6 +4834,7 @@ public sealed class Contact
     public List<ContactEmail> Emails { get; set; } = [];
     public List<ContactPhone> Phones { get; set; } = [];
     public List<ContactAddress> Addresses { get; set; } = [];
+    public List<ContactNote> Notes { get; set; } = [];
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 }
@@ -4126,12 +4895,31 @@ public sealed class ContactAddress
     public Contact Contact { get; set; } = null!;
 }
 
+public sealed class ContactNote
+{
+    public int Id { get; set; }
+    public int ContactId { get; set; }
+
+    [MaxLength(4000)]
+    public required string Content { get; set; }
+
+    [MaxLength(450)]
+    public required string CreatedByUserId { get; set; }
+
+    [MaxLength(256)]
+    public required string CreatedByUserName { get; set; }
+
+    public DateTime CreatedAtUtc { get; set; }
+
+    public Contact Contact { get; set; } = null!;
+}
+
 
 
 ================================================================================
 FILE: Virginia/Data/FormModels.cs
-SIZE: 4.16 KB
-MODIFIED: 03/26/2026 18:14:12
+SIZE: 6.33 KB
+MODIFIED: 03/26/2026 20:16:56
 ================================================================================
 
 using System.ComponentModel.DataAnnotations;
@@ -4237,14 +5025,65 @@ public sealed class AddressFormModel
     public string Country { get; set; } = "US";
 }
 
+// ─── Login ───────────────────────────────────────────────────────────────────
+
+public sealed class LoginFormModel
+{
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email format.")]
+    public string Email { get; set; } = "";
+
+    [Required(ErrorMessage = "Password is required.")]
+    public string Password { get; set; } = "";
+
+    public bool RememberMe { get; set; }
+}
+
+// ─── Register ────────────────────────────────────────────────────────────────
+
+public sealed class RegisterFormModel
+{
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email format.")]
+    [MaxLength(256)]
+    public string Email { get; set; } = "";
+
+    [Required(ErrorMessage = "Password is required.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(100)]
+    public string Password { get; set; } = "";
+
+    [Required(ErrorMessage = "Please confirm your password.")]
+    [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+    public string ConfirmPassword { get; set; } = "";
+}
+
+// ─── Change Password ─────────────────────────────────────────────────────────
+
+public sealed class ChangePasswordFormModel
+{
+    [Required(ErrorMessage = "Current password is required.")]
+    public string CurrentPassword { get; set; } = "";
+
+    [Required(ErrorMessage = "New password is required.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(100)]
+    public string NewPassword { get; set; } = "";
+
+    [Required(ErrorMessage = "Please confirm your new password.")]
+    [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
+    public string ConfirmNewPassword { get; set; } = "";
+}
+
 
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 2.76 KB
-MODIFIED: 03/26/2026 19:02:24
+SIZE: 5.95 KB
+MODIFIED: 03/26/2026 20:18:13
 ================================================================================
 
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Virginia.Components;
 using Virginia.Data;
@@ -4261,6 +5100,38 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
             ?? "Data Source=virginia.db"));
 
+// ── ASP.NET Core Identity ────────────────────────────────────────────────────
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AppClaimsPrincipalFactory>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.AccessDeniedPath = "/account/login";
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
+});
+
+// ── Authorization policies ───────────────────────────────────────────────────
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
+});
+
+builder.Services.AddCascadingAuthenticationState();
+
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddSingleton<ContactTelemetry>();
@@ -4276,10 +5147,43 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
+// ── Apply migrations + seed ──────────────────────────────────────────────────
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.MigrateAsync();
 
-await using var scope = app.Services.CreateAsyncScope();
-var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-await db.Database.EnsureCreatedAsync();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roles = ["Admin", "User"];
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+    }
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var adminSection = app.Configuration.GetSection("AdminUser");
+    var adminEmail = adminSection["Email"] ?? "admin@virginia.local";
+    var adminPassword = adminSection["Password"] ?? "Admin123!";
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser is null)
+    {
+        adminUser = new AppUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+            IsApproved = true,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+        if (createResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+}
 
 app.MapDefaultEndpoints();
 
@@ -4291,9 +5195,12 @@ if (!app.Environment.IsDevelopment())
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
-// ── Minimal API: profile photo endpoint ──────────────────────────────────────
+// ── Minimal API: profile photo endpoint (authenticated) ──────────────────────
 app.MapGet("/api/contacts/{id:int}/photo", async (
     int id,
     IContactService svc,
@@ -4303,14 +5210,23 @@ app.MapGet("/api/contacts/{id:int}/photo", async (
     return result is null
         ? Results.NotFound()
         : Results.File(result.Data, result.ContentType);
-}).CacheOutput(p => p.Expire(TimeSpan.FromMinutes(5)).SetVaryByRouteValue("id"));
+})
+.RequireAuthorization("Approved")
+.CacheOutput(p => p.Expire(TimeSpan.FromMinutes(5)).SetVaryByRouteValue("id"));
+
+// ── Minimal API: logout ──────────────────────────────────────────────────────
+app.MapPost("/account/perform-logout", async (
+    SignInManager<AppUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/account/login");
+});
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
-
 
 
 
@@ -4346,9 +5262,38 @@ MODIFIED: 03/26/2026 17:51:25
 
 
 ================================================================================
+FILE: Virginia/Services/AppClaimsPrincipalFactory.cs
+SIZE: 0.68 KB
+MODIFIED: 03/26/2026 20:18:03
+================================================================================
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public sealed class AppClaimsPrincipalFactory(
+    UserManager<AppUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    IOptions<IdentityOptions> options)
+    : UserClaimsPrincipalFactory<AppUser, IdentityRole>(userManager, roleManager, options)
+{
+    protected override async Task<ClaimsIdentity> GenerateClaimsAsync(AppUser user)
+    {
+        var identity = await base.GenerateClaimsAsync(user);
+        identity.AddClaim(new Claim("approved", user.IsApproved.ToString()));
+        return identity;
+    }
+}
+
+
+
+================================================================================
 FILE: Virginia/Services/ContactService.cs
-SIZE: 17.99 KB
-MODIFIED: 03/26/2026 19:22:30
+SIZE: 19.54 KB
+MODIFIED: 03/26/2026 20:17:15
 ================================================================================
 
 using System.Diagnostics;
@@ -4376,7 +5321,6 @@ public sealed partial class ContactService(
         activity?.SetTag("page", page);
         activity?.SetTag("pageSize", pageSize);
 
-        // Clamp inputs to sane ranges
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
@@ -4384,22 +5328,19 @@ public sealed partial class ContactService(
 
         var query = db.Contacts.AsNoTracking().AsQueryable();
 
-        // All string filters use ToLower() for case-insensitive matching.
-        // SQLite translates this to lower(), avoiding the case-sensitive instr() bug.
-
         if (!string.IsNullOrWhiteSpace(filter.Name))
         {
-            var term = filter.Name.Trim().ToLower();
+            var pattern = $"%{filter.Name.Trim()}%";
             query = query.Where(c =>
-                c.FirstName.ToLower().Contains(term)
-                || c.LastName.ToLower().Contains(term));
+                EF.Functions.Like(c.FirstName, pattern)
+                || EF.Functions.Like(c.LastName, pattern));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
         {
-            var term = filter.Email.Trim().ToLower();
+            var pattern = $"%{filter.Email.Trim()}%";
             query = query.Where(c =>
-                c.Emails.Any(e => e.Address.ToLower().Contains(term)));
+                c.Emails.Any(e => EF.Functions.Like(e.Address, pattern)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Phone))
@@ -4411,16 +5352,16 @@ public sealed partial class ContactService(
 
         if (!string.IsNullOrWhiteSpace(filter.City))
         {
-            var term = filter.City.Trim().ToLower();
+            var pattern = $"%{filter.City.Trim()}%";
             query = query.Where(c =>
-                c.Addresses.Any(a => a.City.ToLower().Contains(term)));
+                c.Addresses.Any(a => EF.Functions.Like(a.City, pattern)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.State))
         {
-            var term = filter.State.Trim().ToLower();
+            var pattern = $"%{filter.State.Trim()}%";
             query = query.Where(c =>
-                c.Addresses.Any(a => a.State.ToLower().Contains(term)));
+                c.Addresses.Any(a => EF.Functions.Like(a.State, pattern)));
         }
 
         if (filter.HasPhoto == true)
@@ -4471,6 +5412,7 @@ public sealed partial class ContactService(
             .Include(x => x.Emails.OrderBy(e => e.Id))
             .Include(x => x.Phones.OrderBy(p => p.Id))
             .Include(x => x.Addresses.OrderBy(a => a.Id))
+            .Include(x => x.Notes.OrderByDescending(n => n.CreatedAtUtc))
             .FirstOrDefaultAsync(x => x.Id == id, ct);
 
         sw.Stop();
@@ -4491,7 +5433,9 @@ public sealed partial class ContactService(
             [.. c.Emails.Select(e => new EmailDto(e.Id, e.Label, e.Address))],
             [.. c.Phones.Select(p => new PhoneDto(p.Id, p.Label, p.Number))],
             [.. c.Addresses.Select(a => new AddressDto(
-                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))]);
+                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))],
+            [.. c.Notes.Select(n => new NoteDto(
+                n.Id, n.Content, n.CreatedByUserName, n.CreatedAtUtc))]);
     }
 
     // ─── Create ──────────────────────────────────────────────────────────
@@ -4716,6 +5660,38 @@ public sealed partial class ContactService(
         Log.RemovedProfilePicture(logger, id, sw.Elapsed.TotalMilliseconds);
     }
 
+    // ─── Notes ───────────────────────────────────────────────────────────
+
+    public async Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
+        activity?.SetTag("contact.id", contactId);
+        var sw = Stopwatch.StartNew();
+
+        var contactExists = await db.Contacts.AnyAsync(c => c.Id == contactId, ct);
+        if (!contactExists)
+            throw new InvalidOperationException($"Contact {contactId} not found.");
+
+        var note = new ContactNote
+        {
+            ContactId = contactId,
+            Content = content.Trim(),
+            CreatedByUserId = userId,
+            CreatedByUserName = userName,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        db.ContactNotes.Add(note);
+        await db.SaveChangesAsync(ct);
+
+        sw.Stop();
+        Log.AddedNote(logger, note.Id, contactId, userName, sw.Elapsed.TotalMilliseconds);
+
+        return note.Id;
+    }
+
     // ─── Private helper ──────────────────────────────────────────────────
 
     private void SyncChildren<TEntity, TModel>(
@@ -4742,7 +5718,7 @@ public sealed partial class ContactService(
         }
     }
 
-    // ─── Source-generated log messages (CA1848 / CA1873 compliant) ────────
+    // ─── Source-generated log messages ────────────────────────────────────
 
     private static partial class Log
     {
@@ -4801,6 +5777,11 @@ public sealed partial class ContactService(
             Message = "Removed profile picture for contact {Id} in {ElapsedMs:F1}ms")]
         public static partial void RemovedProfilePicture(
             ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Added note {NoteId} to contact {ContactId} by {UserName} in {ElapsedMs:F1}ms")]
+        public static partial void AddedNote(
+            ILogger logger, int noteId, int contactId, string userName, double elapsedMs);
     }
 }
 
@@ -4849,8 +5830,8 @@ public sealed class ContactTelemetry
 
 ================================================================================
 FILE: Virginia/Services/IContactService.cs
-SIZE: 0.83 KB
-MODIFIED: 03/26/2026 17:54:31
+SIZE: 0.97 KB
+MODIFIED: 03/26/2026 20:17:07
 ================================================================================
 
 using Virginia.Data;
@@ -4876,6 +5857,10 @@ public interface IContactService
     Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
 
     Task RemoveProfilePictureAsync(int id, CancellationToken ct = default);
+
+    Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        CancellationToken ct = default);
 }
 
 
@@ -4883,13 +5868,12 @@ public interface IContactService
 ================================================================================
 FILE: Virginia/Virginia.csproj
 SIZE: 0.7 KB
-MODIFIED: 03/26/2026 19:43:18
+MODIFIED: 03/26/2026 20:15:15
 ================================================================================
 
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <UserSecretsId>3bd1a45e-843a-4d99-9252-6da6a15767b7</UserSecretsId>
   </PropertyGroup>
 
@@ -4898,6 +5882,7 @@ MODIFIED: 03/26/2026 19:43:18
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
@@ -4908,10 +5893,11 @@ MODIFIED: 03/26/2026 19:43:18
 </Project>
 
 
+
 ================================================================================
 FILE: Virginia/wwwroot/app.css
-SIZE: 0.93 KB
-MODIFIED: 03/26/2026 18:00:54
+SIZE: 5.23 KB
+MODIFIED: 03/26/2026 20:22:32
 ================================================================================
 
 *,
@@ -4972,10 +5958,239 @@ a:hover {
     content: "An error has occurred.";
 }
 
+/* ── Auth pages ──────────────────────────────────────────────────────────── */
+
+.auth-page {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card h1 {
+    margin: 0 0 1.25rem;
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+.auth-card .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 0.75rem;
+}
+
+.auth-card .field label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.auth-card .field input {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.auth-card .field input:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+}
+
+.auth-card .field-check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+
+.auth-card .btn-block {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.auth-card .btn-primary {
+    background: #e94560;
+    color: #fff;
+}
+
+.auth-card .btn-primary:hover {
+    background: #c73650;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* ── Banners (global) ────────────────────────────────────────────────────── */
+
+.banner {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.banner-error {
+    background: #ffeaea;
+    color: #c62828;
+    border: 1px solid #f5c6c6;
+}
+
+.banner-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+/* ── Admin table ─────────────────────────────────────────────────────────── */
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-ok {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-pending {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-approve {
+    background: #4caf50;
+    color: #fff;
+}
+
+.btn-approve:hover {
+    background: #388e3c;
+}
+
+.btn-revoke {
+    background: #ff9800;
+    color: #fff;
+}
+
+.btn-revoke:hover {
+    background: #f57c00;
+}
+
+.btn-promote {
+    background: #2196f3;
+    color: #fff;
+}
+
+.btn-promote:hover {
+    background: #1976d2;
+}
+
+.btn-delete {
+    background: #f44336;
+    color: #fff;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+}
+
+/* ── Shared table/page ───────────────────────────────────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #888;
+    font-weight: 600;
+}
+
+.status {
+    text-align: center;
+    color: #888;
+    padding: 3rem 1rem;
+    font-size: 0.95rem;
+}
+
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 19:55:08
-Total Files Exported: 46
+EXPORT COMPLETED: 03/26/2026 20:23:32
+Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
