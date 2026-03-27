@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 20:23:32
+Generated: 03/26/2026 20:26:06
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -979,21 +979,22 @@ MODIFIED: 03/26/2026 16:12:49
 
 ================================================================================
 FILE: Virginia.ServiceDefaults/Extensions.cs
-SIZE: 3.27 KB
-MODIFIED: 03/26/2026 16:15:11
+SIZE: 3.3 KB
+MODIFIED: 03/26/2026 20:25:20
 ================================================================================
 
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 
-namespace Microsoft.Extensions.Hosting;
+namespace Virginia.ServiceDefaults;
 
 public static class Extensions
 {
@@ -2766,11 +2767,12 @@ async function retryWhenDocumentBecomesVisible() {
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/ChangePassword.razor
-SIZE: 2.94 KB
-MODIFIED: 03/26/2026 20:20:26
+SIZE: 2.98 KB
+MODIFIED: 03/26/2026 20:24:19
 ================================================================================
 
 @page "/account/change-password"
+@using Microsoft.AspNetCore.Identity
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject UserManager<AppUser> UserManager
@@ -2866,11 +2868,12 @@ MODIFIED: 03/26/2026 20:20:26
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Login.razor
-SIZE: 2.62 KB
-MODIFIED: 03/26/2026 20:19:43
+SIZE: 2.65 KB
+MODIFIED: 03/26/2026 20:24:30
 ================================================================================
 
 @page "/account/login"
+@using Microsoft.AspNetCore.Identity
 @attribute [AllowAnonymous]
 @layout MainLayout
 @inject SignInManager<AppUser> SignInManager
@@ -2959,11 +2962,12 @@ MODIFIED: 03/26/2026 20:19:43
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Register.razor
-SIZE: 2.46 KB
-MODIFIED: 03/26/2026 20:20:05
+SIZE: 2.5 KB
+MODIFIED: 03/26/2026 20:24:54
 ================================================================================
 
 @page "/account/register"
+@using Microsoft.AspNetCore.Identity
 @attribute [AllowAnonymous]
 @layout MainLayout
 @inject UserManager<AppUser> UserManager
@@ -3047,11 +3051,12 @@ MODIFIED: 03/26/2026 20:20:05
 
 ================================================================================
 FILE: Virginia/Components/Pages/Admin/UserManagement.razor
-SIZE: 5.85 KB
-MODIFIED: 03/26/2026 20:20:46
+SIZE: 5.89 KB
+MODIFIED: 03/26/2026 20:25:03
 ================================================================================
 
 @page "/admin/users"
+@using Microsoft.AspNetCore.Identity
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @inject UserManager<AppUser> UserManager
@@ -5079,14 +5084,15 @@ public sealed class ChangePasswordFormModel
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 5.95 KB
-MODIFIED: 03/26/2026 20:18:13
+SIZE: 6.31 KB
+MODIFIED: 03/26/2026 20:26:00
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Virginia.Components;
 using Virginia.Data;
+using Virginia.ServiceDefaults;
 using Virginia.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5124,11 +5130,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // ── Authorization policies ───────────────────────────────────────────────────
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
-});
+builder.Services.AddAuthorizationBuilder()
+// ── Authorization policies ───────────────────────────────────────────────────
+.AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+// ── Authorization policies ───────────────────────────────────────────────────
+.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
 
 builder.Services.AddCascadingAuthenticationState();
 
@@ -6190,7 +6196,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 20:23:32
+EXPORT COMPLETED: 03/26/2026 20:26:06
 Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
