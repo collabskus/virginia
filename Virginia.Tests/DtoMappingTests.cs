@@ -17,6 +17,10 @@ public sealed class DtoMappingTests
             Addresses:
             [
                 new(1, "Home", "123 Main", "Richmond", "VA", "23220", "US")
+            ],
+            Notes:
+            [
+                new(1, "Test note", "admin@test.com", DateTime.UtcNow)
             ]);
 
         var form = ContactFormModel.FromDetail(dto);

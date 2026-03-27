@@ -10,7 +10,6 @@ namespace Virginia.Tests;
 
 /// <summary>
 /// Creates a fresh in-memory SQLite database and wired-up service for each test.
-/// Implements IAsyncDisposable for proper cleanup.
 /// </summary>
 public sealed class TestHarness : IAsyncDisposable
 {
@@ -56,7 +55,7 @@ public sealed class TestHarness : IAsyncDisposable
 }
 
 /// <summary>
-/// Minimal IMeterFactory for unit tests — no telemetry collection needed.
+/// Minimal IMeterFactory for unit tests.
 /// </summary>
 internal sealed class TestMeterFactory : IMeterFactory
 {

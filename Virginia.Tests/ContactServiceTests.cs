@@ -69,6 +69,7 @@ public sealed class ContactServiceTests
         Assert.Empty(detail.Emails);
         Assert.Empty(detail.Phones);
         Assert.Empty(detail.Addresses);
+        Assert.Empty(detail.Notes);
     }
 
     [Fact]
@@ -147,7 +148,6 @@ public sealed class ContactServiceTests
         var id = await h.Service.CreateAsync(form, CT);
         var detail = await h.Service.GetAsync(id, CT);
 
-        // Keep email A (by ID), remove B, add C
         var updateForm = new ContactFormModel
         {
             FirstName = "Test", LastName = "User",
@@ -226,12 +226,14 @@ public sealed class ContactServiceTests
             ]
         };
         var id = await h.Service.CreateAsync(form, CT);
+        await h.Service.AddNoteAsync(id, "test note", "user1", "user@test.com", CT);
 
         await h.Service.DeleteAsync(id, CT);
 
         Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactAddresses.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactNotes.CountAsync(CT));
     }
 
     [Fact]
@@ -601,7 +603,6 @@ public sealed class ContactServiceTests
 
         var result = await h.Service.ListAsync(new(), 1, 999999, CT);
 
-        // Should still work, just clamped — all 5 returned since 5 < MaxPageSize
         Assert.Equal(5, result.Items.Count);
         Assert.Equal(5, result.TotalCount);
     }
@@ -655,5 +656,64 @@ public sealed class ContactServiceTests
         var result = await h.Service.ListAsync(new(Name: "   "), 1, 50, CT);
 
         Assert.Single(result.Items);
+    }
+
+    // ─── Notes ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task AddNote_PersistsAndReturnsInDetail()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        var noteId = await h.Service.AddNoteAsync(
+            id, "Hello world", "user-1", "admin@test.com", CT);
+
+        Assert.True(noteId > 0);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Single(detail!.Notes);
+        Assert.Equal("Hello world", detail.Notes[0].Content);
+        Assert.Equal("admin@test.com", detail.Notes[0].CreatedByUserName);
+    }
+
+    [Fact]
+    public async Task AddNote_MultipleNotes_OrderedByNewest()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        await h.Service.AddNoteAsync(id, "First", "u1", "user1@test.com", CT);
+        await Task.Delay(50, CT);
+        await h.Service.AddNoteAsync(id, "Second", "u2", "user2@test.com", CT);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Equal(2, detail!.Notes.Count);
+        Assert.Equal("Second", detail.Notes[0].Content);
+        Assert.Equal("First", detail.Notes[1].Content);
+    }
+
+    [Fact]
+    public async Task AddNote_NonExistentContact_Throws()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            h.Service.AddNoteAsync(9999, "Note", "u1", "user@test.com", CT));
+    }
+
+    [Fact]
+    public async Task AddNote_TrimsContent()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new() { FirstName = "A", LastName = "B" }, CT);
+
+        await h.Service.AddNoteAsync(id, "  Trimmed  ", "u1", "user@test.com", CT);
+
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.Equal("Trimmed", detail!.Notes[0].Content);
     }
 }

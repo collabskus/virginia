@@ -1,0 +1,164 @@
+@page "/admin/users"
+@attribute [Authorize(Roles = "Admin")]
+@rendermode InteractiveServer
+@inject UserManager<AppUser> UserManager
+@inject ILogger<UserManagement> Logger
+
+<PageTitle>User Management | Virginia</PageTitle>
+
+<div class="page">
+    <div class="page-header">
+        <h1>User Management</h1>
+    </div>
+
+    @if (error is not null)
+    {
+        <div class="banner banner-error" role="alert">@error</div>
+    }
+
+    @if (success is not null)
+    {
+        <div class="banner banner-success" role="status">@success</div>
+    }
+
+    @if (users is null)
+    {
+        <div class="status">Loading users...</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Approved</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in users)
+                    {
+                        <tr @key="u.Id">
+                            <td>@u.Email</td>
+                            <td>@u.Role</td>
+                            <td>
+                                @if (u.IsApproved)
+                                {
+                                    <span class="badge badge-ok">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-pending">Pending</span>
+                                }
+                            </td>
+                            <td>@u.CreatedAtUtc.ToString("yyyy-MM-dd")</td>
+                            <td class="actions-cell">
+                                @if (!u.IsApproved)
+                                {
+                                    <button class="btn btn-sm btn-approve"
+                                            @onclick="() => ApproveAsync(u.Id)">Approve</button>
+                                }
+                                else if (u.Role != "Admin")
+                                {
+                                    <button class="btn btn-sm btn-revoke"
+                                            @onclick="() => RevokeAsync(u.Id)">Revoke</button>
+                                }
+
+                                @if (u.Role != "Admin")
+                                {
+                                    <button class="btn btn-sm btn-promote"
+                                            @onclick="() => PromoteAsync(u.Id)">Make Admin</button>
+                                }
+
+                                @if (u.Role != "Admin")
+                                {
+                                    <button class="btn btn-sm btn-delete"
+                                            @onclick="() => DeleteAsync(u.Id)">Delete</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private List<UserRow>? users;
+    private string? error;
+    private string? success;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        error = null;
+        var allUsers = UserManager.Users.OrderBy(u => u.Email).ToList();
+        var rows = new List<UserRow>();
+        foreach (var u in allUsers)
+        {
+            var roles = await UserManager.GetRolesAsync(u);
+            rows.Add(new UserRow(
+                u.Id, u.Email ?? "", roles.Contains("Admin") ? "Admin" : "User",
+                u.IsApproved, u.CreatedAtUtc));
+        }
+        users = rows;
+    }
+
+    private async Task ApproveAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        user.IsApproved = true;
+        await UserManager.UpdateAsync(user);
+        success = $"Approved {user.Email}.";
+        Logger.LogInformation("Approved user {Email}", user.Email);
+        await LoadAsync();
+    }
+
+    private async Task RevokeAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        user.IsApproved = false;
+        await UserManager.UpdateAsync(user);
+        success = $"Revoked approval for {user.Email}.";
+        Logger.LogInformation("Revoked approval for user {Email}", user.Email);
+        await LoadAsync();
+    }
+
+    private async Task PromoteAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        await UserManager.RemoveFromRoleAsync(user, "User");
+        await UserManager.AddToRoleAsync(user, "Admin");
+        user.IsApproved = true;
+        await UserManager.UpdateAsync(user);
+        success = $"Promoted {user.Email} to Admin.";
+        Logger.LogInformation("Promoted user {Email} to Admin", user.Email);
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(string userId)
+    {
+        success = null;
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) { error = "User not found."; return; }
+        var email = user.Email;
+        await UserManager.DeleteAsync(user);
+        success = $"Deleted {email}.";
+        Logger.LogInformation("Deleted user {Email}", email);
+        await LoadAsync();
+    }
+
+    private sealed record UserRow(
+        string Id, string Email, string Role, bool IsApproved, DateTime CreatedAtUtc);
+}

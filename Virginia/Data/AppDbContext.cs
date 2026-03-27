@@ -1,16 +1,22 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Virginia.Data;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options)
+    : IdentityDbContext<AppUser, IdentityRole, string>(options)
 {
     public DbSet<Contact> Contacts => Set<Contact>();
     public DbSet<ContactEmail> ContactEmails => Set<ContactEmail>();
     public DbSet<ContactPhone> ContactPhones => Set<ContactPhone>();
     public DbSet<ContactAddress> ContactAddresses => Set<ContactAddress>();
+    public DbSet<ContactNote> ContactNotes => Set<ContactNote>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Contact>(entity =>
         {
             entity.HasIndex(c => new { c.LastName, c.FirstName });
@@ -29,6 +35,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
                 .WithOne(a => a.Contact)
                 .HasForeignKey(a => a.ContactId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(c => c.Notes)
+                .WithOne(n => n.Contact)
+                .HasForeignKey(n => n.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ContactEmail>(entity =>
@@ -44,6 +55,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         modelBuilder.Entity<ContactAddress>(entity =>
         {
             entity.HasIndex(a => new { a.City, a.State });
+        });
+
+        modelBuilder.Entity<ContactNote>(entity =>
+        {
+            entity.HasIndex(n => n.ContactId);
         });
     }
 }

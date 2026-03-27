@@ -23,7 +23,6 @@ public sealed partial class ContactService(
         activity?.SetTag("page", page);
         activity?.SetTag("pageSize", pageSize);
 
-        // Clamp inputs to sane ranges
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
 
@@ -31,22 +30,19 @@ public sealed partial class ContactService(
 
         var query = db.Contacts.AsNoTracking().AsQueryable();
 
-        // All string filters use ToLower() for case-insensitive matching.
-        // SQLite translates this to lower(), avoiding the case-sensitive instr() bug.
-
         if (!string.IsNullOrWhiteSpace(filter.Name))
         {
-            var term = filter.Name.Trim().ToLower();
+            var pattern = $"%{filter.Name.Trim()}%";
             query = query.Where(c =>
-                c.FirstName.ToLower().Contains(term)
-                || c.LastName.ToLower().Contains(term));
+                EF.Functions.Like(c.FirstName, pattern)
+                || EF.Functions.Like(c.LastName, pattern));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Email))
         {
-            var term = filter.Email.Trim().ToLower();
+            var pattern = $"%{filter.Email.Trim()}%";
             query = query.Where(c =>
-                c.Emails.Any(e => e.Address.ToLower().Contains(term)));
+                c.Emails.Any(e => EF.Functions.Like(e.Address, pattern)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.Phone))
@@ -58,16 +54,16 @@ public sealed partial class ContactService(
 
         if (!string.IsNullOrWhiteSpace(filter.City))
         {
-            var term = filter.City.Trim().ToLower();
+            var pattern = $"%{filter.City.Trim()}%";
             query = query.Where(c =>
-                c.Addresses.Any(a => a.City.ToLower().Contains(term)));
+                c.Addresses.Any(a => EF.Functions.Like(a.City, pattern)));
         }
 
         if (!string.IsNullOrWhiteSpace(filter.State))
         {
-            var term = filter.State.Trim().ToLower();
+            var pattern = $"%{filter.State.Trim()}%";
             query = query.Where(c =>
-                c.Addresses.Any(a => a.State.ToLower().Contains(term)));
+                c.Addresses.Any(a => EF.Functions.Like(a.State, pattern)));
         }
 
         if (filter.HasPhoto == true)
@@ -118,6 +114,7 @@ public sealed partial class ContactService(
             .Include(x => x.Emails.OrderBy(e => e.Id))
             .Include(x => x.Phones.OrderBy(p => p.Id))
             .Include(x => x.Addresses.OrderBy(a => a.Id))
+            .Include(x => x.Notes.OrderByDescending(n => n.CreatedAtUtc))
             .FirstOrDefaultAsync(x => x.Id == id, ct);
 
         sw.Stop();
@@ -138,7 +135,9 @@ public sealed partial class ContactService(
             [.. c.Emails.Select(e => new EmailDto(e.Id, e.Label, e.Address))],
             [.. c.Phones.Select(p => new PhoneDto(p.Id, p.Label, p.Number))],
             [.. c.Addresses.Select(a => new AddressDto(
-                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))]);
+                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))],
+            [.. c.Notes.Select(n => new NoteDto(
+                n.Id, n.Content, n.CreatedByUserName, n.CreatedAtUtc))]);
     }
 
     // ─── Create ──────────────────────────────────────────────────────────
@@ -363,6 +362,38 @@ public sealed partial class ContactService(
         Log.RemovedProfilePicture(logger, id, sw.Elapsed.TotalMilliseconds);
     }
 
+    // ─── Notes ───────────────────────────────────────────────────────────
+
+    public async Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
+        activity?.SetTag("contact.id", contactId);
+        var sw = Stopwatch.StartNew();
+
+        var contactExists = await db.Contacts.AnyAsync(c => c.Id == contactId, ct);
+        if (!contactExists)
+            throw new InvalidOperationException($"Contact {contactId} not found.");
+
+        var note = new ContactNote
+        {
+            ContactId = contactId,
+            Content = content.Trim(),
+            CreatedByUserId = userId,
+            CreatedByUserName = userName,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        db.ContactNotes.Add(note);
+        await db.SaveChangesAsync(ct);
+
+        sw.Stop();
+        Log.AddedNote(logger, note.Id, contactId, userName, sw.Elapsed.TotalMilliseconds);
+
+        return note.Id;
+    }
+
     // ─── Private helper ──────────────────────────────────────────────────
 
     private void SyncChildren<TEntity, TModel>(
@@ -389,7 +420,7 @@ public sealed partial class ContactService(
         }
     }
 
-    // ─── Source-generated log messages (CA1848 / CA1873 compliant) ────────
+    // ─── Source-generated log messages ────────────────────────────────────
 
     private static partial class Log
     {
@@ -448,5 +479,10 @@ public sealed partial class ContactService(
             Message = "Removed profile picture for contact {Id} in {ElapsedMs:F1}ms")]
         public static partial void RemovedProfilePicture(
             ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Added note {NoteId} to contact {ContactId} by {UserName} in {ElapsedMs:F1}ms")]
+        public static partial void AddedNote(
+            ILogger logger, int noteId, int contactId, string userName, double elapsedMs);
     }
 }

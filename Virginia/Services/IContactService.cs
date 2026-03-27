@@ -21,4 +21,8 @@ public interface IContactService
     Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
 
     Task RemoveProfilePictureAsync(int id, CancellationToken ct = default);
+
+    Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        CancellationToken ct = default);
 }

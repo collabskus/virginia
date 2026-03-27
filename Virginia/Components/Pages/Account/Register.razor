@@ -1,0 +1,79 @@
+@page "/account/register"
+@attribute [AllowAnonymous]
+@layout MainLayout
+@inject UserManager<AppUser> UserManager
+@inject NavigationManager Nav
+
+<PageTitle>Register | Virginia</PageTitle>
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h1>Register</h1>
+
+        @if (errors.Count > 0)
+        {
+            <div class="banner banner-error" role="alert">
+                @foreach (var err in errors)
+                {
+                    <div>@err</div>
+                }
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="RegisterAsync" FormName="register">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="email">Email</label>
+                <InputText id="email" @bind-Value="model.Email" type="email" />
+                <ValidationMessage For="() => model.Email" />
+            </div>
+            <div class="field">
+                <label for="password">Password</label>
+                <InputText id="password" @bind-Value="model.Password" type="password" />
+                <ValidationMessage For="() => model.Password" />
+            </div>
+            <div class="field">
+                <label for="confirm">Confirm Password</label>
+                <InputText id="confirm" @bind-Value="model.ConfirmPassword" type="password" />
+                <ValidationMessage For="() => model.ConfirmPassword" />
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </EditForm>
+
+        <p class="auth-link">
+            Already have an account? <a href="/account/login">Sign in</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private RegisterFormModel model { get; set; } = new();
+
+    private List<string> errors = [];
+
+    private async Task RegisterAsync()
+    {
+        errors.Clear();
+
+        var user = new AppUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            IsApproved = false,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, model.Password);
+
+        if (result.Succeeded)
+        {
+            await UserManager.AddToRoleAsync(user, "User");
+            Nav.NavigateTo("/account/login?registered=true", forceLoad: true);
+        }
+        else
+        {
+            errors.AddRange(result.Errors.Select(e => e.Description));
+        }
+    }
+}

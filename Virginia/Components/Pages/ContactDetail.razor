@@ -1,9 +1,11 @@
 @page "/contacts/new"
 @page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
 @rendermode InteractiveServer
 @inject IContactService ContactService
 @inject NavigationManager Nav
 @inject ILogger<ContactDetail> Logger
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
 
@@ -234,6 +236,46 @@
             <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
         </div>
     </EditForm>
+
+    <!-- Notes (edit mode only) -->
+    @if (!IsNew && detail is not null)
+    {
+        <section class="card">
+            <div class="card-head">
+                <h2>Notes</h2>
+            </div>
+
+            <div class="note-input">
+                <textarea @bind="newNoteContent" placeholder="Add a note..."
+                          rows="3" class="note-textarea"></textarea>
+                <button type="button" class="btn btn-add"
+                        @onclick="AddNoteAsync"
+                        disabled="@(string.IsNullOrWhiteSpace(newNoteContent))">
+                    Save Note
+                </button>
+            </div>
+
+            @if (detail.Notes.Count > 0)
+            {
+                <div class="notes-list">
+                    @foreach (var note in detail.Notes)
+                    {
+                        <div class="note-item" @key="note.Id">
+                            <div class="note-meta">
+                                <strong>@note.CreatedByUserName</strong>
+                                <span class="note-date">@note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC</span>
+                            </div>
+                            <div class="note-content">@note.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="hint">No notes yet.</p>
+            }
+        </section>
+    }
 </div>
 
 @code {
@@ -249,6 +291,7 @@
     private string? error;
     private int photoVer = 1;
     private bool confirmingDelete;
+    private string newNoteContent = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -359,6 +402,28 @@
         await ContactService.RemoveProfilePictureAsync(Id!.Value);
         detail = await ContactService.GetAsync(Id!.Value);
         photoVer++;
+    }
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent)) return;
+        error = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+            var userName = authState.User.Identity?.Name ?? "unknown";
+
+            await ContactService.AddNoteAsync(Id!.Value, newNoteContent, userId, userName);
+            newNoteContent = "";
+            detail = await ContactService.GetAsync(Id!.Value);
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to add note: {ex.Message}";
+            Logger.LogError(ex, "Failed to add note to contact {Id}", Id);
+        }
     }
 
     private void GoBack() => Nav.NavigateTo("/");

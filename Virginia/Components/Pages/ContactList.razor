@@ -1,5 +1,6 @@
 @page "/"
 @page "/contacts"
+@attribute [Authorize]
 @rendermode InteractiveServer
 @inject IContactService ContactService
 @inject NavigationManager Nav
@@ -7,6 +8,16 @@
 @implements IDisposable
 
 <PageTitle>Contacts | Virginia</PageTitle>
+
+<AuthorizeView Policy="Approved">
+    <NotAuthorized>
+        <div class="status" style="padding:4rem 1rem;">
+            <h2>Account Pending Approval</h2>
+            <p>Your account has been created but is waiting for administrator approval.</p>
+            <p>Please check back later or contact your administrator.</p>
+        </div>
+    </NotAuthorized>
+    <Authorized>
 
 <div class="page">
     <div class="page-header">
@@ -67,7 +78,6 @@
         <div class="banner banner-error" role="alert">@loadError</div>
     }
 
-    <!-- Content -->
     @if (isLoading)
     {
         <div class="status" aria-live="polite">Loading contacts...</div>
@@ -144,6 +154,9 @@
     }
 </div>
 
+    </Authorized>
+</AuthorizeView>
+
 @code {
     private PagedResult<ContactListItem>? result;
     private bool isLoading = true;
@@ -184,7 +197,6 @@
         }
         catch (TaskCanceledException)
         {
-            // Another keystroke came in — ignore
         }
     }
 

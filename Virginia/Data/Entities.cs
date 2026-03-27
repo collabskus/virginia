@@ -25,6 +25,7 @@ public sealed class Contact
     public List<ContactEmail> Emails { get; set; } = [];
     public List<ContactPhone> Phones { get; set; } = [];
     public List<ContactAddress> Addresses { get; set; } = [];
+    public List<ContactNote> Notes { get; set; } = [];
 
     public string FullName => $"{FirstName} {LastName}".Trim();
 }
@@ -81,6 +82,25 @@ public sealed class ContactAddress
 
     [MaxLength(100)]
     public required string Country { get; set; }
+
+    public Contact Contact { get; set; } = null!;
+}
+
+public sealed class ContactNote
+{
+    public int Id { get; set; }
+    public int ContactId { get; set; }
+
+    [MaxLength(4000)]
+    public required string Content { get; set; }
+
+    [MaxLength(450)]
+    public required string CreatedByUserId { get; set; }
+
+    [MaxLength(256)]
+    public required string CreatedByUserName { get; set; }
+
+    public DateTime CreatedAtUtc { get; set; }
 
     public Contact Contact { get; set; } = null!;
 }

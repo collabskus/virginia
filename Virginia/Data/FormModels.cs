@@ -100,3 +100,53 @@ public sealed class AddressFormModel
     [MaxLength(100)]
     public string Country { get; set; } = "US";
 }
+
+// ─── Login ───────────────────────────────────────────────────────────────────
+
+public sealed class LoginFormModel
+{
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email format.")]
+    public string Email { get; set; } = "";
+
+    [Required(ErrorMessage = "Password is required.")]
+    public string Password { get; set; } = "";
+
+    public bool RememberMe { get; set; }
+}
+
+// ─── Register ────────────────────────────────────────────────────────────────
+
+public sealed class RegisterFormModel
+{
+    [Required(ErrorMessage = "Email is required.")]
+    [EmailAddress(ErrorMessage = "Invalid email format.")]
+    [MaxLength(256)]
+    public string Email { get; set; } = "";
+
+    [Required(ErrorMessage = "Password is required.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(100)]
+    public string Password { get; set; } = "";
+
+    [Required(ErrorMessage = "Please confirm your password.")]
+    [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
+    public string ConfirmPassword { get; set; } = "";
+}
+
+// ─── Change Password ─────────────────────────────────────────────────────────
+
+public sealed class ChangePasswordFormModel
+{
+    [Required(ErrorMessage = "Current password is required.")]
+    public string CurrentPassword { get; set; } = "";
+
+    [Required(ErrorMessage = "New password is required.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters.")]
+    [MaxLength(100)]
+    public string NewPassword { get; set; } = "";
+
+    [Required(ErrorMessage = "Please confirm your new password.")]
+    [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
+    public string ConfirmNewPassword { get; set; } = "";
+}

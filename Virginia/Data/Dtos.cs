@@ -24,7 +24,8 @@ public sealed record ContactDetailDto(
     DateTime UpdatedAtUtc,
     List<EmailDto> Emails,
     List<PhoneDto> Phones,
-    List<AddressDto> Addresses);
+    List<AddressDto> Addresses,
+    List<NoteDto> Notes);
 
 public sealed record EmailDto(int Id, string Label, string Address);
 public sealed record PhoneDto(int Id, string Label, string Number);
@@ -32,6 +33,9 @@ public sealed record PhoneDto(int Id, string Label, string Number);
 public sealed record AddressDto(
     int Id, string Label, string Street,
     string City, string State, string PostalCode, string Country);
+
+public sealed record NoteDto(
+    int Id, string Content, string CreatedByUserName, DateTime CreatedAtUtc);
 
 // ─── Paging ──────────────────────────────────────────────────────────────────
 

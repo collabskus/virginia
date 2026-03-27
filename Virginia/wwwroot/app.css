@@ -55,3 +55,232 @@ a:hover {
 .blazor-error-boundary::after {
     content: "An error has occurred.";
 }
+
+/* ── Auth pages ──────────────────────────────────────────────────────────── */
+
+.auth-page {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-card h1 {
+    margin: 0 0 1.25rem;
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+.auth-card .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin-bottom: 0.75rem;
+}
+
+.auth-card .field label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.auth-card .field input {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.auth-card .field input:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+}
+
+.auth-card .field-check {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+
+.auth-card .btn-block {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.auth-card .btn-primary {
+    background: #e94560;
+    color: #fff;
+}
+
+.auth-card .btn-primary:hover {
+    background: #c73650;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* ── Banners (global) ────────────────────────────────────────────────────── */
+
+.banner {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.banner-error {
+    background: #ffeaea;
+    color: #c62828;
+    border: 1px solid #f5c6c6;
+}
+
+.banner-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+/* ── Admin table ─────────────────────────────────────────────────────────── */
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-ok {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.badge-pending {
+    background: #fff3e0;
+    color: #e65100;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-approve {
+    background: #4caf50;
+    color: #fff;
+}
+
+.btn-approve:hover {
+    background: #388e3c;
+}
+
+.btn-revoke {
+    background: #ff9800;
+    color: #fff;
+}
+
+.btn-revoke:hover {
+    background: #f57c00;
+}
+
+.btn-promote {
+    background: #2196f3;
+    color: #fff;
+}
+
+.btn-promote:hover {
+    background: #1976d2;
+}
+
+.btn-delete {
+    background: #f44336;
+    color: #fff;
+}
+
+.btn-delete:hover {
+    background: #d32f2f;
+}
+
+/* ── Shared table/page ───────────────────────────────────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.data-table th {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #888;
+    font-weight: 600;
+}
+
+.status {
+    text-align: center;
+    color: #888;
+    padding: 3rem 1rem;
+    font-size: 0.95rem;
+}
