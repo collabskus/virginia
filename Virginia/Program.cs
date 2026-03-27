@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Virginia.Components;
 using Virginia.Data;
+using Virginia.ServiceDefaults;
 using Virginia.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,11 +40,11 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 // ── Authorization policies ───────────────────────────────────────────────────
-builder.Services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-    options.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
-});
+builder.Services.AddAuthorizationBuilder()
+// ── Authorization policies ───────────────────────────────────────────────────
+.AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+// ── Authorization policies ───────────────────────────────────────────────────
+.AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
 
 builder.Services.AddCascadingAuthenticationState();
 
