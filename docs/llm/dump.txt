@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 20:56:09
+Generated: 03/26/2026 20:57:05
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -5096,8 +5096,8 @@ public sealed class ChangePasswordFormModel
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 7.43 KB
-MODIFIED: 03/26/2026 20:40:54
+SIZE: 7.55 KB
+MODIFIED: 03/26/2026 20:56:59
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -5182,8 +5182,11 @@ var app = builder.Build();
 // ── Apply migrations + seed ──────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
 {
+    //var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //await db.Database.MigrateAsync();
+
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
+    await db.Database.EnsureCreatedAsync();
 
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     string[] roles = ["Admin", "User"];
@@ -6222,7 +6225,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 20:56:09
+EXPORT COMPLETED: 03/26/2026 20:57:05
 Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
