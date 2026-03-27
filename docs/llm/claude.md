@@ -13609,7 +13609,7 @@ Check the system event log for error messages
 Enable logging the application process' stdout messages
 Attach a debugger to the application process and inspect
 For more guidance on diagnosing and handling these errors, visit Troubleshoot ASP.NET Core on Azure App Service and IIS.
-and ran locally and here is the exception 
+and ran locally and here is the exception  
 Microsoft.Data.Sqlite.SqliteException
   HResult=0x80004005
   Message=SQLite Error 1: 'no such table: AspNetRoles'.
