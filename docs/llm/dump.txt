@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 20:50:22
+Generated: 03/26/2026 20:52:35
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -62,9 +62,6 @@ Virginia/Services/ContactService.cs
 Virginia/Services/ContactTelemetry.cs
 Virginia/Services/IContactService.cs
 Virginia/Virginia.csproj
-Virginia/virginia.db
-Virginia/virginia.db-shm
-Virginia/virginia.db-wal
 Virginia/wwwroot/app.css
 
 
@@ -176,8 +173,8 @@ jobs:
 
 ================================================================================
 FILE: .gitignore
-SIZE: 8.3 KB
-MODIFIED: 03/26/2026 14:02:15
+SIZE: 8.34 KB
+MODIFIED: 03/26/2026 20:52:31
 ================================================================================
 
 ## Ignore Visual Studio temporary files, build results, and
@@ -662,6 +659,11 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
 
 
 
@@ -6220,7 +6222,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 20:50:23
+EXPORT COMPLETED: 03/26/2026 20:52:35
 Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
