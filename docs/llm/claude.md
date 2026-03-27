@@ -13723,3 +13723,88 @@ Replace with:
 
 That's it. `EnsureCreatedAsync()` looks at the current model (Identity tables, Contacts, Notes, everything) and creates all tables if the database doesn't exist or is empty. No migration files needed.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Got this exception after logging in as admin locally 
+Microsoft.AspNetCore.Components.NavigationException
+  HResult=0x80131500
+  Message=Exception of type 'Microsoft.AspNetCore.Components.NavigationException' was thrown.
+  Source=Microsoft.AspNetCore.Components.Server
+  StackTrace:
+   at Microsoft.AspNetCore.Components.Server.Circuits.RemoteNavigationManager.NavigateToCore(String uri, NavigationOptions options)
+   at Microsoft.AspNetCore.Components.NavigationManager.NavigateToCore(String uri, Boolean forceLoad)
+   at Virginia.Components.Pages.Account.Login.<LoginAsync>d__15.MoveNext() in D:\DEV\personal\Virginia\Virginia\Components\Pages\Account\Login.razor:line 80
+   at Microsoft.AspNetCore.Components.ComponentBase.<CallStateHasChangedOnAsyncCompletion>d__30.MoveNext()
