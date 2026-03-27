@@ -12909,3 +12909,104 @@ public sealed class ContactServiceTests
 | `Virginia.Tests/DtoMappingTests.cs` | Changed (updated DTO constructor) |
 | `Virginia.Tests/ContactServiceTests.cs` | Changed (note tests, cascading notes) |
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Multiple issues 
+1. we need a one time code change that will delete the db file if exists. we will deploy this change and it will delete this db file if exists and start migrations. I don't have the ability to delete files or run migrations on the server. 
+make it obvious so I can simply delete that code so i don't accidentally publish it again after successful deployment 
+2. build fails 
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS0006	Metadata file 'D:\DEV\personal\Virginia\Virginia\obj\Debug\net10.0\ref\Virginia.dll' could not be found	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\CSC	1	
+Error (active)	RZ9999	The child content element 'Authorized' of component 'AuthorizeView' uses the same parameter name ('context') as enclosing child content element 'Authorized' of component 'AuthorizeView'. Specify the parameter name like: '<Authorized Context="another_name"> to resolve the ambiguity	Virginia	D:\DEV\personal\Virginia\Virginia\Components\Layout\MainLayout.razor	13	
+Error (active)	BL0008	The value of a property decorated with [SupplyParameterFromForm] and initialized with a property initializer can be overwritten with null when the component receives parameters. To ensure the initialized value is not overwritten, move the initialization to a component lifecycle method like OnInitialized or OnInitializedAsync	Virginia	D:\DEV\personal\Virginia\Virginia\Components\Pages\Account\Register.razor	52	
+Error (active)	CA1725	In member void AppDbContext.OnModelCreating(ModelBuilder modelBuilder), change parameter name modelBuilder to builder in order to match the identifier as it has been declared in void IdentityDbContext<AppUser, IdentityRole, string, IdentityUserClaim<string>, IdentityUserRole<string>, IdentityUserLogin<string>, IdentityRoleClaim<string>, IdentityUserToken<string>, IdentityUserPasskey<string>>.OnModelCreating(ModelBuilder builder) (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1725)	Virginia	D:\DEV\personal\Virginia\Virginia\Data\AppDbContext.cs	16	
+I am sure I am forgetting other things. 
+If you see anything please fix that too 
+and please return FULL files for easy copy pasting. 
