@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 21:00:51
+Generated: 03/26/2026 21:09:01
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -2873,8 +2873,8 @@ MODIFIED: 03/26/2026 20:24:19
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Login.razor
-SIZE: 2.68 KB
-MODIFIED: 03/26/2026 20:41:28
+SIZE: 2.73 KB
+MODIFIED: 03/26/2026 21:02:26
 ================================================================================
 
 @page "/account/login"
@@ -2951,12 +2951,15 @@ MODIFIED: 03/26/2026 20:41:28
 
     private async Task LoginAsync()
     {
+        if (HttpContext is null) return;
+
         var result = await SignInManager.PasswordSignInAsync(
             model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
-            Nav.NavigateTo("/", forceLoad: true);
+            // Use HttpContext redirect instead of NavigateTo to avoid NavigationException in SSR
+            HttpContext.Response.Redirect("/");
         }
         else
         {
@@ -5096,8 +5099,8 @@ public sealed class ChangePasswordFormModel
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 7.55 KB
-MODIFIED: 03/26/2026 20:56:59
+SIZE: 7.58 KB
+MODIFIED: 03/26/2026 21:08:50
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -5163,21 +5166,21 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ██  ONE-TIME DEPLOYMENT: Delete this entire block after successful deploy  ██
-// ══════════════════════════════════════════════════════════════════════════════
-{
-    var connStr = app.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=virginia.db";
-    var dbPath = connStr.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
-    if (File.Exists(dbPath))
-    {
-        File.Delete(dbPath);
-        Console.WriteLine($"*** ONE-TIME: Deleted existing database at {dbPath} ***");
-    }
-}
-// ══════════════════════════════════════════════════════════════════════════════
-// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
-// ══════════════════════════════════════════════════════════════════════════════
+//// ══════════════════════════════════════════════════════════════════════════════
+//// ██  ONE-TIME DEPLOYMENT: Delete this entire block after successful deploy  ██
+//// ══════════════════════════════════════════════════════════════════════════════
+//{
+//    var connStr = app.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=virginia.db";
+//    var dbPath = connStr.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
+//    if (File.Exists(dbPath))
+//    {
+//        File.Delete(dbPath);
+//        Console.WriteLine($"*** ONE-TIME: Deleted existing database at {dbPath} ***");
+//    }
+//}
+//// ══════════════════════════════════════════════════════════════════════════════
+//// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
+//// ══════════════════════════════════════════════════════════════════════════════
 
 // ── Apply migrations + seed ──────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
@@ -6225,7 +6228,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 21:00:51
+EXPORT COMPLETED: 03/26/2026 21:09:01
 Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
