@@ -13502,3 +13502,133 @@ That's all five files. Quick summary of what each fix addresses:
 **AppDbContext.cs** — Renamed `modelBuilder` parameter to `builder` to match the base class declaration (CA1725).
 
 The CS0006 error about the missing DLL is a cascading build failure — once the other errors in the Virginia project are fixed, it will compile and the test project will find the DLL.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+got this error on dev 
+HTTP Error 500.30 - ASP.NET Core app failed to start
+Common solutions to this issue:
+The app failed to start
+The app started but then stopped
+The app started but threw an exception during startup
+Troubleshooting steps:
+Check the system event log for error messages
+Enable logging the application process' stdout messages
+Attach a debugger to the application process and inspect
+For more guidance on diagnosing and handling these errors, visit Troubleshoot ASP.NET Core on Azure App Service and IIS.
+and ran locally and here is the exception 
+Microsoft.Data.Sqlite.SqliteException
+  HResult=0x80004005
+  Message=SQLite Error 1: 'no such table: AspNetRoles'.
+  Source=Microsoft.Data.Sqlite
+  StackTrace:
+   at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+   at Microsoft.Data.Sqlite.SqliteCommand.<PrepareAndEnumerateStatements>d__64.MoveNext()
+   at Microsoft.Data.Sqlite.SqliteCommand.<GetStatements>d__54.MoveNext()
+   at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+   at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.Data.Sqlite.SqliteCommand.<ExecuteDbDataReaderAsync>d__60.MoveNext()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.<ExecuteReaderAsync>d__22.MoveNext()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.<ExecuteReaderAsync>d__22.MoveNext()
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.<InitializeReaderAsync>d__21.MoveNext()
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.<MoveNextAsync>d__20.MoveNext()
+   at System.Runtime.CompilerServices.ConfiguredValueTaskAwaitable`1.ConfiguredValueTaskAwaiter.GetResult()
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.<SingleOrDefaultAsync>d__16`1.MoveNext()
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.<SingleOrDefaultAsync>d__16`1.MoveNext()
+   at Microsoft.AspNetCore.Identity.RoleManager`1.<RoleExistsAsync>d__33.MoveNext()
+   at Program.<<Main>$>d__0.MoveNext() in D:\DEV\personal\Virginia\Virginia\Program.cs:line 90
+   at Program.<<Main>$>d__0.MoveNext() in D:\DEV\personal\Virginia\Virginia\Program.cs:line 116
