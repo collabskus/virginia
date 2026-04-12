@@ -14170,3 +14170,39 @@ Now let me present all the files:Here's what changed and where each file goes:
 
 Looks like `Contactlist.razor` didn't generate properly.
 Please generate this full file again.
+
+47
+07
+
+when I built the project I got this error
+please review the full dump.txt
+and give me full files for ALL the files that need to change to resolve this issue 
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	RZ9999	The child content element 'ChildContent' of component 'AuthorizeView' uses the same parameter name ('context') as enclosing child content element 'Authorized' of component 'AuthorizeView'. Specify the parameter name like: '<ChildContent Context="another_name"> to resolve the ambiguity	Virginia	D:\DEV\personal\Virginia\Virginia\CSC	1	
+
+Let me review the dump.txt to find the source of this nested `AuthorizeView` context collision.The issue is in `ContactList.razor`. The inner `<AuthorizeView Policy="Admin">` is nested inside the outer `<AuthorizeView Policy="Approved">`, and the inner one's `<ChildContent>` (implicit — its content isn't wrapped in `<Authorized>`) collides with the outer `<Authorized>` context parameter.
+
+The fix is to either give the inner `AuthorizeView` an explicit context name, or wrap its content in `<Authorized>`. Let me check the exact structure more carefully:
+
+The inner `AuthorizeView Policy="Admin"` at line 4086 has its content directly as `<ChildContent>` (no `<Authorized>` tag). It's nested inside the outer's `<Authorized>`. The compiler sees both implicit `context` parameters colliding.
+
+The simplest fix: add `Context="adminContext"` to the inner `AuthorizeView`.
+
+Let me get the full file to deliver it completely:The problem is clear. The inner `<AuthorizeView Policy="Admin">` at line 4086 has its content as implicit `ChildContent` (no `<Authorized>` wrapper), and it's nested inside the outer `<AuthorizeView Policy="Approved">`'s `<Authorized>` block. Both use the implicit `context` parameter name, causing RZ9999.
+
+The fix: add `Context="adminContext"` to the inner `<AuthorizeView>`. Only one file needs to change — `ContactList.razor`.Only one file needs to change. The fix is on the inner `AuthorizeView` — changed from:
+
+```
+<AuthorizeView Policy="Admin">
+```
+
+to:
+
+```
+<AuthorizeView Policy="Admin" Context="adminContext">
+```
+
+This is the same RZ9999 pattern you've hit before. The inner `AuthorizeView` uses implicit `ChildContent` (no `<Authorized>` wrapper), so its implicit `context` parameter collides with the outer `<Authorized>` block's `context`. Adding `Context="adminContext"` disambiguates them. The `MainLayout.razor` file already had this fix applied correctly — it was just missing from `ContactList.razor`.
+
+53
+08
