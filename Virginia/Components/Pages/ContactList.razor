@@ -27,6 +27,65 @@
         </button>
     </div>
 
+    <!-- Admin Bulk Actions -->
+    <AuthorizeView Policy="Admin">
+        <div class="bulk-actions">
+            <span class="bulk-label">Admin</span>
+
+            <button class="btn btn-bulk btn-bulk-generate"
+                    disabled="@bulkBusy"
+                    @onclick="GenerateFakeContactsAsync">
+                @if (isGenerating)
+                {
+                    <span>Generating...</span>
+                }
+                else
+                {
+                    <span>Generate 500 Contacts</span>
+                }
+            </button>
+
+            @if (!confirmingDeleteAll)
+            {
+                <button class="btn btn-bulk btn-bulk-delete"
+                        disabled="@bulkBusy"
+                        @onclick="() => confirmingDeleteAll = true">
+                    Delete All Contacts
+                </button>
+            }
+            else
+            {
+                <span class="bulk-confirm">
+                    <span class="bulk-confirm-text">Are you sure? This cannot be undone.</span>
+                    <button class="btn btn-bulk btn-bulk-delete-confirm"
+                            disabled="@bulkBusy"
+                            @onclick="DeleteAllContactsAsync">
+                        @if (isDeleting)
+                        {
+                            <span>Deleting...</span>
+                        }
+                        else
+                        {
+                            <span>Yes, delete all</span>
+                        }
+                    </button>
+                    <button class="btn btn-bulk btn-bulk-cancel"
+                            disabled="@bulkBusy"
+                            @onclick="() => confirmingDeleteAll = false">
+                        Cancel
+                    </button>
+                </span>
+            }
+
+            @if (bulkMessage is not null)
+            {
+                <span class="bulk-message @(bulkIsError ? "bulk-error" : "bulk-success")">
+                    @bulkMessage
+                </span>
+            }
+        </div>
+    </AuthorizeView>
+
     <!-- Filters -->
     <details class="filter-panel" open>
         <summary class="filter-toggle">Filters</summary>
@@ -173,6 +232,15 @@
 
     private CancellationTokenSource? _debounceCts;
 
+    // ─── Bulk action state ───────────────────────────────────────────────
+    private bool isGenerating;
+    private bool isDeleting;
+    private bool confirmingDeleteAll;
+    private string? bulkMessage;
+    private bool bulkIsError;
+
+    private bool bulkBusy => isGenerating || isDeleting;
+
     private bool HasActiveFilters =>
         !string.IsNullOrWhiteSpace(filterName)
         || !string.IsNullOrWhiteSpace(filterEmail)
@@ -244,6 +312,63 @@
         filterName = filterEmail = filterPhone = filterCity = filterState = filterHasPhoto = "";
         page = 1;
         await LoadAsync();
+    }
+
+    // ─── Bulk actions ────────────────────────────────────────────────────
+
+    private async Task GenerateFakeContactsAsync()
+    {
+        isGenerating = true;
+        bulkMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var count = await ContactService.CreateBulkAsync(500);
+            bulkMessage = $"Generated {count} fake contacts.";
+            bulkIsError = false;
+            Logger.LogInformation("Admin generated {Count} fake contacts", count);
+            page = 1;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            bulkMessage = $"Generation failed: {ex.Message}";
+            bulkIsError = true;
+            Logger.LogError(ex, "Failed to generate fake contacts");
+        }
+        finally
+        {
+            isGenerating = false;
+        }
+    }
+
+    private async Task DeleteAllContactsAsync()
+    {
+        isDeleting = true;
+        bulkMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var count = await ContactService.DeleteAllAsync();
+            bulkMessage = $"Deleted {count} contacts.";
+            bulkIsError = false;
+            confirmingDeleteAll = false;
+            Logger.LogInformation("Admin deleted all contacts ({Count})", count);
+            page = 1;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            bulkMessage = $"Delete failed: {ex.Message}";
+            bulkIsError = true;
+            Logger.LogError(ex, "Failed to delete all contacts");
+        }
+        finally
+        {
+            isDeleting = false;
+        }
     }
 
     private static string? NullIfEmpty(string s) =>
