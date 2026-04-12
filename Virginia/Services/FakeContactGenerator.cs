@@ -1,3 +1,4 @@
+using System.Globalization;
 using Virginia.Data;
 
 namespace Virginia.Services;
@@ -138,7 +139,7 @@ internal static class FakeContactGenerator
                 Street = $"{rng.Next(100, 9999)} {Pick(rng, Streets)}",
                 City = Pick(rng, Cities),
                 State = Pick(rng, States),
-                PostalCode = rng.Next(10000, 99999).ToString("D5"),
+                PostalCode = rng.Next(10000, 99999).ToString("D5", CultureInfo.InvariantCulture),
                 Country = "US"
             });
         }
