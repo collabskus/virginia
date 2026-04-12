@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 04/12/2026 16:45:31
+Generated: 04/12/2026 16:56:00
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -4049,8 +4049,8 @@ MODIFIED: 03/26/2026 20:22:20
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactList.razor
-SIZE: 13.56 KB
-MODIFIED: 04/12/2026 16:45:09
+SIZE: 13.58 KB
+MODIFIED: 04/12/2026 16:55:48
 ================================================================================
 
 @page "/"
@@ -4083,7 +4083,7 @@ MODIFIED: 04/12/2026 16:45:09
     </div>
 
     <!-- Admin Bulk Actions -->
-    <AuthorizeView Policy="Admin">
+    <AuthorizeView Policy="Admin" Context="adminContext">
         <div class="bulk-actions">
             <span class="bulk-label">Admin</span>
 
@@ -6756,7 +6756,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 04/12/2026 16:45:31
+EXPORT COMPLETED: 04/12/2026 16:56:00
 Total Files Exported: 54
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
