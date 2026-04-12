@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 03/26/2026 21:11:22
+Generated: 04/12/2026 15:33:04
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -692,7 +692,7 @@ MODIFIED: 03/26/2026 16:10:37
 ================================================================================
 FILE: Directory.Packages.props
 SIZE: 1.29 KB
-MODIFIED: 03/26/2026 20:14:43
+MODIFIED: 04/12/2026 15:25:22
 ================================================================================
 
 <Project>
@@ -703,8 +703,8 @@ MODIFIED: 03/26/2026 20:14:43
     <!-- Identity -->
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.5" />
     <!-- OpenTelemetry -->
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.0" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.0" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.2" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.0" />
@@ -714,10 +714,9 @@ MODIFIED: 03/26/2026 20:14:43
     <!-- Testing -->
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.4.0" />
   </ItemGroup>
 </Project>
-
 
 
 ================================================================================
@@ -964,10 +963,10 @@ MODIFIED: 03/26/2026 16:13:51
 ================================================================================
 FILE: Virginia.AppHost/Virginia.AppHost.csproj
 SIZE: 0.29 KB
-MODIFIED: 03/26/2026 20:58:01
+MODIFIED: 04/02/2026 10:57:51
 ================================================================================
 
-<Project Sdk="Aspire.AppHost.Sdk/13.1.0">
+<Project Sdk="Aspire.AppHost.Sdk/13.2.1">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6228,7 +6227,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 03/26/2026 21:11:22
+EXPORT COMPLETED: 04/12/2026 15:33:04
 Total Files Exported: 53
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
