@@ -10,6 +10,7 @@ public sealed partial class ContactService(
     ContactTelemetry telemetry) : IContactService
 {
     private const int MaxPageSize = 100;
+    private const int BulkBatchSize = 50;
 
     // ─── List ────────────────────────────────────────────────────────────
 
@@ -394,6 +395,76 @@ public sealed partial class ContactService(
         return note.Id;
     }
 
+    // ─── Bulk create ─────────────────────────────────────────────────────
+
+    public async Task<int> CreateBulkAsync(int count, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("BulkCreateContacts");
+        activity?.SetTag("bulk.requested", count);
+        var sw = Stopwatch.StartNew();
+
+        count = Math.Clamp(count, 1, 10_000);
+
+        var rng = new Random();
+        var created = 0;
+
+        for (var batch = 0; batch < count; batch += BulkBatchSize)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var batchSize = Math.Min(BulkBatchSize, count - batch);
+
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                for (var i = 0; i < batchSize; i++)
+                {
+                    var contact = FakeContactGenerator.Generate(rng);
+                    db.Contacts.Add(contact);
+                }
+
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                created += batchSize;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                await tx.RollbackAsync(ct);
+                Log.FailedBulkCreate(logger, created, count, ex);
+                throw;
+            }
+        }
+
+        sw.Stop();
+        telemetry.RecordBulkCreated(created);
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.BulkCreated(logger, created, sw.Elapsed.TotalMilliseconds);
+
+        return created;
+    }
+
+    // ─── Delete all ──────────────────────────────────────────────────────
+
+    public async Task<int> DeleteAllAsync(CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("DeleteAllContacts");
+        var sw = Stopwatch.StartNew();
+
+        // Child tables are cascade-deleted by SQLite, but ExecuteDeleteAsync
+        // on the parent is the cleanest single-statement approach.
+        var rows = await db.Contacts.ExecuteDeleteAsync(ct);
+
+        sw.Stop();
+        telemetry.RecordBulkDeleted(rows);
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.DeletedAll(logger, rows, sw.Elapsed.TotalMilliseconds);
+
+        return rows;
+    }
+
     // ─── Private helper ──────────────────────────────────────────────────
 
     private void SyncChildren<TEntity, TModel>(
@@ -484,5 +555,20 @@ public sealed partial class ContactService(
             Message = "Added note {NoteId} to contact {ContactId} by {UserName} in {ElapsedMs:F1}ms")]
         public static partial void AddedNote(
             ILogger logger, int noteId, int contactId, string userName, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Bulk created {Count} contacts in {ElapsedMs:F1}ms")]
+        public static partial void BulkCreated(
+            ILogger logger, int count, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Bulk create failed after {Created}/{Requested} contacts")]
+        public static partial void FailedBulkCreate(
+            ILogger logger, int created, int requested, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Deleted all contacts ({Count} rows) in {ElapsedMs:F1}ms")]
+        public static partial void DeletedAll(
+            ILogger logger, int count, double elapsedMs);
     }
 }

@@ -25,4 +25,8 @@ public interface IContactService
     Task<int> AddNoteAsync(
         int contactId, string content, string userId, string userName,
         CancellationToken ct = default);
+
+    Task<int> CreateBulkAsync(int count, CancellationToken ct = default);
+
+    Task<int> DeleteAllAsync(CancellationToken ct = default);
 }

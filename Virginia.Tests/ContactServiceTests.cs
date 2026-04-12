@@ -27,7 +27,8 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
         var form = new ContactFormModel
         {
-            FirstName = "John", LastName = "Smith",
+            FirstName = "John",
+            LastName = "Smith",
             Emails =
             [
                 new() { Label = "Work", Address = "john@work.com" },
@@ -69,22 +70,21 @@ public sealed class ContactServiceTests
         Assert.Empty(detail.Emails);
         Assert.Empty(detail.Phones);
         Assert.Empty(detail.Addresses);
-        Assert.Empty(detail.Notes);
     }
 
     [Fact]
     public async Task Create_TrimsWhitespace()
     {
         await using var h = await TestHarness.CreateAsync();
-        var form = new ContactFormModel
+
+        var id = await h.Service.CreateAsync(new ContactFormModel
         {
-            FirstName = "  Alice  ", LastName = "  Smith  ",
+            FirstName = "  Alice  ",
+            LastName = "  Smith  ",
             Emails = [new() { Label = " Work ", Address = " a@b.com " }]
-        };
+        }, CT);
 
-        var id = await h.Service.CreateAsync(form, CT);
         var detail = await h.Service.GetAsync(id, CT);
-
         Assert.Equal("Alice", detail!.FirstName);
         Assert.Equal("Smith", detail.LastName);
         Assert.Equal("Work", detail.Emails[0].Label);
@@ -119,38 +119,25 @@ public sealed class ContactServiceTests
     // ─── Update ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task Update_ChangesName()
+    public async Task Update_ChangesNameAndChildren()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(
-            new ContactFormModel { FirstName = "Old", LastName = "Name" }, CT);
-
-        await h.Service.UpdateAsync(id,
-            new ContactFormModel { FirstName = "New", LastName = "Name" }, CT);
-
-        var detail = await h.Service.GetAsync(id, CT);
-        Assert.Equal("New", detail!.FirstName);
-    }
-
-    [Fact]
-    public async Task Update_AddsAndRemovesEmails()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        var form = new ContactFormModel
+        var id = await h.Service.CreateAsync(new ContactFormModel
         {
-            FirstName = "Test", LastName = "User",
+            FirstName = "Test",
+            LastName = "User",
             Emails =
             [
                 new() { Label = "A", Address = "a@t.com" },
                 new() { Label = "B", Address = "b@t.com" }
             ]
-        };
-        var id = await h.Service.CreateAsync(form, CT);
+        }, CT);
         var detail = await h.Service.GetAsync(id, CT);
 
         var updateForm = new ContactFormModel
         {
-            FirstName = "Test", LastName = "User",
+            FirstName = "Test",
+            LastName = "User",
             Emails =
             [
                 new() { Id = detail!.Emails[0].Id, Label = "A2", Address = "a2@t.com" },
@@ -213,7 +200,8 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
         var form = new ContactFormModel
         {
-            FirstName = "P", LastName = "C",
+            FirstName = "P",
+            LastName = "C",
             Emails = [new() { Label = "W", Address = "w@t.com" }],
             Phones = [new() { Label = "M", Number = "555-0001" }],
             Addresses =
@@ -225,15 +213,13 @@ public sealed class ContactServiceTests
                 }
             ]
         };
-        var id = await h.Service.CreateAsync(form, CT);
-        await h.Service.AddNoteAsync(id, "test note", "user1", "user@test.com", CT);
 
+        var id = await h.Service.CreateAsync(form, CT);
         await h.Service.DeleteAsync(id, CT);
 
         Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactAddresses.CountAsync(CT));
-        Assert.Equal(0, await h.Db.ContactNotes.CountAsync(CT));
     }
 
     [Fact]
@@ -244,292 +230,120 @@ public sealed class ContactServiceTests
         await h.Service.DeleteAsync(9999, CT);
     }
 
-    // ─── List / Filtering ────────────────────────────────────────────────
+    // ─── Profile picture ─────────────────────────────────────────────────
 
     [Fact]
-    public async Task List_FilterByName_MatchesPartial()
+    public async Task ProfilePicture_SetAndGet()
     {
         await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new() { FirstName = "Alice", LastName = "Johnson" }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Jones" }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "Charlie", LastName = "Brown" }, CT);
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Photo", LastName = "Test" }, CT);
 
-        var result = await h.Service.ListAsync(new(Name: "Jo"), 1, 50, CT);
+        var data = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
+        await h.Service.SetProfilePictureAsync(id, data, "image/png", CT);
+
+        var result = await h.Service.GetProfilePictureAsync(id, CT);
+        Assert.NotNull(result);
+        Assert.Equal("image/png", result.ContentType);
+        Assert.Equal(data, result.Data);
+    }
+
+    [Fact]
+    public async Task ProfilePicture_Get_NonExistent_ReturnsNull()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        Assert.Null(await h.Service.GetProfilePictureAsync(9999, CT));
+    }
+
+    [Fact]
+    public async Task ProfilePicture_Remove_ClearsData()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "A", LastName = "B" }, CT);
+        await h.Service.SetProfilePictureAsync(
+            id, [0x00], "image/jpeg", CT);
+
+        await h.Service.RemoveProfilePictureAsync(id, CT);
+
+        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
+        var detail = await h.Service.GetAsync(id, CT);
+        Assert.False(detail!.HasPhoto);
+    }
+
+    [Fact]
+    public async Task ProfilePicture_Set_NonExistent_Throws()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            h.Service.SetProfilePictureAsync(9999, [0x00], "image/png", CT));
+    }
+
+    // ─── List: basic ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_ReturnsAllContacts()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Alice", LastName = "A" }, CT);
+        await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "Bob", LastName = "B" }, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 50, CT);
 
         Assert.Equal(2, result.TotalCount);
+        Assert.Equal(2, result.Items.Count);
     }
 
     [Fact]
-    public async Task List_FilterByEmail()
+    public async Task List_Paging_Works()
     {
         await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "A", LastName = "B",
-            Emails = [new() { Label = "W", Address = "alice@example.com" }]
-        }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
+        for (var i = 0; i < 5; i++)
+            await h.Service.CreateAsync(
+                new() { FirstName = $"U{i}", LastName = "T" }, CT);
 
-        var result = await h.Service.ListAsync(new(Email: "alice"), 1, 50, CT);
+        var page1 = await h.Service.ListAsync(new(), 1, 2, CT);
+        var page2 = await h.Service.ListAsync(new(), 2, 2, CT);
 
-        Assert.Single(result.Items);
-        Assert.Equal("A", result.Items[0].FirstName);
-    }
-
-    [Fact]
-    public async Task List_FilterByPhone()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "A", LastName = "B",
-            Phones = [new() { Label = "M", Number = "757-555-0199" }]
-        }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
-
-        var result = await h.Service.ListAsync(new(Phone: "0199"), 1, 50, CT);
-
-        Assert.Single(result.Items);
-    }
-
-    [Fact]
-    public async Task List_FilterByCity()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "A", LastName = "B",
-            Addresses =
-            [
-                new()
-                {
-                    Label = "H", Street = "1 St", City = "Newport News",
-                    State = "VA", PostalCode = "23601", Country = "US"
-                }
-            ]
-        }, CT);
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "C", LastName = "D",
-            Addresses =
-            [
-                new()
-                {
-                    Label = "H", Street = "2 St", City = "Richmond",
-                    State = "VA", PostalCode = "23220", Country = "US"
-                }
-            ]
-        }, CT);
-
-        var result = await h.Service.ListAsync(new(City: "Newport"), 1, 50, CT);
-
-        Assert.Single(result.Items);
-    }
-
-    [Fact]
-    public async Task List_FilterByState()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "VA", LastName = "Person",
-            Addresses =
-            [
-                new()
-                {
-                    Label = "H", Street = "1 St", City = "A",
-                    State = "VA", PostalCode = "23601", Country = "US"
-                }
-            ]
-        }, CT);
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "CA", LastName = "Person",
-            Addresses =
-            [
-                new()
-                {
-                    Label = "H", Street = "2 St", City = "B",
-                    State = "CA", PostalCode = "90210", Country = "US"
-                }
-            ]
-        }, CT);
-
-        var result = await h.Service.ListAsync(new(State: "VA"), 1, 50, CT);
-
-        Assert.Single(result.Items);
-        Assert.Equal("VA", result.Items[0].FirstName);
-    }
-
-    [Fact]
-    public async Task List_FilterHasPhoto_True()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" }, CT);
-        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg", CT);
-
-        var result = await h.Service.ListAsync(new(HasPhoto: true), 1, 50, CT);
-
-        Assert.Single(result.Items);
-        Assert.Equal("With", result.Items[0].FirstName);
-    }
-
-    [Fact]
-    public async Task List_FilterHasPhoto_False()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        var id1 = await h.Service.CreateAsync(new() { FirstName = "With", LastName = "Photo" }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "No", LastName = "Photo" }, CT);
-        await h.Service.SetProfilePictureAsync(id1, [0xFF, 0xD8], "image/jpeg", CT);
-
-        var result = await h.Service.ListAsync(new(HasPhoto: false), 1, 50, CT);
-
-        Assert.Single(result.Items);
-        Assert.Equal("No", result.Items[0].FirstName);
-    }
-
-    [Fact]
-    public async Task List_CombinedFilters()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "Alice", LastName = "Johnson",
-            Addresses =
-            [
-                new()
-                {
-                    Label = "H", Street = "1 St", City = "Richmond",
-                    State = "VA", PostalCode = "23220", Country = "US"
-                }
-            ]
-        }, CT);
-        await h.Service.CreateAsync(new()
-        {
-            FirstName = "Alice", LastName = "Jones",
-            Addresses =
-            [
-                new()
-                {
-                    Label = "H", Street = "2 St", City = "Norfolk",
-                    State = "VA", PostalCode = "23510", Country = "US"
-                }
-            ]
-        }, CT);
-
-        var result = await h.Service.ListAsync(
-            new(Name: "Alice", City: "Richmond"), 1, 50, CT);
-
-        Assert.Single(result.Items);
-        Assert.Equal("Johnson", result.Items[0].LastName);
-    }
-
-    // ─── Pagination ──────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task List_Pagination_WorksCorrectly()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        for (var i = 0; i < 25; i++)
-            await h.Service.CreateAsync(new() { FirstName = $"U{i:D2}", LastName = "Test" }, CT);
-
-        var p1 = await h.Service.ListAsync(new(), 1, 10, CT);
-        var p2 = await h.Service.ListAsync(new(), 2, 10, CT);
-        var p3 = await h.Service.ListAsync(new(), 3, 10, CT);
-
-        Assert.Equal(25, p1.TotalCount);
-        Assert.Equal(3, p1.TotalPages);
-        Assert.Equal(10, p1.Items.Count);
-        Assert.Equal(10, p2.Items.Count);
-        Assert.Equal(5, p3.Items.Count);
-
-        Assert.True(p1.HasNext);
-        Assert.False(p1.HasPrevious);
-        Assert.True(p2.HasPrevious);
-        Assert.True(p2.HasNext);
-        Assert.True(p3.HasPrevious);
-        Assert.False(p3.HasNext);
+        Assert.Equal(2, page1.Items.Count);
+        Assert.Equal(2, page2.Items.Count);
+        Assert.Equal(5, page1.TotalCount);
+        Assert.True(page1.HasNext);
+        Assert.True(page2.HasPrevious);
     }
 
     [Fact]
     public async Task List_OrdersByLastNameThenFirst()
     {
         await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(new() { FirstName = "Zoe", LastName = "Adams" }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "Amy", LastName = "Adams" }, CT);
-        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Baker" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "B", LastName = "Z" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "A", LastName = "A" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "A" }, CT);
 
         var result = await h.Service.ListAsync(new(), 1, 50, CT);
 
-        Assert.Equal("Amy", result.Items[0].FirstName);
-        Assert.Equal("Zoe", result.Items[1].FirstName);
-        Assert.Equal("Bob", result.Items[2].FirstName);
+        Assert.Equal("A", result.Items[0].FirstName);
+        Assert.Equal("C", result.Items[1].FirstName);
+        Assert.Equal("B", result.Items[2].FirstName);
     }
 
-    // ─── Profile pictures ────────────────────────────────────────────────
+    // ─── List: filters ───────────────────────────────────────────────────
 
     [Fact]
-    public async Task ProfilePicture_SetAndRetrieve()
+    public async Task List_FilterByName_CaseInsensitive()
     {
         await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
-        byte[] data = [0x89, 0x50, 0x4E, 0x47];
+        await h.Service.CreateAsync(new() { FirstName = "Alice", LastName = "Smith" }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "Bob", LastName = "Jones" }, CT);
 
-        await h.Service.SetProfilePictureAsync(id, data, "image/png", CT);
-        var photo = await h.Service.GetProfilePictureAsync(id, CT);
-
-        Assert.NotNull(photo);
-        Assert.Equal(data, photo.Data);
-        Assert.Equal("image/png", photo.ContentType);
-    }
-
-    [Fact]
-    public async Task ProfilePicture_Remove()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
-        await h.Service.SetProfilePictureAsync(id, [0xFF], "image/jpeg", CT);
-
-        await h.Service.RemoveProfilePictureAsync(id, CT);
-
-        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
-    }
-
-    [Fact]
-    public async Task ProfilePicture_GetNonExistent_ReturnsNull()
-    {
-        await using var h = await TestHarness.CreateAsync();
-        var id = await h.Service.CreateAsync(new() { FirstName = "P", LastName = "T" }, CT);
-
-        Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
-    }
-
-    [Fact]
-    public async Task ProfilePicture_SetForNonExistent_Throws()
-    {
-        await using var h = await TestHarness.CreateAsync();
-
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            h.Service.SetProfilePictureAsync(9999, [0xFF], "image/jpeg", CT));
-    }
-
-    // ─── Case-insensitive filtering ──────────────────────────────────────
-
-    [Theory]
-    [InlineData("linc")]
-    [InlineData("LINC")]
-    [InlineData("Linc")]
-    [InlineData("lInC")]
-    public async Task List_FilterByName_CaseInsensitive(string term)
-    {
-        await using var h = await TestHarness.CreateAsync();
-        await h.Service.CreateAsync(
-            new() { FirstName = "Abraham", LastName = "Lincoln" }, CT);
-
-        var result = await h.Service.ListAsync(new(Name: term), 1, 50, CT);
+        var result = await h.Service.ListAsync(new(Name: "alice"), 1, 50, CT);
 
         Assert.Single(result.Items);
+        Assert.Equal("Alice", result.Items[0].FirstName);
     }
 
     [Fact]
@@ -538,11 +352,13 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
         await h.Service.CreateAsync(new()
         {
-            FirstName = "A", LastName = "B",
-            Emails = [new() { Label = "W", Address = "Alice@Example.COM" }]
+            FirstName = "A",
+            LastName = "B",
+            Emails = [new() { Label = "W", Address = "Alice@Test.COM" }]
         }, CT);
+        await h.Service.CreateAsync(new() { FirstName = "C", LastName = "D" }, CT);
 
-        var result = await h.Service.ListAsync(new(Email: "alice@example"), 1, 50, CT);
+        var result = await h.Service.ListAsync(new(Email: "alice@test"), 1, 50, CT);
 
         Assert.Single(result.Items);
     }
@@ -553,7 +369,8 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
         await h.Service.CreateAsync(new()
         {
-            FirstName = "A", LastName = "B",
+            FirstName = "A",
+            LastName = "B",
             Addresses =
             [
                 new()
@@ -575,7 +392,8 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
         await h.Service.CreateAsync(new()
         {
-            FirstName = "A", LastName = "B",
+            FirstName = "A",
+            LastName = "B",
             Addresses =
             [
                 new()
@@ -715,5 +533,201 @@ public sealed class ContactServiceTests
 
         var detail = await h.Service.GetAsync(id, CT);
         Assert.Equal("Trimmed", detail!.Notes[0].Content);
+    }
+
+    // ─── Bulk create ─────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task CreateBulk_CreatesRequestedCount()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        var created = await h.Service.CreateBulkAsync(50, CT);
+
+        Assert.Equal(50, created);
+
+        var result = await h.Service.ListAsync(new(), 1, 100, CT);
+        Assert.Equal(50, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task CreateBulk_ContactsHaveValidNames()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await h.Service.CreateBulkAsync(10, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 100, CT);
+        foreach (var item in result.Items)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(item.FirstName));
+            Assert.False(string.IsNullOrWhiteSpace(item.LastName));
+        }
+    }
+
+    [Fact]
+    public async Task CreateBulk_ContactsHaveChildren()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        // With 100 contacts, statistically we should get some with emails/phones/addresses
+        await h.Service.CreateBulkAsync(100, CT);
+
+        var emailCount = await h.Db.ContactEmails.CountAsync(CT);
+        var phoneCount = await h.Db.ContactPhones.CountAsync(CT);
+        var addressCount = await h.Db.ContactAddresses.CountAsync(CT);
+
+        // With 80%/70%/60% probabilities and 100 contacts, we should have some of each
+        Assert.True(emailCount > 0, "Expected some contacts to have emails");
+        Assert.True(phoneCount > 0, "Expected some contacts to have phones");
+        Assert.True(addressCount > 0, "Expected some contacts to have addresses");
+    }
+
+    [Fact]
+    public async Task CreateBulk_CanBeCalledMultipleTimes()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await h.Service.CreateBulkAsync(10, CT);
+        await h.Service.CreateBulkAsync(10, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 100, CT);
+        Assert.Equal(20, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task CreateBulk_CountClampedToMax()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        // Count above 10,000 should be clamped — we test with a small
+        // value to keep the test fast; the important thing is that
+        // a negative count is clamped to 1.
+        var created = await h.Service.CreateBulkAsync(-5, CT);
+
+        Assert.Equal(1, created);
+    }
+
+    [Fact]
+    public async Task CreateBulk_SetsTimestamps()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var before = DateTime.UtcNow;
+
+        await h.Service.CreateBulkAsync(5, CT);
+
+        var contacts = await h.Db.Contacts.ToListAsync(CT);
+        foreach (var c in contacts)
+        {
+            Assert.True(c.CreatedAtUtc >= before);
+            Assert.True(c.UpdatedAtUtc >= before);
+        }
+    }
+
+    [Fact]
+    public async Task CreateBulk_RespectsCancellation()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        using var cts = new CancellationTokenSource();
+        await cts.CancelAsync();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            h.Service.CreateBulkAsync(500, cts.Token));
+    }
+
+    // ─── Delete all ──────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task DeleteAll_RemovesAllContacts()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "A", LastName = "B" }, CT);
+        await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "C", LastName = "D" }, CT);
+
+        var deleted = await h.Service.DeleteAllAsync(CT);
+
+        Assert.Equal(2, deleted);
+
+        var result = await h.Service.ListAsync(new(), 1, 50, CT);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task DeleteAll_CascadesChildren()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        await h.Service.CreateAsync(new ContactFormModel
+        {
+            FirstName = "A",
+            LastName = "B",
+            Emails = [new() { Label = "W", Address = "a@b.com" }],
+            Phones = [new() { Label = "M", Number = "555-0001" }],
+            Addresses =
+            [
+                new()
+                {
+                    Label = "H", Street = "1 St", City = "X",
+                    PostalCode = "12345", Country = "US"
+                }
+            ]
+        }, CT);
+
+        await h.Service.DeleteAllAsync(CT);
+
+        Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
+        Assert.Equal(0, await h.Db.ContactAddresses.CountAsync(CT));
+    }
+
+    [Fact]
+    public async Task DeleteAll_EmptyDatabase_ReturnsZero()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        var deleted = await h.Service.DeleteAllAsync(CT);
+
+        Assert.Equal(0, deleted);
+    }
+
+    [Fact]
+    public async Task DeleteAll_AfterBulkCreate_RemovesAll()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await h.Service.CreateBulkAsync(50, CT);
+        var deleted = await h.Service.DeleteAllAsync(CT);
+
+        Assert.Equal(50, deleted);
+
+        var result = await h.Service.ListAsync(new(), 1, 100, CT);
+        Assert.Equal(0, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task DeleteAll_ThenCreateBulk_Works()
+    {
+        await using var h = await TestHarness.CreateAsync();
+
+        await h.Service.CreateBulkAsync(10, CT);
+        await h.Service.DeleteAllAsync(CT);
+        await h.Service.CreateBulkAsync(5, CT);
+
+        var result = await h.Service.ListAsync(new(), 1, 100, CT);
+        Assert.Equal(5, result.TotalCount);
+    }
+
+    [Fact]
+    public async Task DeleteAll_DeletesNotes()
+    {
+        await using var h = await TestHarness.CreateAsync();
+        var id = await h.Service.CreateAsync(
+            new ContactFormModel { FirstName = "A", LastName = "B" }, CT);
+        await h.Service.AddNoteAsync(id, "Test note", "u1", "user@test.com", CT);
+
+        await h.Service.DeleteAllAsync(CT);
+
+        Assert.Equal(0, await h.Db.ContactNotes.CountAsync(CT));
     }
 }

@@ -13,6 +13,8 @@ public sealed class ContactTelemetry
     private readonly Counter<long> _deleted;
     private readonly Histogram<double> _queryDuration;
     private readonly Histogram<double> _writeDuration;
+    private readonly Counter<long> _bulkCreated;
+    private readonly Counter<long> _bulkDeleted;
 
     public ContactTelemetry(IMeterFactory meterFactory)
     {
@@ -22,6 +24,8 @@ public sealed class ContactTelemetry
         _deleted = meter.CreateCounter<long>("contacts.deleted", "contacts", "Contacts deleted");
         _queryDuration = meter.CreateHistogram<double>("contacts.query.duration", "ms", "Query duration");
         _writeDuration = meter.CreateHistogram<double>("contacts.write.duration", "ms", "Write duration");
+        _bulkCreated = meter.CreateCounter<long>("contacts.bulk.created", "contacts", "Contacts bulk created");
+        _bulkDeleted = meter.CreateCounter<long>("contacts.bulk.deleted", "contacts", "Contacts bulk deleted");
     }
 
     public void RecordContactCreated() => _created.Add(1);
@@ -29,4 +33,6 @@ public sealed class ContactTelemetry
     public void RecordContactDeleted() => _deleted.Add(1);
     public void RecordQueryDuration(double ms) => _queryDuration.Record(ms);
     public void RecordWriteDuration(double ms) => _writeDuration.Record(ms);
+    public void RecordBulkCreated(long count) => _bulkCreated.Add(count);
+    public void RecordBulkDeleted(long count) => _bulkDeleted.Add(count);
 }
