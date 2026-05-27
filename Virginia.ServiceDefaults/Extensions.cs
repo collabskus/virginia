@@ -1,5 +1,7 @@
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -59,6 +61,7 @@ public static class Extensions
             });
 
         builder.AddOpenTelemetryExporters();
+        builder.AddAzureMonitorExporter();
 
         return builder;
     }
@@ -73,6 +76,30 @@ public static class Extensions
         {
             builder.Services.AddOpenTelemetry().UseOtlpExporter();
         }
+
+        return builder;
+    }
+
+    private static TBuilder AddAzureMonitorExporter<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        // Resolve the connection string. Order of precedence:
+        //   1) APPLICATIONINSIGHTS_CONNECTION_STRING  (standard Azure env var)
+        //   2) ApplicationInsights:ConnectionString   (config file / user secrets)
+        var connectionString =
+            builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+            ?? builder.Configuration["ApplicationInsights:ConnectionString"];
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return builder;
+        }
+
+        builder.Services.AddOpenTelemetry()
+            .UseAzureMonitor(options =>
+            {
+                options.ConnectionString = connectionString;
+            });
 
         return builder;
     }
