@@ -1,0 +1,33 @@
+@using Virginia.Data
+
+<section class="card" aria-labelledby="basic-info-heading">
+    <h2 id="basic-info-heading">Basic Info</h2>
+    <div class="row">
+        <div class="group">
+            <label for="contact-first-name">First Name <span aria-hidden="true">*</span></label>
+            <InputText id="contact-first-name"
+                       @bind-Value="Model.FirstName"
+                       aria-required="true"
+                       aria-describedby="contact-first-name-validation"
+                       data-testid="first-name" />
+            <div id="contact-first-name-validation" class="field-validation">
+                <ValidationMessage For="() => Model.FirstName" />
+            </div>
+        </div>
+        <div class="group">
+            <label for="contact-last-name">Last Name <span aria-hidden="true">*</span></label>
+            <InputText id="contact-last-name"
+                       @bind-Value="Model.LastName"
+                       aria-required="true"
+                       aria-describedby="contact-last-name-validation"
+                       data-testid="last-name" />
+            <div id="contact-last-name-validation" class="field-validation">
+                <ValidationMessage For="() => Model.LastName" />
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ContactFormModel Model { get; set; } = default!;
+}

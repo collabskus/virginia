@@ -1,0 +1,38 @@
+@* Behavior in ProfilePictureCard.razor.cs *@
+
+<section class="card" aria-labelledby="@HeadingId">
+    <h2 id="@HeadingId">Profile Picture</h2>
+    <div class="photo-row">
+        @if (Detail?.HasPhoto == true)
+        {
+            <img src="/api/contacts/@ContactId/photo?v=@PhotoVersion"
+                 alt="Profile photo of @Detail.FirstName @Detail.LastName"
+                 class="avatar-lg"
+                 data-testid="profile-photo" />
+            <button type="button"
+                    class="btn btn-danger-sm"
+                    disabled="@Saving"
+                    data-testid="remove-photo"
+                    @onclick="OnRemoveClicked">
+                Remove
+            </button>
+        }
+        else
+        {
+            <div class="avatar-lg avatar-empty" aria-hidden="true">No photo</div>
+        }
+        <div class="photo-upload">
+            <label for="@UploadId">Upload (max 2 MB, JPEG/PNG/WebP):</label>
+            <InputFile id="@UploadId"
+                       OnChange="OnFileSelectedAsync"
+                       accept="image/jpeg,image/png,image/webp"
+                       data-testid="upload-photo" />
+            @if (!string.IsNullOrEmpty(LocalError))
+            {
+                <div class="photo-error" role="alert" data-testid="photo-error">
+                    @LocalError
+                </div>
+            }
+        </div>
+    </div>
+</section>

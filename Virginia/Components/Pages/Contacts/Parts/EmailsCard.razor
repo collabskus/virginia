@@ -1,0 +1,68 @@
+@using Virginia.Data
+
+<section class="card" aria-labelledby="emails-heading">
+    <div class="card-head">
+        <h2 id="emails-heading">Emails</h2>
+        <button type="button"
+                class="btn btn-add"
+                data-testid="add-email"
+                @onclick="AddEmail">
+            + Add email
+        </button>
+    </div>
+
+    @if (Items.Count == 0)
+    {
+        <p class="hint" data-testid="emails-empty">No email addresses yet.</p>
+    }
+    else
+    {
+        <ul class="child-list" role="list" data-testid="emails-list">
+            @foreach (var item in Items)
+            {
+                var labelId = $"email-label-{item.GetHashCode():x}";
+                var addrId = $"email-addr-{item.GetHashCode():x}";
+                var valId = $"email-val-{item.GetHashCode():x}";
+                <li class="child-item" @key="item" data-testid="email-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label for="@labelId">Label</label>
+                            <InputText id="@labelId"
+                                       @bind-Value="item.Label"
+                                       data-testid="email-label" />
+                        </div>
+                        <div class="group">
+                            <label for="@addrId">
+                                Address <span aria-hidden="true">*</span>
+                            </label>
+                            <InputText id="@addrId"
+                                       @bind-Value="item.Address"
+                                       type="email"
+                                       aria-required="true"
+                                       aria-describedby="@valId"
+                                       data-testid="email-address" />
+                            <div id="@valId" class="field-validation">
+                                <ValidationMessage For="() => item.Address" />
+                            </div>
+                        </div>
+                        <button type="button"
+                                class="btn-x"
+                                aria-label="Remove email"
+                                data-testid="remove-email"
+                                @onclick="() => RemoveEmail(item)">
+                            ✕
+                        </button>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<EmailFormModel> Items { get; set; } = default!;
+
+    private void AddEmail() => Items.Add(new EmailFormModel());
+    private void RemoveEmail(EmailFormModel item) => Items.Remove(item);
+}

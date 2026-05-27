@@ -1,0 +1,112 @@
+@page "/contacts/new"
+@page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
+@rendermode InteractiveServer
+@using Virginia.Components.Pages.Contacts.Parts
+@using Virginia.Components.Shared
+
+<PageTitle>@(IsNew ? "New Contact" : "Edit Contact") | Virginia</PageTitle>
+
+<div class="detail-page" role="region" aria-labelledby="contact-page-heading">
+    <nav class="detail-nav" aria-label="Detail navigation">
+        <button type="button"
+                class="btn btn-ghost"
+                data-testid="back-to-list"
+                @onclick="GoBack">
+            ← Back to list
+        </button>
+    </nav>
+
+    <h1 id="contact-page-heading" class="page-heading">
+        @(IsNew ? "New Contact" : "Edit Contact")
+    </h1>
+
+    <ToastStack />
+
+    @if (NotFound)
+    {
+        <div class="banner banner-error" role="alert" data-testid="not-found">
+            Contact not found. <a href="/" data-testid="not-found-back">Back to list</a>
+        </div>
+    }
+    else if (Loading)
+    {
+        <div class="status"
+             role="status"
+             aria-live="polite"
+             data-testid="loading">
+            Loading...
+        </div>
+    }
+    else if (DeletedByOther)
+    {
+        <div class="banner banner-error" role="alert" data-testid="deleted-by-other">
+            <span>This contact was deleted by another user.</span>
+            <button type="button"
+                    class="btn btn-secondary"
+                    data-testid="deleted-back"
+                    @onclick="GoBack">
+                Back to list
+            </button>
+        </div>
+    }
+    else
+    {
+        @if (Error is not null)
+        {
+            <div class="banner banner-error"
+                 role="alert"
+                 data-testid="form-error">
+                @Error
+            </div>
+        }
+
+        @if (Saved)
+        {
+            <div class="banner banner-success"
+                 role="status"
+                 aria-live="polite"
+                 data-testid="form-saved">
+                Contact saved successfully.
+            </div>
+        }
+
+        @if (!IsNew && Detail is not null)
+        {
+            <ProfilePictureCard ContactId="Id!.Value"
+                                Detail="Detail"
+                                PhotoVersion="PhotoVer"
+                                Saving="Saving"
+                                OnUpload="OnPhotoUploadAsync"
+                                OnRemove="OnPhotoRemoveAsync" />
+        }
+
+        <EditForm EditContext="EditContext"
+                  OnValidSubmit="SaveAsync"
+                  FormName="contact">
+            <DataAnnotationsValidator />
+            <div class="validation-summary-wrap" data-testid="validation-summary">
+                <ValidationSummary />
+            </div>
+
+            <BasicInfoCard Model="Model" />
+
+            <EmailsCard Items="Model.Emails" />
+            <PhonesCard Items="Model.Phones" />
+            <AddressesCard Items="Model.Addresses" />
+
+            <ContactActions IsNew="IsNew"
+                            Saving="Saving"
+                            ConfirmingDelete="ConfirmingDelete"
+                            OnStartDelete="StartDeleteConfirm"
+                            OnCancelDelete="CancelDeleteConfirm"
+                            OnDelete="DeleteAsync"
+                            OnCancel="GoBack" />
+        </EditForm>
+
+        @if (!IsNew && Detail is not null)
+        {
+            <NotesCard Detail="Detail" OnAddNote="OnAddNoteAsync" />
+        }
+    }
+</div>
