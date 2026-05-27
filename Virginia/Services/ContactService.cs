@@ -7,7 +7,8 @@ namespace Virginia.Services;
 public sealed partial class ContactService(
     AppDbContext db,
     ILogger<ContactService> logger,
-    ContactTelemetry telemetry) : IContactService
+    ContactTelemetry telemetry,
+    IContactChangeNotifier notifier) : IContactService
 {
     private const int MaxPageSize = 100;
     private const int BulkBatchSize = 50;
@@ -204,7 +205,8 @@ public sealed partial class ContactService(
 
     // ─── Update ──────────────────────────────────────────────────────────
 
-    public async Task UpdateAsync(int id, ContactFormModel form, CancellationToken ct)
+    public async Task UpdateAsync(
+        int id, ContactFormModel form, Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("UpdateContact");
         activity?.SetTag("contact.id", id);
@@ -274,6 +276,8 @@ public sealed partial class ContactService(
             telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
 
             Log.UpdatedContact(logger, id, contact.FullName, sw.Elapsed.TotalMilliseconds);
+
+            notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.Updated, originId));
         }
         catch (Exception ex) when (ex is not InvalidOperationException)
         {
@@ -285,7 +289,7 @@ public sealed partial class ContactService(
 
     // ─── Delete ──────────────────────────────────────────────────────────
 
-    public async Task DeleteAsync(int id, CancellationToken ct)
+    public async Task DeleteAsync(int id, Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("DeleteContact");
         activity?.SetTag("contact.id", id);
@@ -304,12 +308,15 @@ public sealed partial class ContactService(
         telemetry.RecordContactDeleted();
         telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
         Log.DeletedContact(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.Deleted, originId));
     }
 
     // ─── Profile picture ─────────────────────────────────────────────────
 
     public async Task SetProfilePictureAsync(
-        int id, byte[] data, string contentType, CancellationToken ct)
+        int id, byte[] data, string contentType,
+        Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("SetProfilePicture");
         activity?.SetTag("contact.id", id);
@@ -329,6 +336,8 @@ public sealed partial class ContactService(
             throw new InvalidOperationException($"Contact {id} not found.");
 
         Log.SetProfilePicture(logger, id, data.Length, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.PhotoChanged, originId));
     }
 
     public async Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct)
@@ -347,7 +356,7 @@ public sealed partial class ContactService(
             result.ProfilePictureContentType ?? "image/jpeg");
     }
 
-    public async Task RemoveProfilePictureAsync(int id, CancellationToken ct)
+    public async Task RemoveProfilePictureAsync(int id, Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("RemoveProfilePicture");
         activity?.SetTag("contact.id", id);
@@ -361,13 +370,15 @@ public sealed partial class ContactService(
 
         sw.Stop();
         Log.RemovedProfilePicture(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.PhotoChanged, originId));
     }
 
     // ─── Notes ───────────────────────────────────────────────────────────
 
     public async Task<int> AddNoteAsync(
         int contactId, string content, string userId, string userName,
-        CancellationToken ct)
+        Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
         activity?.SetTag("contact.id", contactId);
@@ -391,6 +402,10 @@ public sealed partial class ContactService(
 
         sw.Stop();
         Log.AddedNote(logger, note.Id, contactId, userName, sw.Elapsed.TotalMilliseconds);
+
+        var dto = new NoteDto(note.Id, note.Content, note.CreatedByUserName, note.CreatedAtUtc);
+        notifier.Publish(new ContactChangeEvent(
+            contactId, ContactChangeKind.NoteAdded, originId, dto));
 
         return note.Id;
     }

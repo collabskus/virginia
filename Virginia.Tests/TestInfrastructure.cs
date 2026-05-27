@@ -17,12 +17,18 @@ public sealed class TestHarness : IAsyncDisposable
 
     public AppDbContext Db { get; }
     public IContactService Service { get; }
+    public IContactChangeNotifier Notifier { get; }
 
-    private TestHarness(SqliteConnection connection, AppDbContext db, IContactService service)
+    private TestHarness(
+        SqliteConnection connection,
+        AppDbContext db,
+        IContactService service,
+        IContactChangeNotifier notifier)
     {
         _connection = connection;
         Db = db;
         Service = service;
+        Notifier = notifier;
     }
 
     public static async Task<TestHarness> CreateAsync()
@@ -39,12 +45,15 @@ public sealed class TestHarness : IAsyncDisposable
 
         var meterFactory = new TestMeterFactory();
         var telemetry = new ContactTelemetry(meterFactory);
+        IContactChangeNotifier notifier = new ContactChangeNotifier(
+            NullLogger<ContactChangeNotifier>.Instance);
         IContactService service = new ContactService(
             db,
             NullLogger<ContactService>.Instance,
-            telemetry);
+            telemetry,
+            notifier);
 
-        return new TestHarness(connection, db, service);
+        return new TestHarness(connection, db, service, notifier);
     }
 
     public async ValueTask DisposeAsync()

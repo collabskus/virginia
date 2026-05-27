@@ -49,6 +49,7 @@ builder.Services.AddCascadingAuthenticationState();
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddSingleton<ContactTelemetry>();
+builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
 
 // ── Register custom OTEL sources/meters ──────────────────────────────────────
 builder.Services.AddOpenTelemetry()

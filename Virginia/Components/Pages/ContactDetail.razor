@@ -2,7 +2,9 @@
 @page "/contacts/{Id:int}"
 @attribute [Authorize(Policy = "Approved")]
 @rendermode InteractiveServer
+@implements IDisposable
 @inject IContactService ContactService
+@inject IContactChangeNotifier Notifier
 @inject NavigationManager Nav
 @inject ILogger<ContactDetail> Logger
 @inject AuthenticationStateProvider AuthStateProvider
@@ -26,6 +28,33 @@
         return;
     }
 
+    @if (deletedByOther)
+    {
+        <div class="banner banner-error" role="alert">
+            This contact was deleted by another user.
+            <button class="btn btn-secondary" @onclick="GoBack">Back to list</button>
+        </div>
+        return;
+    }
+
+    @if (toasts.Count > 0)
+    {
+        <div class="toast-stack" aria-live="polite">
+            @foreach (var toast in toasts)
+            {
+                <div class="toast toast-@toast.SeverityClass" @key="toast.Id">
+                    <span class="toast-text">@toast.Message</span>
+                    @if (toast.HasReload)
+                    {
+                        <button class="btn btn-add" @onclick="ReloadFromServer">Reload</button>
+                    }
+                    <button class="toast-dismiss" @onclick="() => DismissToast(toast.Id)"
+                            aria-label="Dismiss">✕</button>
+                </div>
+            }
+        </div>
+    }
+
     @if (error is not null)
     {
         <div class="banner banner-error" role="alert">@error</div>
@@ -36,7 +65,6 @@
         <div class="banner banner-success" role="status">Contact saved successfully.</div>
     }
 
-    <!-- Profile picture (edit mode only) -->
     @if (!IsNew)
     {
         <section class="card">
@@ -63,11 +91,10 @@
         </section>
     }
 
-    <EditForm Model="model" OnValidSubmit="SaveAsync" FormName="contact">
+    <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="contact">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
-        <!-- Basic info -->
         <section class="card">
             <h2>Basic Info</h2>
             <div class="row">
@@ -84,7 +111,6 @@
             </div>
         </section>
 
-        <!-- Emails -->
         <section class="card">
             <div class="card-head">
                 <h2>Emails</h2>
@@ -118,7 +144,6 @@
             }
         </section>
 
-        <!-- Phones -->
         <section class="card">
             <div class="card-head">
                 <h2>Phones</h2>
@@ -152,7 +177,6 @@
             }
         </section>
 
-        <!-- Addresses -->
         <section class="card">
             <div class="card-head">
                 <h2>Addresses</h2>
@@ -210,7 +234,6 @@
             }
         </section>
 
-        <!-- Actions -->
         <div class="actions">
             <button type="submit" class="btn btn-primary" disabled="@saving">
                 @(saving ? "Saving..." : "Save")
@@ -237,7 +260,6 @@
         </div>
     </EditForm>
 
-    <!-- Notes (edit mode only) -->
     @if (!IsNew && detail is not null)
     {
         <section class="card">
@@ -283,6 +305,7 @@
 
     private bool IsNew => Id is null;
     private ContactFormModel model = new();
+    private EditContext editContext = null!;
     private ContactDetailDto? detail;
     private bool loading = true;
     private bool notFound;
@@ -292,9 +315,18 @@
     private int photoVer = 1;
     private bool confirmingDelete;
     private string newNoteContent = "";
+    private bool deletedByOther;
+
+    // Unique per-circuit id so we can ignore echoes of our own writes.
+    private readonly Guid originId = Guid.NewGuid();
+
+    private readonly List<ToastMessage> toasts = [];
+    private int nextToastId = 1;
 
     protected override async Task OnInitializedAsync()
     {
+        editContext = new EditContext(model);
+
         if (!IsNew)
         {
             detail = await ContactService.GetAsync(Id!.Value);
@@ -305,9 +337,130 @@
                 return;
             }
             model = ContactFormModel.FromDetail(detail);
+            editContext = new EditContext(model);
+
+            Notifier.Changed += OnContactChanged;
         }
+
         loading = false;
     }
+
+    public void Dispose()
+    {
+        Notifier.Changed -= OnContactChanged;
+    }
+
+    // ─── Real-time updates ──────────────────────────────────────────────
+
+    private void OnContactChanged(ContactChangeEvent evt)
+    {
+        if (IsNew || evt.ContactId != Id!.Value) return;
+        if (evt.OriginId == originId) return;
+
+        _ = InvokeAsync(() => HandleChangeAsync(evt));
+    }
+
+    private async Task HandleChangeAsync(ContactChangeEvent evt)
+    {
+        switch (evt.Kind)
+        {
+            case ContactChangeKind.NoteAdded when evt.Note is not null:
+                if (detail is not null)
+                {
+                    var newNotes = new List<NoteDto>(detail.Notes.Count + 1) { evt.Note };
+                    newNotes.AddRange(detail.Notes);
+                    detail = detail with { Notes = newNotes };
+                }
+                AddToast($"{evt.Note.CreatedByUserName} added a note.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.PhotoChanged:
+                detail = await ContactService.GetAsync(Id!.Value);
+                if (detail is null) { deletedByOther = true; break; }
+                photoVer++;
+                AddToast("Profile picture was updated.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.Updated:
+                if (editContext.IsModified())
+                {
+                    AddToast(
+                        "Another user changed this contact. Reload to see their changes, or save to overwrite.",
+                        ToastSeverity.Warn,
+                        hasReload: true);
+                }
+                else
+                {
+                    await ReloadFromServer();
+                    AddToast("This contact was updated by another user.", ToastSeverity.Info, false);
+                }
+                break;
+
+            case ContactChangeKind.Deleted:
+                deletedByOther = true;
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ReloadFromServer()
+    {
+        if (IsNew) return;
+
+        var fresh = await ContactService.GetAsync(Id!.Value);
+        if (fresh is null)
+        {
+            deletedByOther = true;
+            StateHasChanged();
+            return;
+        }
+
+        detail = fresh;
+        model = ContactFormModel.FromDetail(fresh);
+        editContext = new EditContext(model);
+        photoVer++;
+
+        toasts.RemoveAll(t => t.HasReload);
+        StateHasChanged();
+    }
+
+    // ─── Toast helpers ──────────────────────────────────────────────────
+
+    private void AddToast(string message, ToastSeverity severity, bool hasReload)
+    {
+        if (hasReload && toasts.Any(t => t.HasReload)) return;
+
+        var toast = new ToastMessage(nextToastId++, message, severity, hasReload);
+        toasts.Add(toast);
+
+        if (severity == ToastSeverity.Info)
+        {
+            _ = AutoDismiss(toast.Id, TimeSpan.FromSeconds(5));
+        }
+    }
+
+    private async Task AutoDismiss(int id, TimeSpan after)
+    {
+        await Task.Delay(after);
+        await InvokeAsync(() =>
+        {
+            if (toasts.RemoveAll(t => t.Id == id) > 0)
+                StateHasChanged();
+        });
+    }
+
+    private void DismissToast(int id) => toasts.RemoveAll(t => t.Id == id);
+
+    private enum ToastSeverity { Info, Warn }
+
+    private sealed record ToastMessage(
+        int Id, string Message, ToastSeverity Severity, bool HasReload)
+    {
+        public string SeverityClass => Severity == ToastSeverity.Warn ? "warn" : "info";
+    }
+
+    // ─── Existing handlers ──────────────────────────────────────────────
 
     private async Task SaveAsync()
     {
@@ -325,9 +478,11 @@
             }
             else
             {
-                await ContactService.UpdateAsync(Id!.Value, model);
+                await ContactService.UpdateAsync(Id!.Value, model, originId);
                 detail = await ContactService.GetAsync(Id!.Value);
                 saved = true;
+                toasts.RemoveAll(t => t.HasReload);
+                editContext = new EditContext(model);
                 Logger.LogInformation("Updated contact {Id}", Id);
             }
         }
@@ -349,7 +504,7 @@
 
         try
         {
-            await ContactService.DeleteAsync(Id!.Value);
+            await ContactService.DeleteAsync(Id!.Value, originId);
             Logger.LogInformation("Deleted contact {Id}", Id);
             Nav.NavigateTo("/");
         }
@@ -385,7 +540,8 @@
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
 
-            await ContactService.SetProfilePictureAsync(Id!.Value, ms.ToArray(), file.ContentType);
+            await ContactService.SetProfilePictureAsync(
+                Id!.Value, ms.ToArray(), file.ContentType, originId);
             detail = await ContactService.GetAsync(Id!.Value);
             photoVer++;
         }
@@ -399,7 +555,7 @@
     private async Task RemovePhoto()
     {
         error = null;
-        await ContactService.RemoveProfilePictureAsync(Id!.Value);
+        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId);
         detail = await ContactService.GetAsync(Id!.Value);
         photoVer++;
     }
@@ -415,7 +571,8 @@
             var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
             var userName = authState.User.Identity?.Name ?? "unknown";
 
-            await ContactService.AddNoteAsync(Id!.Value, newNoteContent, userId, userName);
+            await ContactService.AddNoteAsync(
+                Id!.Value, newNoteContent, userId, userName, originId);
             newNoteContent = "";
             detail = await ContactService.GetAsync(Id!.Value);
         }
