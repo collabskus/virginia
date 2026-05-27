@@ -18601,3 +18601,4 @@ Error (active)	CA1068	Method 'Virginia.Services.IContactService.UpdateAsync(int,
 On another note, the razor file has gotten terribly large.
 contact detail.razor is almost six hundred lines long
 what can we do about this?
+does it make sense to make partials for things only used in one place?
