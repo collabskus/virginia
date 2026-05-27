@@ -1,0 +1,124 @@
+@page "/"
+@using CollabsKus.BlazorWebAssembly.Models
+@using CollabsKus.BlazorWebAssembly.Services
+@implements IDisposable
+
+<PageTitle>Kathmandu Calendar & Time</PageTitle>
+
+<div class="header">
+    <h1>काठमाडौं</h1>
+    <div class="subtitle">Kathmandu, Nepal</div>
+</div>
+
+@if (_isLoading)
+{
+    <div class="loading">Loading...</div>
+}
+else if (_error != null)
+{
+    <div class="error">@_error</div>
+}
+else
+{
+    <TimeDisplay CurrentTime="_currentTime" />
+    <DateCards CalendarData="_calendarData?.Res" />
+    <MoonDisplay MoonPhase="_moonPhase" />
+    <CalendarGrid CalendarData="_calendarData?.Res" />
+}
+
+<div class="footer">
+    Last updated: <span>@_lastUpdate</span>
+</div>
+
+@code {
+    [Inject]
+    private KathmanduCalendarService CalendarService { get; set; } = default!;
+
+    [Inject]
+    private MoonPhaseService MoonPhaseService { get; set; } = default!;
+
+    private CalendarResponse? _calendarData;
+    private TimeResponse? _timeData;
+    private MoonPhase? _moonPhase;
+    private DateTime _currentTime = DateTime.Now;
+    private string _lastUpdate = "--";
+    private bool _isLoading = true;
+    private string? _error;
+    private System.Threading.Timer? _clockTimer;
+    private System.Threading.Timer? _timeApiTimer;
+    private System.Threading.Timer? _calendarApiTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Initial data fetch
+            await LoadDataAsync();
+
+            // Start clock timer (updates every second)
+            _clockTimer = new System.Threading.Timer(async _ =>
+            {
+                _currentTime = CalendarService.GetCurrentKathmanduTime();
+                await InvokeAsync(StateHasChanged);
+            }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
+            // Start time API timer (refreshes every hour)
+            _timeApiTimer = new System.Threading.Timer(async _ =>
+            {
+                await LoadTimeDataAsync();
+            }, null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
+
+            // Start calendar API timer (refreshes every 24 hours)
+            _calendarApiTimer = new System.Threading.Timer(async _ =>
+            {
+                await LoadCalendarDataAsync();
+            }, null, TimeSpan.FromHours(24), TimeSpan.FromHours(24));
+
+            _isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Failed to load data: {ex.Message}";
+            _isLoading = false;
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        await Task.WhenAll(LoadCalendarDataAsync(), LoadTimeDataAsync());
+        UpdateMoonPhase();
+        UpdateLastUpdateTime();
+    }
+
+    private async Task LoadCalendarDataAsync()
+    {
+        _calendarData = await CalendarService.GetTodayDataAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadTimeDataAsync()
+    {
+        _timeData = await CalendarService.GetTimeDataAsync();
+        _currentTime = CalendarService.GetCurrentKathmanduTime();
+        UpdateMoonPhase();
+        UpdateLastUpdateTime();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateMoonPhase()
+    {
+        _moonPhase = MoonPhaseService.CalculateMoonPhase(_currentTime);
+    }
+
+    private void UpdateLastUpdateTime()
+    {
+        _lastUpdate = DateTime.Now.ToString("hh:mm:ss tt");
+    }
+
+    public void Dispose()
+    {
+        _clockTimer?.Dispose();
+        _timeApiTimer?.Dispose();
+        _calendarApiTimer?.Dispose();
+    }
+}

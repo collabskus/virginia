@@ -1,0 +1,55 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<div class="app-shell">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="app-header">
+        <a href="/" class="app-logo" data-testid="app-logo">Virginia</a>
+        <span class="app-subtitle">Address Book</span>
+        <div class="app-header-spacer"></div>
+        <AuthorizeView>
+            <Authorized>
+                <nav class="app-nav" aria-label="Account">
+                    <span class="app-user" data-testid="current-user">
+                        @context.User.Identity?.Name
+                    </span>
+                    <AuthorizeView Roles="Admin" Context="adminContext">
+                        <Authorized Context="adminInner">
+                            <a href="/admin/users"
+                               class="header-link"
+                               data-testid="nav-users">Users</a>
+                        </Authorized>
+                    </AuthorizeView>
+                    <a href="/account/change-password"
+                       class="header-link"
+                       data-testid="nav-password">Password</a>
+                    <form method="post"
+                          action="/account/perform-logout"
+                          class="logout-form">
+                        <AntiforgeryToken />
+                        <button type="submit"
+                                class="btn-logout"
+                                data-testid="logout-button">
+                            Logout
+                        </button>
+                    </form>
+                </nav>
+            </Authorized>
+        </AuthorizeView>
+    </header>
+
+    <main id="main-content" class="app-main" tabindex="-1">
+        @Body
+    </main>
+
+    <footer class="app-footer">
+        <small>&copy; @DateTime.UtcNow.Year Virginia — Built with .NET 10, Aspire &amp; Blazor</small>
+    </footer>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet role="alert">
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss" role="button" tabindex="0" aria-label="Dismiss error">🗙</span>
+</div>

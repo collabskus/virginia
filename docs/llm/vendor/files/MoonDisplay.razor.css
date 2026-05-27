@@ -1,0 +1,33 @@
+.moon-display {
+    text-align: center;
+    margin: 30px 0;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.label {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.moon-icon {
+    font-size: 4rem;
+    margin: 15px 0;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+}
+
+.moon-phase-name {
+    font-size: 1.3rem;
+    margin-top: 10px;
+    font-weight: 300;
+}
+
+.moon-illumination {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin-top: 5px;
+}

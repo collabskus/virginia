@@ -1,0 +1,77 @@
+.calendar-grid {
+    margin-top: 30px;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.calendar-header .day-name {
+    text-align: center;
+    font-size: 0.8rem;
+    padding: 8px;
+    opacity: 0.7;
+    font-weight: 500;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.calendar-day {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.calendar-day.pre,
+.calendar-day.next {
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+    transform: scale(1.05);
+}
+
+.calendar-day .bs-date {
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.calendar-day .ad-date {
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+    .calendar-day {
+        padding: 8px 5px;
+        font-size: 0.8rem;
+    }
+
+    .calendar-day .bs-date {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-day {
+        padding: 5px 3px;
+    }
+
+    .calendar-day .bs-date {
+        font-size: 0.8rem;
+    }
+}

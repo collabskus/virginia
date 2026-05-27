@@ -18803,3 +18803,98 @@ Claude reached its tool-use limit for this turn.
 
 Continue 
 
+Good, everything from the previous turn is preserved. Now let me write the three missing files: Program.cs, NaturalComparerTests, and ToastServiceTests. Then check the TestInfrastructure to make sure the test files follow the existing pattern.Good. Now I have everything I need for the tests. Let me write the missing files.Now the test files:Now let me verify everything is in place and audit the files for any obvious issues before presenting:Let me audit the most critical files for issues. First, look at the ContactDetail.razor and the orchestrator to verify cohesion:One issue: `<ValidationSummary class="validation-summary" ...>` — the Blazor `ValidationSummary` component doesn't accept arbitrary attributes via `class=`. It does accept it through the `CaptureUnmatchedValues` mechanism in some versions, but to be safe, let me wrap it instead. Also, the `ValidationSummary` doesn't take a `data-testid` attribute directly.Now let me audit one more critical thing — the `data-testid` attribute on `InputFile`. Looking at Blazor's `InputFile`, it should accept arbitrary attributes through `AdditionalAttributes` if they're not declared. Let me check the ProfilePictureCard once more:`InputFile` does accept arbitrary attributes via its `AdditionalAttributes` capture and passes them through to the rendered `<input type="file">`. Good. Same for `InputText` and `data-testid`. Verified pattern.
+
+Let me also check ContactActions for the `@ref` usage:One issue: `OnParametersSet` will set `_shouldFocusConfirm = true` on EVERY render where ConfirmingDelete is true, not just on transition. That means after the focus completes, if anything causes a re-render while still in confirming state (a prop change on the parent), it would try to refocus and possibly steal focus from where the user has navigated. Let me fix the transition detection:Now let me check the ContactDetail.razor.cs — specifically the issue where I call `Toasts.DismissReloadToasts()` from the page after save. Since `IToastService` is scoped per circuit, this is the same instance the ToastStack uses. Good.
+
+But I noticed one issue: the `NotesCard` rethrows the exception so the parent handles it via Error banner. Yet I also call `Toasts.ShowError(...)` inside it. That's duplicated UX. Let me fix this — let the parent handle errors uniformly:Now `IToastService` and `ILogger` in NotesCard — IToastService is no longer used. Let me clean that up:Similarly for ProfilePictureCard — it uses Toasts. Let me check that:Same issue here — the `LocalError` is shown inline AND `Toasts.ShowError` is called. Duplicated. Let me also be consistent — local component-level errors via inline `<div role="alert">`, page-level errors via the toast/banner. The local error inline is appropriate for a card. Drop the toast.Now let me audit the ContactDetail.razor.cs for any issues, particularly around the rethrow in OnAddNoteAsync:The `throw` here causes the NotesCard to also catch and log, which is fine — double-logging is acceptable for failures. But more importantly, by rethrowing, the NotesCard `try/catch` triggers and clears `Submitting`. That's the right outcome. The page sets `Error` so the user sees a banner.
+
+Actually wait — let me reconsider. The flow is:
+1. NotesCard calls `OnAddNote.InvokeAsync(content)` which routes to `OnAddNoteAsync` in the page
+2. Page's `OnAddNoteAsync` catches, sets `Error = ...`, then `throw;`
+3. The rethrow propagates back through `InvokeAsync` to NotesCard's catch
+4. NotesCard catches and logs again, clears `Submitting`
+
+That's correct but slightly wasteful (double log). Let me not rethrow — the page's setting of `Error` and the `StateHasChanged` from completing the async should trigger a re-render. But NotesCard's `Submitting` won't get reset unless its try/catch fires. Actually, `finally` always runs even on success, so `Submitting = false` will run regardless. So we don't need the rethrow.One more issue I want to look at: when `NotesCard` clears `NewNoteContent = ""` on success, that should work — but the success path doesn't trigger anything to clear it if the page-level handler swallowed the exception. Actually it does: if no exception, the assignment runs. Good.
+
+Now, a subtle issue I want to address — the `ToastService` uses `Task.Run` for auto-dismiss. In Blazor Server, that fires-and-forgets on the thread pool. The `Dismiss` it calls would then need `InvokeAsync` to marshal back to the renderer's sync context. But `Dismiss` itself just modifies the list and invokes `Changed`. The `ToastStack` subscribes with `InvokeAsync(StateHasChanged)` already, so the marshalling happens there. Good.
+
+However, there's a thread-safety concern: `_toasts.RemoveAll` while another thread might be iterating it. The `IReadOnlyList<Toast> Toasts => _toasts;` exposes the list directly. In practice, the only iterator is the Razor template via `foreach`, and that happens on the renderer's sync context — so there's a race between the background `Dismiss` modifying the list and the renderer reading it. Let me make this thread-safe with a lock:Wait - `Lock` type is a newer .NET 9+ feature. The project is on .NET 10 so it's fine, but let me double-check the IContactService for the Lock reference precedent... Actually .NET 9 introduced `System.Threading.Lock`. .NET 10 has it. Good.
+
+One more thing — I notice the `IToastService` interface declares `IReadOnlyList<Toast> Toasts`, but ToastService's getter creates a new array each time. That's a behavior change. The interface should stay consistent. Let me re-look at the original to ensure consistency.
+
+The interface says `IReadOnlyList<Toast> Toasts { get; }`. The implementation returns `_toasts.ToArray()` (which implements IReadOnlyList<Toast>). That works.
+
+Now the test file uses `svc.Toasts[0]` which works on the snapshot. And `svc.Toasts.Count`. All good.
+
+Let me also fix one issue: the test `Toast_Ids_Are_Sequential_And_Unique` test depends on the actual ID values being increasing, but Ids are just unique (sequential is an implementation detail). Let me make the test only check uniqueness:
+
+Actually re-reading my test — it does just check uniqueness via `Distinct().Count()`. Good.
+
+Now let me also double-check the empty state hint color contrast: `#595959` on `#fff` (white) → 7.0:1 (passes AAA). Good.
+
+Let me verify the page-level CSS once more:Good. Now let me view the final ContactDetail.razor:Good. Now let me also create a deletion-notice file so the human knows which files to delete:Let me verify the final inventory and present the files. First, a final list:Let me zip everything for easier downloading:Everything is shipped. Here's the headline summary.
+
+**The zip at the top** is the easiest path — unpack at your repo root and it overlays cleanly. Read `REFACTOR_PLAN.md` first for the why; `APPLY_INSTRUCTIONS.md` for the how, complete with deletion list, file map, and a Playwright selector cheat sheet.
+
+A few things worth flagging that came out of the implementation pass and aren't called out in the plan:
+
+1. **`item.GetHashCode()` as the basis for input field `id` attributes** in the email/phone/address loops. This works because default reference hashcodes are stable for an object's lifetime, but it's slightly ugly. If you want it cleaner, add a `Guid LocalId { get; } = Guid.NewGuid();` to each `EmailFormModel` / `PhoneFormModel` / `AddressFormModel` — that's a UI-only change to `FormModels.cs`, not a schema change. Say the word and I'll do it.
+
+2. **The toast service is thread-safe via `System.Threading.Lock`** (the new .NET 9+ lock primitive). The auto-dismiss runs on the thread pool, so the lock matters. The renderer reads `Toasts` as a snapshot array, so iteration is safe.
+
+3. **Two cards (`Profile`, `Notes`) had duplicate error UX** — both an inline error AND a toast — in my first draft. I removed the toasts in those cases. Pattern is now: in-component validation/transient errors get an inline `role="alert"` element; cross-cutting events (someone else edited this contact, etc.) get a toast. Cleaner mental model.
+
+4. **`ValidationSummary` is wrapped in a `<div>`** rather than receiving `data-testid` directly, because the component doesn't pass through arbitrary attributes reliably across all Blazor versions.
+
+5. **The contrast failures were real**: `#999` on `#f8f9fa` was 2.85:1, well under WCAG AA's 4.5:1. Fixed to `#595959` (7.0:1, passes AAA). Same for `#aaa` hints.
+
+6. **One thing I deliberately did NOT touch**: `ContactList.razor`. It has the same kinds of issues (row-as-button with `tabindex="0"` instead of a proper anchor, bulk-actions inlined into the page) but doing both pages in one pass would have ballooned the change. The plan has it listed as the next refactor.
+
+Let me know if you want adjustments — particularly on the `LocalId` question, or if you'd like me to do the same treatment to `ContactList` next.
+
+66
+52
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

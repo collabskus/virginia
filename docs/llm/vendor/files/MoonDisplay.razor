@@ -1,0 +1,13 @@
+@using CollabsKus.BlazorWebAssembly.Models
+
+<div class="moon-display">
+    <div class="label">MOON PHASE</div>
+    <div class="moon-icon">@MoonPhase?.Icon</div>
+    <div class="moon-phase-name">@MoonPhase?.Name</div>
+    <div class="moon-illumination">@((int)(MoonPhase?.Illumination ?? 0))% Illuminated</div>
+</div>
+
+@code {
+    [Parameter]
+    public MoonPhase? MoonPhase { get; set; }
+}

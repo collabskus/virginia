@@ -1,0 +1,23 @@
+@using CollabsKus.BlazorWebAssembly.Services
+
+<div class="time-display">
+    <div class="time">@Hours:@Minutes:@Seconds <span class="ampm">@AmPm</span></div>
+    <div class="time-nepali">@HoursNepali:@MinutesNepali:@SecondsNepali</div>
+</div>
+
+@code {
+    [Parameter]
+    public DateTime CurrentTime { get; set; }
+
+    [Inject]
+    private KathmanduCalendarService CalendarService { get; set; } = default!;
+
+    private string Hours => CurrentTime.ToString("hh");
+    private string Minutes => CurrentTime.ToString("mm");
+    private string Seconds => CurrentTime.ToString("ss");
+    private string AmPm => CurrentTime.ToString("tt");
+
+    private string HoursNepali => CalendarService.ToNepaliDigits(int.Parse(Hours));
+    private string MinutesNepali => CalendarService.ToNepaliDigits(int.Parse(Minutes));
+    private string SecondsNepali => CalendarService.ToNepaliDigits(int.Parse(Seconds));
+}

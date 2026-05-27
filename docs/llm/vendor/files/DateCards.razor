@@ -1,0 +1,17 @@
+@using CollabsKus.BlazorWebAssembly.Models
+
+<div class="date-display">
+    <div class="date-card">
+        <div class="label">Bikram Sambat</div>
+        <div class="value">@CalendarData?.Name @CalendarData?.Year</div>
+    </div>
+    <div class="date-card">
+        <div class="label">Gregorian</div>
+        <div class="value">@CalendarData?.Eng1-@CalendarData?.Eng2 @CalendarData?.EngYear</div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public CalendarData? CalendarData { get; set; }
+}

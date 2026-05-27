@@ -1,0 +1,27 @@
+@using CollabsKus.BlazorWebAssembly.Models
+
+@if (CalendarData != null)
+{
+    <div class="calendar-grid">
+        <div class="calendar-header">
+            @foreach (var day in CalendarData.WeeksNeMini)
+            {
+                <div class="day-name">@day</div>
+            }
+        </div>
+        <div class="calendar-days">
+            @foreach (var day in CalendarData.Days)
+            {
+                <div class="calendar-day @(day.Tag ?? "")">
+                    <div class="bs-date">@day.Bs</div>
+                    <div class="ad-date">@day.Ad</div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public CalendarData? CalendarData { get; set; }
+}
