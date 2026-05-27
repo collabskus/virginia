@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 19:53:05
+Generated: 05/27/2026 19:54:45
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -14,102 +14,6 @@ Directory.Build.props
 Directory.Packages.props
 docs/llm/claude.md
 docs/llm/dump.txt
-docs/llm/vendor/files.zip
-docs/llm/vendor/files/_Imports_1.razor
-docs/llm/vendor/files/_Imports.razor
-docs/llm/vendor/files/AddressesCard.razor
-docs/llm/vendor/files/AddressesCard.razor.css
-docs/llm/vendor/files/ApiLoggerService.cs
-docs/llm/vendor/files/app_1.css
-docs/llm/vendor/files/app.css
-docs/llm/vendor/files/App.razor
-docs/llm/vendor/files/APPLY_INSTRUCTIONS.md
-docs/llm/vendor/files/BasicInfoCard.razor
-docs/llm/vendor/files/BasicInfoCard.razor.css
-docs/llm/vendor/files/CalendarGrid.razor
-docs/llm/vendor/files/CalendarGrid.razor.css
-docs/llm/vendor/files/CalendarResponse.cs
-docs/llm/vendor/files/ContactActions.razor
-docs/llm/vendor/files/ContactActions.razor.css
-docs/llm/vendor/files/ContactDetail.razor
-docs/llm/vendor/files/ContactDetail.razor.cs
-docs/llm/vendor/files/ContactDetail.razor.css
-docs/llm/vendor/files/DateCards.razor
-docs/llm/vendor/files/DateCards.razor.css
-docs/llm/vendor/files/deploy.yml
-docs/llm/vendor/files/EmailsCard.razor
-docs/llm/vendor/files/EmailsCard.razor.css
-docs/llm/vendor/files/Home.razor
-docs/llm/vendor/files/Home.razor.css
-docs/llm/vendor/files/index.html
-docs/llm/vendor/files/IToastService.cs
-docs/llm/vendor/files/KathmanduCalendarService.cs
-docs/llm/vendor/files/MainLayout_1.razor
-docs/llm/vendor/files/MainLayout.razor
-docs/llm/vendor/files/MainLayout.razor_1.css
-docs/llm/vendor/files/MainLayout.razor.css
-docs/llm/vendor/files/MoonDisplay.razor
-docs/llm/vendor/files/MoonDisplay.razor.css
-docs/llm/vendor/files/MoonPhase.cs
-docs/llm/vendor/files/MoonPhaseService.cs
-docs/llm/vendor/files/NaturalComparer.cs
-docs/llm/vendor/files/NaturalComparerTests.cs
-docs/llm/vendor/files/NotesCard.razor
-docs/llm/vendor/files/NotesCard.razor.cs
-docs/llm/vendor/files/NotesCard.razor.css
-docs/llm/vendor/files/PhonesCard.razor
-docs/llm/vendor/files/PhonesCard.razor.css
-docs/llm/vendor/files/ProfilePictureCard.razor
-docs/llm/vendor/files/ProfilePictureCard.razor.cs
-docs/llm/vendor/files/ProfilePictureCard.razor.css
-docs/llm/vendor/files/Program_1.cs
-docs/llm/vendor/files/Program.cs
-docs/llm/vendor/files/PROJECT_SUMMARY.md
-docs/llm/vendor/files/README.md
-docs/llm/vendor/files/REFACTOR_PLAN.md
-docs/llm/vendor/files/TimeDisplay.razor
-docs/llm/vendor/files/TimeDisplay.razor.css
-docs/llm/vendor/files/TimeResponse.cs
-docs/llm/vendor/files/ToastService.cs
-docs/llm/vendor/files/ToastServiceTests.cs
-docs/llm/vendor/files/ToastStack.razor
-docs/llm/vendor/files/ToastStack.razor.cs
-docs/llm/vendor/files/ToastStack.razor.css
-docs/llm/vendor/files/virginia-refactor.zip
-docs/llm/vendor/files/virginia-refactor/APPLY_INSTRUCTIONS.md
-docs/llm/vendor/files/virginia-refactor/REFACTOR_PLAN.md
-docs/llm/vendor/files/virginia-refactor/Virginia.Tests/NaturalComparerTests.cs
-docs/llm/vendor/files/virginia-refactor/Virginia.Tests/ToastServiceTests.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/_Imports.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Layout/MainLayout.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Layout/MainLayout.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/ContactDetail.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/ContactDetail.razor.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/ContactDetail.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ContactActions.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ContactActions.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/NotesCard.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Shared/ToastStack.razor
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Shared/ToastStack.razor.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Components/Shared/ToastStack.razor.css
-docs/llm/vendor/files/virginia-refactor/Virginia/Extensions/NaturalComparer.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Program.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Services/IToastService.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/Services/ToastService.cs
-docs/llm/vendor/files/virginia-refactor/Virginia/wwwroot/app.css
 docs/llm/vendor/gemini.md
 Export.ps1
 README.md
@@ -8868,7 +8772,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 19:53:05
+EXPORT COMPLETED: 05/27/2026 19:54:45
 Total Files Exported: 82
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
