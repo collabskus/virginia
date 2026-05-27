@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 19:54:45
+Generated: 05/27/2026 19:59:32
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -5904,10 +5904,10 @@ MODIFIED: 03/26/2026 20:18:42
 ================================================================================
 FILE: Virginia/Components/Shared/ToastGroup.razor
 SIZE: 1.36 KB
-MODIFIED: 05/27/2026 19:47:07
+MODIFIED: 05/27/2026 19:59:19
 ================================================================================
 
-@* Behavior in ToastStack.razor.cs *@
+@* Behavior in ToastGroup.razor.cs *@
 
 @if (Toasts.Toasts.Count > 0)
 {
@@ -5949,7 +5949,7 @@ MODIFIED: 05/27/2026 19:47:07
 ================================================================================
 FILE: Virginia/Components/Shared/ToastGroup.razor.cs
 SIZE: 1.03 KB
-MODIFIED: 05/27/2026 19:47:07
+MODIFIED: 05/27/2026 19:58:54
 ================================================================================
 
 using Microsoft.AspNetCore.Components;
@@ -5957,7 +5957,7 @@ using Virginia.Services;
 
 namespace Virginia.Components.Shared;
 
-public sealed partial class ToastStack : ComponentBase, IDisposable
+public sealed partial class ToastContainer : ComponentBase, IDisposable
 {
     [Inject] private IToastService Toasts { get; set; } = default!;
 
@@ -8772,7 +8772,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 19:54:45
+EXPORT COMPLETED: 05/27/2026 19:59:32
 Total Files Exported: 82
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
