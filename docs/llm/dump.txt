@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 19:43:57
+Generated: 05/27/2026 19:53:05
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -166,9 +166,10 @@ Virginia/Components/Pages/Error.razor
 Virginia/Components/Pages/NotFound.razor
 Virginia/Components/RedirectToLogin.razor
 Virginia/Components/Routes.razor
-Virginia/Components/Shared/ToastStack.razor
+Virginia/Components/Shared/ToastGroup.razor
+Virginia/Components/Shared/ToastGroup.razor.cs
+Virginia/Components/Shared/ToastGroup.razor.css
 Virginia/Components/Shared/ToastStack.razor.cs
-Virginia/Components/Shared/ToastStack.razor.css
 Virginia/Data/AppDbContext.cs
 Virginia/Data/AppUser.cs
 Virginia/Data/Dtos.cs
@@ -4601,8 +4602,8 @@ MODIFIED: 04/12/2026 16:31:45
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/ContactDetail.razor
-SIZE: 3.45 KB
-MODIFIED: 05/27/2026 19:15:59
+SIZE: 3.56 KB
+MODIFIED: 05/27/2026 19:51:34
 ================================================================================
 
 @page "/contacts/new"
@@ -4628,7 +4629,7 @@ MODIFIED: 05/27/2026 19:15:59
         @(IsNew ? "New Contact" : "Edit Contact")
     </h1>
 
-    <ToastStack />
+    <ToastGroup />
 
     @if (NotFound)
     {
@@ -5997,9 +5998,9 @@ MODIFIED: 03/26/2026 20:18:42
 
 
 ================================================================================
-FILE: Virginia/Components/Shared/ToastStack.razor
-SIZE: 1.33 KB
-MODIFIED: 05/27/2026 19:11:08
+FILE: Virginia/Components/Shared/ToastGroup.razor
+SIZE: 1.36 KB
+MODIFIED: 05/27/2026 19:47:07
 ================================================================================
 
 @* Behavior in ToastStack.razor.cs *@
@@ -6042,9 +6043,9 @@ MODIFIED: 05/27/2026 19:11:08
 
 
 ================================================================================
-FILE: Virginia/Components/Shared/ToastStack.razor.cs
-SIZE: 0.99 KB
-MODIFIED: 05/27/2026 19:10:50
+FILE: Virginia/Components/Shared/ToastGroup.razor.cs
+SIZE: 1.03 KB
+MODIFIED: 05/27/2026 19:47:07
 ================================================================================
 
 using Microsoft.AspNetCore.Components;
@@ -6092,9 +6093,9 @@ public sealed partial class ToastStack : ComponentBase, IDisposable
 
 
 ================================================================================
-FILE: Virginia/Components/Shared/ToastStack.razor.css
-SIZE: 1.7 KB
-MODIFIED: 05/27/2026 19:11:18
+FILE: Virginia/Components/Shared/ToastGroup.razor.css
+SIZE: 1.8 KB
+MODIFIED: 05/27/2026 19:47:07
 ================================================================================
 
 .toast-stack {
@@ -6197,6 +6198,56 @@ MODIFIED: 05/27/2026 19:11:18
 @media (prefers-reduced-motion: reduce) {
     .toast {
         animation: none;
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Shared/ToastStack.razor.cs
+SIZE: 1.03 KB
+MODIFIED: 05/27/2026 19:51:34
+================================================================================
+
+using Microsoft.AspNetCore.Components;
+using Virginia.Services;
+
+namespace Virginia.Components.Shared;
+
+public sealed partial class ToastGroup : ComponentBase, IDisposable
+{
+    [Inject] private IToastService Toasts { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        Toasts.Changed += OnToastsChanged;
+    }
+
+    private void OnToastsChanged() => InvokeAsync(StateHasChanged);
+
+    private void InvokeReload(Toast toast)
+    {
+        toast.OnReload?.Invoke();
+        Toasts.Dismiss(toast.Id);
+    }
+
+    private static string RoleFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "alert",
+        ToastSeverity.Warn => "alert",
+        _ => "status"
+    };
+
+    private static string LiveFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "assertive",
+        ToastSeverity.Warn => "assertive",
+        _ => "polite"
+    };
+
+    public void Dispose()
+    {
+        Toasts.Changed -= OnToastsChanged;
     }
 }
 
@@ -7994,8 +8045,8 @@ public interface IContactService
 
 ================================================================================
 FILE: Virginia/Services/IToastService.cs
-SIZE: 1.85 KB
-MODIFIED: 05/27/2026 19:10:21
+SIZE: 1.91 KB
+MODIFIED: 05/27/2026 19:51:34
 ================================================================================
 
 namespace Virginia.Services;
@@ -8003,7 +8054,7 @@ namespace Virginia.Services;
 /// <summary>
 /// Per-circuit (scoped) toast queue. Components on the page call
 /// <see cref="Show"/> / <see cref="ShowWithReload"/> / <see cref="Dismiss"/>;
-/// the shared <c>ToastStack</c> component subscribes to <see cref="Changed"/>
+/// the shared <c>ToastGroup</c> component subscribes to <see cref="Changed"/>
 /// and re-renders.
 /// </summary>
 public interface IToastService
@@ -8817,7 +8868,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 19:43:58
-Total Files Exported: 81
+EXPORT COMPLETED: 05/27/2026 19:53:05
+Total Files Exported: 82
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
