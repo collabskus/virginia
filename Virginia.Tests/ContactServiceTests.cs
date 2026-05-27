@@ -145,7 +145,7 @@ public sealed class ContactServiceTests
             ]
         };
 
-        await h.Service.UpdateAsync(id, updateForm, CT);
+        await h.Service.UpdateAsync(id, updateForm, null, CT);
         var updated = await h.Service.GetAsync(id, CT);
 
         Assert.Equal(2, updated!.Emails.Count);
@@ -161,7 +161,7 @@ public sealed class ContactServiceTests
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             h.Service.UpdateAsync(9999,
-                new ContactFormModel { FirstName = "X", LastName = "Y" }, CT));
+                new ContactFormModel { FirstName = "X", LastName = "Y" }, null, CT));
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public sealed class ContactServiceTests
 
         await Task.Delay(50, CT);
         await h.Service.UpdateAsync(id,
-            new ContactFormModel { FirstName = "T2", LastName = "S" }, CT);
+            new ContactFormModel { FirstName = "T2", LastName = "S" }, null, CT);
 
         var after = (await h.Service.GetAsync(id, CT))!.UpdatedAtUtc;
         Assert.True(after > before);
@@ -189,7 +189,7 @@ public sealed class ContactServiceTests
         var id = await h.Service.CreateAsync(
             new ContactFormModel { FirstName = "Gone", LastName = "Soon" }, CT);
 
-        await h.Service.DeleteAsync(id, CT);
+        await h.Service.DeleteAsync(id, null, CT);
 
         Assert.Null(await h.Service.GetAsync(id, CT));
     }
@@ -215,7 +215,7 @@ public sealed class ContactServiceTests
         };
 
         var id = await h.Service.CreateAsync(form, CT);
-        await h.Service.DeleteAsync(id, CT);
+        await h.Service.DeleteAsync(id, null, CT);
 
         Assert.Equal(0, await h.Db.ContactEmails.CountAsync(CT));
         Assert.Equal(0, await h.Db.ContactPhones.CountAsync(CT));
@@ -227,7 +227,7 @@ public sealed class ContactServiceTests
     {
         await using var h = await TestHarness.CreateAsync();
 
-        await h.Service.DeleteAsync(9999, CT);
+        await h.Service.DeleteAsync(9999, null, CT);
     }
 
     // ─── Profile picture ─────────────────────────────────────────────────
@@ -240,7 +240,7 @@ public sealed class ContactServiceTests
             new ContactFormModel { FirstName = "Photo", LastName = "Test" }, CT);
 
         var data = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
-        await h.Service.SetProfilePictureAsync(id, data, "image/png", CT);
+        await h.Service.SetProfilePictureAsync(id, data, "image/png", null, CT);
 
         var result = await h.Service.GetProfilePictureAsync(id, CT);
         Assert.NotNull(result);
@@ -263,9 +263,9 @@ public sealed class ContactServiceTests
         var id = await h.Service.CreateAsync(
             new ContactFormModel { FirstName = "A", LastName = "B" }, CT);
         await h.Service.SetProfilePictureAsync(
-            id, [0x00], "image/jpeg", CT);
+            id, [0x00], "image/jpeg", null, CT);
 
-        await h.Service.RemoveProfilePictureAsync(id, CT);
+        await h.Service.RemoveProfilePictureAsync(id, null, CT);
 
         Assert.Null(await h.Service.GetProfilePictureAsync(id, CT));
         var detail = await h.Service.GetAsync(id, CT);
@@ -278,7 +278,7 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            h.Service.SetProfilePictureAsync(9999, [0x00], "image/png", CT));
+            h.Service.SetProfilePictureAsync(9999, [0x00], "image/png", null, CT));
     }
 
     // ─── List: basic ─────────────────────────────────────────────────────
@@ -486,7 +486,7 @@ public sealed class ContactServiceTests
             new() { FirstName = "A", LastName = "B" }, CT);
 
         var noteId = await h.Service.AddNoteAsync(
-            id, "Hello world", "user-1", "admin@test.com", CT);
+            id, "Hello world", "user-1", "admin@test.com", null, CT);
 
         Assert.True(noteId > 0);
 
@@ -503,9 +503,9 @@ public sealed class ContactServiceTests
         var id = await h.Service.CreateAsync(
             new() { FirstName = "A", LastName = "B" }, CT);
 
-        await h.Service.AddNoteAsync(id, "First", "u1", "user1@test.com", CT);
+        await h.Service.AddNoteAsync(id, "First", "u1", "user1@test.com", null, CT);
         await Task.Delay(50, CT);
-        await h.Service.AddNoteAsync(id, "Second", "u2", "user2@test.com", CT);
+        await h.Service.AddNoteAsync(id, "Second", "u2", "user2@test.com", null, CT);
 
         var detail = await h.Service.GetAsync(id, CT);
         Assert.Equal(2, detail!.Notes.Count);
@@ -519,7 +519,7 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            h.Service.AddNoteAsync(9999, "Note", "u1", "user@test.com", CT));
+            h.Service.AddNoteAsync(9999, "Note", "u1", "user@test.com", null, CT));
     }
 
     [Fact]
@@ -529,7 +529,7 @@ public sealed class ContactServiceTests
         var id = await h.Service.CreateAsync(
             new() { FirstName = "A", LastName = "B" }, CT);
 
-        await h.Service.AddNoteAsync(id, "  Trimmed  ", "u1", "user@test.com", CT);
+        await h.Service.AddNoteAsync(id, "  Trimmed  ", "u1", "user@test.com", null, CT);
 
         var detail = await h.Service.GetAsync(id, CT);
         Assert.Equal("Trimmed", detail!.Notes[0].Content);
@@ -724,7 +724,7 @@ public sealed class ContactServiceTests
         await using var h = await TestHarness.CreateAsync();
         var id = await h.Service.CreateAsync(
             new ContactFormModel { FirstName = "A", LastName = "B" }, CT);
-        await h.Service.AddNoteAsync(id, "Test note", "u1", "user@test.com", CT);
+        await h.Service.AddNoteAsync(id, "Test note", "u1", "user@test.com", null, CT);
 
         await h.Service.DeleteAllAsync(CT);
 

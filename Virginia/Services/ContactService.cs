@@ -206,7 +206,7 @@ public sealed partial class ContactService(
     // ─── Update ──────────────────────────────────────────────────────────
 
     public async Task UpdateAsync(
-        int id, ContactFormModel form, CancellationToken ct, Guid? originId)
+        int id, ContactFormModel form, Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("UpdateContact");
         activity?.SetTag("contact.id", id);
@@ -289,7 +289,7 @@ public sealed partial class ContactService(
 
     // ─── Delete ──────────────────────────────────────────────────────────
 
-    public async Task DeleteAsync(int id, CancellationToken ct, Guid? originId)
+    public async Task DeleteAsync(int id, Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("DeleteContact");
         activity?.SetTag("contact.id", id);
@@ -316,7 +316,7 @@ public sealed partial class ContactService(
 
     public async Task SetProfilePictureAsync(
         int id, byte[] data, string contentType,
-        CancellationToken ct, Guid? originId)
+        Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("SetProfilePicture");
         activity?.SetTag("contact.id", id);
@@ -356,7 +356,7 @@ public sealed partial class ContactService(
             result.ProfilePictureContentType ?? "image/jpeg");
     }
 
-    public async Task RemoveProfilePictureAsync(int id, CancellationToken ct, Guid? originId)
+    public async Task RemoveProfilePictureAsync(int id, Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("RemoveProfilePicture");
         activity?.SetTag("contact.id", id);
@@ -378,7 +378,7 @@ public sealed partial class ContactService(
 
     public async Task<int> AddNoteAsync(
         int contactId, string content, string userId, string userName,
-        CancellationToken ct, Guid? originId)
+        Guid? originId, CancellationToken ct)
     {
         using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
         activity?.SetTag("contact.id", contactId);

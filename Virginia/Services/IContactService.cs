@@ -13,23 +13,28 @@ public interface IContactService
 
     Task UpdateAsync(
         int id, ContactFormModel form,
-        CancellationToken ct = default, Guid? originId = null);
+        Guid? originId = null,
+        CancellationToken ct = default);
 
     Task DeleteAsync(
-        int id, CancellationToken ct = default, Guid? originId = null);
+        int id, Guid? originId = null,
+        CancellationToken ct = default);
 
     Task SetProfilePictureAsync(
         int id, byte[] data, string contentType,
-        CancellationToken ct = default, Guid? originId = null);
+        Guid? originId = null,
+        CancellationToken ct = default);
 
     Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
 
     Task RemoveProfilePictureAsync(
-        int id, CancellationToken ct = default, Guid? originId = null);
+        int id, Guid? originId = null,
+        CancellationToken ct = default);
 
     Task<int> AddNoteAsync(
         int contactId, string content, string userId, string userName,
-        CancellationToken ct = default, Guid? originId = null);
+        Guid? originId = null,
+        CancellationToken ct = default);
 
     Task<int> CreateBulkAsync(int count, CancellationToken ct = default);
 
