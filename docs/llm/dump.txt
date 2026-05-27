@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 19:25:41
+Generated: 05/27/2026 19:33:12
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -14,6 +14,68 @@ Directory.Build.props
 Directory.Packages.props
 docs/llm/claude.md
 docs/llm/dump.txt
+docs/llm/vendor/files.zip
+docs/llm/vendor/files/_Imports_1.razor
+docs/llm/vendor/files/_Imports.razor
+docs/llm/vendor/files/AddressesCard.razor
+docs/llm/vendor/files/AddressesCard.razor.css
+docs/llm/vendor/files/ApiLoggerService.cs
+docs/llm/vendor/files/app_1.css
+docs/llm/vendor/files/app.css
+docs/llm/vendor/files/App.razor
+docs/llm/vendor/files/APPLY_INSTRUCTIONS.md
+docs/llm/vendor/files/BasicInfoCard.razor
+docs/llm/vendor/files/BasicInfoCard.razor.css
+docs/llm/vendor/files/CalendarGrid.razor
+docs/llm/vendor/files/CalendarGrid.razor.css
+docs/llm/vendor/files/CalendarResponse.cs
+docs/llm/vendor/files/ContactActions.razor
+docs/llm/vendor/files/ContactActions.razor.css
+docs/llm/vendor/files/ContactDetail.razor
+docs/llm/vendor/files/ContactDetail.razor.cs
+docs/llm/vendor/files/ContactDetail.razor.css
+docs/llm/vendor/files/DateCards.razor
+docs/llm/vendor/files/DateCards.razor.css
+docs/llm/vendor/files/deploy.yml
+docs/llm/vendor/files/EmailsCard.razor
+docs/llm/vendor/files/EmailsCard.razor.css
+docs/llm/vendor/files/Home.razor
+docs/llm/vendor/files/Home.razor.css
+docs/llm/vendor/files/index.html
+docs/llm/vendor/files/IToastService.cs
+docs/llm/vendor/files/KathmanduCalendarService.cs
+docs/llm/vendor/files/MainLayout_1.razor
+docs/llm/vendor/files/MainLayout.razor
+docs/llm/vendor/files/MainLayout.razor_1.css
+docs/llm/vendor/files/MainLayout.razor.css
+docs/llm/vendor/files/MoonDisplay.razor
+docs/llm/vendor/files/MoonDisplay.razor.css
+docs/llm/vendor/files/MoonPhase.cs
+docs/llm/vendor/files/MoonPhaseService.cs
+docs/llm/vendor/files/NaturalComparer.cs
+docs/llm/vendor/files/NaturalComparerTests.cs
+docs/llm/vendor/files/NotesCard.razor
+docs/llm/vendor/files/NotesCard.razor.cs
+docs/llm/vendor/files/NotesCard.razor.css
+docs/llm/vendor/files/PhonesCard.razor
+docs/llm/vendor/files/PhonesCard.razor.css
+docs/llm/vendor/files/ProfilePictureCard.razor
+docs/llm/vendor/files/ProfilePictureCard.razor.cs
+docs/llm/vendor/files/ProfilePictureCard.razor.css
+docs/llm/vendor/files/Program_1.cs
+docs/llm/vendor/files/Program.cs
+docs/llm/vendor/files/PROJECT_SUMMARY.md
+docs/llm/vendor/files/README.md
+docs/llm/vendor/files/REFACTOR_PLAN.md
+docs/llm/vendor/files/TimeDisplay.razor
+docs/llm/vendor/files/TimeDisplay.razor.css
+docs/llm/vendor/files/TimeResponse.cs
+docs/llm/vendor/files/ToastService.cs
+docs/llm/vendor/files/ToastServiceTests.cs
+docs/llm/vendor/files/ToastStack.razor
+docs/llm/vendor/files/ToastStack.razor.cs
+docs/llm/vendor/files/ToastStack.razor.css
+docs/llm/vendor/files/virginia-refactor.zip
 docs/llm/vendor/gemini.md
 Export.ps1
 README.md
@@ -7155,7 +7217,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 19:25:41
+EXPORT COMPLETED: 05/27/2026 19:33:13
 Total Files Exported: 56
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
