@@ -17066,3 +17066,1366 @@ On the page: the moment you start typing anywhere in the form, `editContext.IsMo
 The `originId` is a `readonly Guid` field on the component instance, regenerated on every page navigation. That's the right granularity — if you open the same contact in two tabs, they each have their own `originId` and will receive each other's events, which is what you want.
 
 One real edge case: if you start typing, dismiss the "Reload" toast, then save — your save wins (last-write-wins as designed), and Bob's changes are gone. That's the documented behavior you signed up for. If you ever want to soften this, you'd need an optimistic concurrency token (`UpdatedAtUtc` round-tripped on update) — but that's a different feature for another day.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+I made the changes but now the build is failing I think because we changed the source but not the tests. 
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS1503	Argument 4: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	266	
+Error (active)	CS1503	Argument 3: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	148	
+Error (active)	CS1503	Argument 3: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	164	
+Error (active)	CS1503	Argument 3: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	177	
+Error (active)	CS1503	Argument 2: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	192	
+Error (active)	CS1503	Argument 2: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	218	
+Error (active)	CS1503	Argument 2: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	230	
+Error (active)	CS1503	Argument 4: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	243	
+Error (active)	CS1503	Argument 2: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	268	
+Error (active)	CS1503	Argument 4: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	281	
+Error (active)	CS1503	Argument 5: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	489	
+Error (active)	CS1503	Argument 5: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	506	
+Error (active)	CS1503	Argument 5: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	508	
+Error (active)	CS1503	Argument 5: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	522	
+Error (active)	CS1503	Argument 5: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	532	
+Error (active)	CS1503	Argument 5: cannot convert from 'System.Threading.CancellationToken' to 'System.Guid?'	Virginia.Tests	D:\DEV\personal\Virginia\Virginia.Tests\ContactServiceTests.cs	727	
+
+
+Right — I goofed. I claimed the tests wouldn't need changes because `originId` defaulted to `null`, but that only works for *positional* tail arguments. When tests pass `CT` (the `CancellationToken`) positionally, the compiler tries to bind it to the new `Guid?` parameter slot. The fix is to make `CancellationToken ct` the second-to-last parameter and put `Guid? originId` last, so existing positional calls keep binding the way they used to.
+
+Let me read the test file to confirm the call shapes, then give you the two corrected files.Confirmed — tests pass `CT` positionally as the last argument. The clean fix is to swap parameter order so `CancellationToken ct` stays in its original position and `Guid? originId` goes before it (or at the end with named-args). Simplest: put `CancellationToken ct = default` last (its original spot) and `Guid? originId = null` second-to-last. That breaks no existing positional calls.
+
+Wait — let me check that. The original signatures had `CancellationToken ct` last. If I add `Guid? originId` *before* `ct`, positional calls passing `CT` as the last positional argument will still bind to `ct`. The new `originId` will use its default. That's what I want.
+
+Two files change:
+
+---
+
+## MODIFIED: `Virginia/Services/IContactService.cs`
+
+```csharp
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public interface IContactService
+{
+    Task<PagedResult<ContactListItem>> ListAsync(
+        ContactFilter filter, int page, int pageSize, CancellationToken ct = default);
+
+    Task<ContactDetailDto?> GetAsync(int id, CancellationToken ct = default);
+
+    Task<int> CreateAsync(ContactFormModel form, CancellationToken ct = default);
+
+    Task UpdateAsync(
+        int id, ContactFormModel form,
+        Guid? originId = null, CancellationToken ct = default);
+
+    Task DeleteAsync(
+        int id, Guid? originId = null, CancellationToken ct = default);
+
+    Task SetProfilePictureAsync(
+        int id, byte[] data, string contentType,
+        Guid? originId = null, CancellationToken ct = default);
+
+    Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
+
+    Task RemoveProfilePictureAsync(
+        int id, Guid? originId = null, CancellationToken ct = default);
+
+    Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        Guid? originId = null, CancellationToken ct = default);
+
+    Task<int> CreateBulkAsync(int count, CancellationToken ct = default);
+
+    Task<int> DeleteAllAsync(CancellationToken ct = default);
+}
+```
+
+That part was already right. Looking at your errors again — the problem is on the `ContactService.cs` *implementation* side. Interface optional defaults don't propagate to the implementing methods automatically; the implementation has its own parameter order. Let me look at what I gave you for `ContactService.cs`:
+
+```csharp
+public async Task UpdateAsync(
+    int id, ContactFormModel form, Guid? originId, CancellationToken ct)
+```
+
+That's the bug. The implementation has `Guid? originId` before `CancellationToken ct`, but with **no default values**, so when a test calls `UpdateAsync(id, form, CT)`, the compiler does *overload resolution against the concrete type* (since `h.Service` is typed as `IContactService`, actually — hmm, let me re-check).
+
+Actually `h.Service` is typed `IContactService`, so it should resolve against the interface, which does have defaults. But errors are firing at `ContactServiceTests.cs:148, 164, 177...` — and looking at the count (16 errors), this matches calls like `h.Service.UpdateAsync(id, form, CT)` where the compiler sees 3 positional arguments and the interface has params `(int, ContactFormModel, Guid?, CancellationToken)` — so `CT` binds to slot 3 = `Guid?`. Default values don't help with positional binding; they only help with *omitted* trailing arguments.
+
+So the real fix: put `Guid? originId` *after* `CancellationToken ct` in both interface and implementation, so omitting it still works.
+
+Here are the two corrected files:
+
+---
+
+## MODIFIED: `Virginia/Services/IContactService.cs`
+
+```csharp
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public interface IContactService
+{
+    Task<PagedResult<ContactListItem>> ListAsync(
+        ContactFilter filter, int page, int pageSize, CancellationToken ct = default);
+
+    Task<ContactDetailDto?> GetAsync(int id, CancellationToken ct = default);
+
+    Task<int> CreateAsync(ContactFormModel form, CancellationToken ct = default);
+
+    Task UpdateAsync(
+        int id, ContactFormModel form,
+        CancellationToken ct = default, Guid? originId = null);
+
+    Task DeleteAsync(
+        int id, CancellationToken ct = default, Guid? originId = null);
+
+    Task SetProfilePictureAsync(
+        int id, byte[] data, string contentType,
+        CancellationToken ct = default, Guid? originId = null);
+
+    Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
+
+    Task RemoveProfilePictureAsync(
+        int id, CancellationToken ct = default, Guid? originId = null);
+
+    Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        CancellationToken ct = default, Guid? originId = null);
+
+    Task<int> CreateBulkAsync(int count, CancellationToken ct = default);
+
+    Task<int> DeleteAllAsync(CancellationToken ct = default);
+}
+```
+
+---
+
+## MODIFIED: `Virginia/Services/ContactService.cs`
+
+```csharp
+using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public sealed partial class ContactService(
+    AppDbContext db,
+    ILogger<ContactService> logger,
+    ContactTelemetry telemetry,
+    IContactChangeNotifier notifier) : IContactService
+{
+    private const int MaxPageSize = 100;
+    private const int BulkBatchSize = 50;
+
+    // ─── List ────────────────────────────────────────────────────────────
+
+    public async Task<PagedResult<ContactListItem>> ListAsync(
+        ContactFilter filter, int page, int pageSize, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("ListContacts");
+        activity?.SetTag("filter.name", filter.Name);
+        activity?.SetTag("filter.city", filter.City);
+        activity?.SetTag("filter.state", filter.State);
+        activity?.SetTag("page", page);
+        activity?.SetTag("pageSize", pageSize);
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var sw = Stopwatch.StartNew();
+
+        var query = db.Contacts.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Name))
+        {
+            var pattern = $"%{filter.Name.Trim()}%";
+            query = query.Where(c =>
+                EF.Functions.Like(c.FirstName, pattern)
+                || EF.Functions.Like(c.LastName, pattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Email))
+        {
+            var pattern = $"%{filter.Email.Trim()}%";
+            query = query.Where(c =>
+                c.Emails.Any(e => EF.Functions.Like(e.Address, pattern)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Phone))
+        {
+            var term = filter.Phone.Trim();
+            query = query.Where(c =>
+                c.Phones.Any(p => p.Number.Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.City))
+        {
+            var pattern = $"%{filter.City.Trim()}%";
+            query = query.Where(c =>
+                c.Addresses.Any(a => EF.Functions.Like(a.City, pattern)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.State))
+        {
+            var pattern = $"%{filter.State.Trim()}%";
+            query = query.Where(c =>
+                c.Addresses.Any(a => EF.Functions.Like(a.State, pattern)));
+        }
+
+        if (filter.HasPhoto == true)
+            query = query.Where(c => c.ProfilePicture != null);
+        else if (filter.HasPhoto == false)
+            query = query.Where(c => c.ProfilePicture == null);
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(c => c.LastName)
+            .ThenBy(c => c.FirstName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new ContactListItem(
+                c.Id,
+                c.FirstName,
+                c.LastName,
+                c.ProfilePicture != null,
+                c.Emails.OrderBy(e => e.Id).Select(e => e.Address).FirstOrDefault(),
+                c.Phones.OrderBy(p => p.Id).Select(p => p.Number).FirstOrDefault(),
+                c.Addresses.OrderBy(a => a.Id).Select(a => a.City).FirstOrDefault(),
+                c.CreatedAtUtc))
+            .ToListAsync(ct);
+
+        sw.Stop();
+
+        activity?.SetTag("result.count", items.Count);
+        activity?.SetTag("result.totalCount", totalCount);
+        telemetry.RecordQueryDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.ListedContacts(logger, items.Count, totalCount, sw.Elapsed.TotalMilliseconds, page);
+
+        return new PagedResult<ContactListItem>(items, totalCount, page, pageSize);
+    }
+
+    // ─── Get ─────────────────────────────────────────────────────────────
+
+    public async Task<ContactDetailDto?> GetAsync(int id, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("GetContact");
+        activity?.SetTag("contact.id", id);
+
+        var sw = Stopwatch.StartNew();
+
+        var c = await db.Contacts
+            .AsNoTracking()
+            .Include(x => x.Emails.OrderBy(e => e.Id))
+            .Include(x => x.Phones.OrderBy(p => p.Id))
+            .Include(x => x.Addresses.OrderBy(a => a.Id))
+            .Include(x => x.Notes.OrderByDescending(n => n.CreatedAtUtc))
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+        sw.Stop();
+        telemetry.RecordQueryDuration(sw.Elapsed.TotalMilliseconds);
+
+        if (c is null)
+        {
+            Log.ContactNotFound(logger, id, sw.Elapsed.TotalMilliseconds);
+            return null;
+        }
+
+        Log.RetrievedContact(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        return new ContactDetailDto(
+            c.Id, c.FirstName, c.LastName,
+            c.ProfilePicture is not null, c.ProfilePictureContentType,
+            c.CreatedAtUtc, c.UpdatedAtUtc,
+            [.. c.Emails.Select(e => new EmailDto(e.Id, e.Label, e.Address))],
+            [.. c.Phones.Select(p => new PhoneDto(p.Id, p.Label, p.Number))],
+            [.. c.Addresses.Select(a => new AddressDto(
+                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))],
+            [.. c.Notes.Select(n => new NoteDto(
+                n.Id, n.Content, n.CreatedByUserName, n.CreatedAtUtc))]);
+    }
+
+    // ─── Create ──────────────────────────────────────────────────────────
+
+    public async Task<int> CreateAsync(ContactFormModel form, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("CreateContact");
+        var sw = Stopwatch.StartNew();
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var now = DateTime.UtcNow;
+            var contact = new Contact
+            {
+                FirstName = form.FirstName.Trim(),
+                LastName = form.LastName.Trim(),
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                Emails = [.. form.Emails.Select(e => new ContactEmail
+                {
+                    Label = e.Label.Trim(),
+                    Address = e.Address.Trim()
+                })],
+                Phones = [.. form.Phones.Select(p => new ContactPhone
+                {
+                    Label = p.Label.Trim(),
+                    Number = p.Number.Trim()
+                })],
+                Addresses = [.. form.Addresses.Select(a => new ContactAddress
+                {
+                    Label = a.Label.Trim(),
+                    Street = a.Street.Trim(),
+                    City = a.City.Trim(),
+                    State = a.State.Trim(),
+                    PostalCode = a.PostalCode.Trim(),
+                    Country = a.Country.Trim()
+                })]
+            };
+
+            db.Contacts.Add(contact);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            sw.Stop();
+            activity?.SetTag("contact.id", contact.Id);
+            telemetry.RecordContactCreated();
+            telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+            Log.CreatedContact(logger, contact.Id, contact.FullName,
+                contact.Emails.Count, contact.Phones.Count, contact.Addresses.Count,
+                sw.Elapsed.TotalMilliseconds);
+
+            return contact.Id;
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync(ct);
+            Log.FailedToCreateContact(logger, ex);
+            throw;
+        }
+    }
+
+    // ─── Update ──────────────────────────────────────────────────────────
+
+    public async Task UpdateAsync(
+        int id, ContactFormModel form, CancellationToken ct, Guid? originId)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("UpdateContact");
+        activity?.SetTag("contact.id", id);
+        var sw = Stopwatch.StartNew();
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var contact = await db.Contacts
+                .Include(c => c.Emails)
+                .Include(c => c.Phones)
+                .Include(c => c.Addresses)
+                .FirstOrDefaultAsync(c => c.Id == id, ct)
+                ?? throw new InvalidOperationException($"Contact {id} not found.");
+
+            contact.FirstName = form.FirstName.Trim();
+            contact.LastName = form.LastName.Trim();
+            contact.UpdatedAtUtc = DateTime.UtcNow;
+
+            SyncChildren(contact.Emails, form.Emails,
+                (e, m) => e.Id == m.Id && m.Id != 0,
+                (e, m) => { e.Label = m.Label.Trim(); e.Address = m.Address.Trim(); },
+                m => new ContactEmail
+                {
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Address = m.Address.Trim()
+                });
+
+            SyncChildren(contact.Phones, form.Phones,
+                (e, m) => e.Id == m.Id && m.Id != 0,
+                (e, m) => { e.Label = m.Label.Trim(); e.Number = m.Number.Trim(); },
+                m => new ContactPhone
+                {
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Number = m.Number.Trim()
+                });
+
+            SyncChildren(contact.Addresses, form.Addresses,
+                (e, m) => e.Id == m.Id && m.Id != 0,
+                (e, m) =>
+                {
+                    e.Label = m.Label.Trim();
+                    e.Street = m.Street.Trim();
+                    e.City = m.City.Trim();
+                    e.State = m.State.Trim();
+                    e.PostalCode = m.PostalCode.Trim();
+                    e.Country = m.Country.Trim();
+                },
+                m => new ContactAddress
+                {
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Street = m.Street.Trim(),
+                    City = m.City.Trim(),
+                    State = m.State.Trim(),
+                    PostalCode = m.PostalCode.Trim(),
+                    Country = m.Country.Trim()
+                });
+
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            sw.Stop();
+            telemetry.RecordContactUpdated();
+            telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+            Log.UpdatedContact(logger, id, contact.FullName, sw.Elapsed.TotalMilliseconds);
+
+            notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.Updated, originId));
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            await tx.RollbackAsync(ct);
+            Log.FailedToUpdateContact(logger, id, ex);
+            throw;
+        }
+    }
+
+    // ─── Delete ──────────────────────────────────────────────────────────
+
+    public async Task DeleteAsync(int id, CancellationToken ct, Guid? originId)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("DeleteContact");
+        activity?.SetTag("contact.id", id);
+        var sw = Stopwatch.StartNew();
+
+        var rows = await db.Contacts.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
+
+        sw.Stop();
+
+        if (rows == 0)
+        {
+            Log.DeleteContactNotFound(logger, id);
+            return;
+        }
+
+        telemetry.RecordContactDeleted();
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+        Log.DeletedContact(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.Deleted, originId));
+    }
+
+    // ─── Profile picture ─────────────────────────────────────────────────
+
+    public async Task SetProfilePictureAsync(
+        int id, byte[] data, string contentType,
+        CancellationToken ct, Guid? originId)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("SetProfilePicture");
+        activity?.SetTag("contact.id", id);
+        activity?.SetTag("picture.bytes", data.Length);
+        activity?.SetTag("picture.contentType", contentType);
+        var sw = Stopwatch.StartNew();
+
+        var rows = await db.Contacts.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.ProfilePicture, data)
+                .SetProperty(c => c.ProfilePictureContentType, contentType)
+                .SetProperty(c => c.UpdatedAtUtc, DateTime.UtcNow), ct);
+
+        sw.Stop();
+
+        if (rows == 0)
+            throw new InvalidOperationException($"Contact {id} not found.");
+
+        Log.SetProfilePicture(logger, id, data.Length, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.PhotoChanged, originId));
+    }
+
+    public async Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct)
+    {
+        var result = await db.Contacts
+            .AsNoTracking()
+            .Where(c => c.Id == id && c.ProfilePicture != null)
+            .Select(c => new { c.ProfilePicture, c.ProfilePictureContentType })
+            .FirstOrDefaultAsync(ct);
+
+        if (result?.ProfilePicture is null)
+            return null;
+
+        return new ProfilePictureResult(
+            result.ProfilePicture,
+            result.ProfilePictureContentType ?? "image/jpeg");
+    }
+
+    public async Task RemoveProfilePictureAsync(int id, CancellationToken ct, Guid? originId)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("RemoveProfilePicture");
+        activity?.SetTag("contact.id", id);
+        var sw = Stopwatch.StartNew();
+
+        await db.Contacts.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.ProfilePicture, (byte[]?)null)
+                .SetProperty(c => c.ProfilePictureContentType, (string?)null)
+                .SetProperty(c => c.UpdatedAtUtc, DateTime.UtcNow), ct);
+
+        sw.Stop();
+        Log.RemovedProfilePicture(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.PhotoChanged, originId));
+    }
+
+    // ─── Notes ───────────────────────────────────────────────────────────
+
+    public async Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        CancellationToken ct, Guid? originId)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
+        activity?.SetTag("contact.id", contactId);
+        var sw = Stopwatch.StartNew();
+
+        var contactExists = await db.Contacts.AnyAsync(c => c.Id == contactId, ct);
+        if (!contactExists)
+            throw new InvalidOperationException($"Contact {contactId} not found.");
+
+        var note = new ContactNote
+        {
+            ContactId = contactId,
+            Content = content.Trim(),
+            CreatedByUserId = userId,
+            CreatedByUserName = userName,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        db.ContactNotes.Add(note);
+        await db.SaveChangesAsync(ct);
+
+        sw.Stop();
+        Log.AddedNote(logger, note.Id, contactId, userName, sw.Elapsed.TotalMilliseconds);
+
+        var dto = new NoteDto(note.Id, note.Content, note.CreatedByUserName, note.CreatedAtUtc);
+        notifier.Publish(new ContactChangeEvent(
+            contactId, ContactChangeKind.NoteAdded, originId, dto));
+
+        return note.Id;
+    }
+
+    // ─── Bulk create ─────────────────────────────────────────────────────
+
+    public async Task<int> CreateBulkAsync(int count, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("BulkCreateContacts");
+        activity?.SetTag("bulk.requested", count);
+        var sw = Stopwatch.StartNew();
+
+        count = Math.Clamp(count, 1, 10_000);
+
+        var rng = new Random();
+        var created = 0;
+
+        for (var batch = 0; batch < count; batch += BulkBatchSize)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var batchSize = Math.Min(BulkBatchSize, count - batch);
+
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                for (var i = 0; i < batchSize; i++)
+                {
+                    var contact = FakeContactGenerator.Generate(rng);
+                    db.Contacts.Add(contact);
+                }
+
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                created += batchSize;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                await tx.RollbackAsync(ct);
+                Log.FailedBulkCreate(logger, created, count, ex);
+                throw;
+            }
+        }
+
+        sw.Stop();
+        telemetry.RecordBulkCreated(created);
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.BulkCreated(logger, created, sw.Elapsed.TotalMilliseconds);
+
+        return created;
+    }
+
+    // ─── Delete all ──────────────────────────────────────────────────────
+
+    public async Task<int> DeleteAllAsync(CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("DeleteAllContacts");
+        var sw = Stopwatch.StartNew();
+
+        // Child tables are cascade-deleted by SQLite, but ExecuteDeleteAsync
+        // on the parent is the cleanest single-statement approach.
+        var rows = await db.Contacts.ExecuteDeleteAsync(ct);
+
+        sw.Stop();
+        telemetry.RecordBulkDeleted(rows);
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.DeletedAll(logger, rows, sw.Elapsed.TotalMilliseconds);
+
+        return rows;
+    }
+
+    // ─── Private helper ──────────────────────────────────────────────────
+
+    private void SyncChildren<TEntity, TModel>(
+        List<TEntity> entities,
+        List<TModel> models,
+        Func<TEntity, TModel, bool> match,
+        Action<TEntity, TModel> update,
+        Func<TModel, TEntity> create) where TEntity : class
+    {
+        var toRemove = entities.Where(e => !models.Any(m => match(e, m))).ToList();
+        foreach (var item in toRemove)
+        {
+            entities.Remove(item);
+            db.Remove(item);
+        }
+
+        foreach (var model in models)
+        {
+            var existing = entities.FirstOrDefault(e => match(e, model));
+            if (existing is not null)
+                update(existing, model);
+            else
+                entities.Add(create(model));
+        }
+    }
+
+    // ─── Source-generated log messages ────────────────────────────────────
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Listed {Count}/{Total} contacts in {ElapsedMs:F1}ms (page {Page})")]
+        public static partial void ListedContacts(
+            ILogger logger, int count, int total, double elapsedMs, int page);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Contact {Id} not found ({ElapsedMs:F1}ms)")]
+        public static partial void ContactNotFound(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Retrieved contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void RetrievedContact(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Created contact {Id} ({Name}) with {Emails}e/{Phones}p/{Addresses}a in {ElapsedMs:F1}ms")]
+        public static partial void CreatedContact(
+            ILogger logger, int id, string name,
+            int emails, int phones, int addresses, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Failed to create contact")]
+        public static partial void FailedToCreateContact(
+            ILogger logger, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Updated contact {Id} ({Name}) in {ElapsedMs:F1}ms")]
+        public static partial void UpdatedContact(
+            ILogger logger, int id, string name, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Failed to update contact {Id}")]
+        public static partial void FailedToUpdateContact(
+            ILogger logger, int id, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Delete: contact {Id} not found")]
+        public static partial void DeleteContactNotFound(
+            ILogger logger, int id);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Deleted contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void DeletedContact(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Set profile picture for contact {Id} ({Bytes} bytes) in {ElapsedMs:F1}ms")]
+        public static partial void SetProfilePicture(
+            ILogger logger, int id, int bytes, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Removed profile picture for contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void RemovedProfilePicture(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Added note {NoteId} to contact {ContactId} by {UserName} in {ElapsedMs:F1}ms")]
+        public static partial void AddedNote(
+            ILogger logger, int noteId, int contactId, string userName, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Bulk created {Count} contacts in {ElapsedMs:F1}ms")]
+        public static partial void BulkCreated(
+            ILogger logger, int count, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Bulk create failed after {Created}/{Requested} contacts")]
+        public static partial void FailedBulkCreate(
+            ILogger logger, int created, int requested, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Deleted all contacts ({Count} rows) in {ElapsedMs:F1}ms")]
+        public static partial void DeletedAll(
+            ILogger logger, int count, double elapsedMs);
+    }
+}
+```
+
+---
+
+## MODIFIED: `Virginia/Components/Pages/ContactDetail.razor`
+
+Only the four call sites to `ContactService` mutating methods change. Here's the full file with `originId` moved to the trailing named-argument position:
+
+```razor
+@page "/contacts/new"
+@page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IContactService ContactService
+@inject IContactChangeNotifier Notifier
+@inject NavigationManager Nav
+@inject ILogger<ContactDetail> Logger
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
+
+<div class="detail">
+    <nav class="detail-nav">
+        <button class="btn btn-ghost" @onclick="GoBack">← Back to list</button>
+    </nav>
+
+    @if (notFound)
+    {
+        <div class="status">Contact not found. <a href="/">Back to list</a></div>
+        return;
+    }
+
+    @if (loading)
+    {
+        <div class="status" aria-live="polite">Loading...</div>
+        return;
+    }
+
+    @if (deletedByOther)
+    {
+        <div class="banner banner-error" role="alert">
+            This contact was deleted by another user.
+            <button class="btn btn-secondary" @onclick="GoBack">Back to list</button>
+        </div>
+        return;
+    }
+
+    @if (toasts.Count > 0)
+    {
+        <div class="toast-stack" aria-live="polite">
+            @foreach (var toast in toasts)
+            {
+                <div class="toast toast-@toast.SeverityClass" @key="toast.Id">
+                    <span class="toast-text">@toast.Message</span>
+                    @if (toast.HasReload)
+                    {
+                        <button class="btn btn-add" @onclick="ReloadFromServer">Reload</button>
+                    }
+                    <button class="toast-dismiss" @onclick="() => DismissToast(toast.Id)"
+                            aria-label="Dismiss">✕</button>
+                </div>
+            }
+        </div>
+    }
+
+    @if (error is not null)
+    {
+        <div class="banner banner-error" role="alert">@error</div>
+    }
+
+    @if (saved)
+    {
+        <div class="banner banner-success" role="status">Contact saved successfully.</div>
+    }
+
+    @if (!IsNew)
+    {
+        <section class="card">
+            <h2>Profile Picture</h2>
+            <div class="photo-row">
+                @if (detail?.HasPhoto == true)
+                {
+                    <img src="/api/contacts/@Id/photo?v=@photoVer"
+                         alt="@model.FirstName @model.LastName"
+                         class="avatar-lg" />
+                    <button class="btn btn-danger-sm" @onclick="RemovePhoto"
+                            disabled="@saving">Remove</button>
+                }
+                else
+                {
+                    <div class="avatar-lg avatar-empty">No photo</div>
+                }
+                <div class="photo-upload">
+                    <label>Upload (max 2 MB, JPEG/PNG/WebP):</label>
+                    <InputFile OnChange="OnPhotoSelected"
+                               accept="image/jpeg,image/png,image/webp" />
+                </div>
+            </div>
+        </section>
+    }
+
+    <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="contact">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <section class="card">
+            <h2>Basic Info</h2>
+            <div class="row">
+                <div class="group">
+                    <label for="fn">First Name *</label>
+                    <InputText id="fn" @bind-Value="model.FirstName" />
+                    <ValidationMessage For="() => model.FirstName" />
+                </div>
+                <div class="group">
+                    <label for="ln">Last Name *</label>
+                    <InputText id="ln" @bind-Value="model.LastName" />
+                    <ValidationMessage For="() => model.LastName" />
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Emails</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Emails.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Emails.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Emails[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Address</label>
+                            <InputText @bind-Value="model.Emails[idx].Address"
+                                       type="email" />
+                            <ValidationMessage For="() => model.Emails[idx].Address" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Emails.RemoveAt(idx)"
+                                aria-label="Remove email">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Emails.Count == 0)
+            {
+                <p class="hint">No email addresses yet.</p>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Phones</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Phones.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Phones.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Phones[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Number</label>
+                            <InputText @bind-Value="model.Phones[idx].Number"
+                                       type="tel" />
+                            <ValidationMessage For="() => model.Phones[idx].Number" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Phones.RemoveAt(idx)"
+                                aria-label="Remove phone">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Phones.Count == 0)
+            {
+                <p class="hint">No phone numbers yet.</p>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Addresses</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Addresses.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Addresses.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Addresses[idx].Label" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Addresses.RemoveAt(idx)"
+                                aria-label="Remove address">✕</button>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>Street *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Street" />
+                            <ValidationMessage For="() => model.Addresses[idx].Street" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>City *</label>
+                            <InputText @bind-Value="model.Addresses[idx].City" />
+                            <ValidationMessage For="() => model.Addresses[idx].City" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>State</label>
+                            <InputText @bind-Value="model.Addresses[idx].State" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Postal Code *</label>
+                            <InputText @bind-Value="model.Addresses[idx].PostalCode" />
+                            <ValidationMessage For="() => model.Addresses[idx].PostalCode" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>Country *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Country" />
+                            <ValidationMessage For="() => model.Addresses[idx].Country" />
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (model.Addresses.Count == 0)
+            {
+                <p class="hint">No mailing addresses yet.</p>
+            }
+        </section>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" disabled="@saving">
+                @(saving ? "Saving..." : "Save")
+            </button>
+            @if (!IsNew)
+            {
+                @if (confirmingDelete)
+                {
+                    <span class="confirm-delete">
+                        Are you sure?
+                        <button type="button" class="btn btn-danger" disabled="@saving"
+                                @onclick="DeleteAsync">Yes, delete</button>
+                        <button type="button" class="btn btn-secondary"
+                                @onclick="() => confirmingDelete = false">Cancel</button>
+                    </span>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" disabled="@saving"
+                            @onclick="() => confirmingDelete = true">Delete</button>
+                }
+            }
+            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        </div>
+    </EditForm>
+
+    @if (!IsNew && detail is not null)
+    {
+        <section class="card">
+            <div class="card-head">
+                <h2>Notes</h2>
+            </div>
+
+            <div class="note-input">
+                <textarea @bind="newNoteContent" placeholder="Add a note..."
+                          rows="3" class="note-textarea"></textarea>
+                <button type="button" class="btn btn-add"
+                        @onclick="AddNoteAsync"
+                        disabled="@(string.IsNullOrWhiteSpace(newNoteContent))">
+                    Save Note
+                </button>
+            </div>
+
+            @if (detail.Notes.Count > 0)
+            {
+                <div class="notes-list">
+                    @foreach (var note in detail.Notes)
+                    {
+                        <div class="note-item" @key="note.Id">
+                            <div class="note-meta">
+                                <strong>@note.CreatedByUserName</strong>
+                                <span class="note-date">@note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC</span>
+                            </div>
+                            <div class="note-content">@note.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="hint">No notes yet.</p>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private bool IsNew => Id is null;
+    private ContactFormModel model = new();
+    private EditContext editContext = null!;
+    private ContactDetailDto? detail;
+    private bool loading = true;
+    private bool notFound;
+    private bool saving;
+    private bool saved;
+    private string? error;
+    private int photoVer = 1;
+    private bool confirmingDelete;
+    private string newNoteContent = "";
+    private bool deletedByOther;
+
+    // Unique per-circuit id so we can ignore echoes of our own writes.
+    private readonly Guid originId = Guid.NewGuid();
+
+    private readonly List<ToastMessage> toasts = [];
+    private int nextToastId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(model);
+
+        if (!IsNew)
+        {
+            detail = await ContactService.GetAsync(Id!.Value);
+            if (detail is null)
+            {
+                notFound = true;
+                loading = false;
+                return;
+            }
+            model = ContactFormModel.FromDetail(detail);
+            editContext = new EditContext(model);
+
+            Notifier.Changed += OnContactChanged;
+        }
+
+        loading = false;
+    }
+
+    public void Dispose()
+    {
+        Notifier.Changed -= OnContactChanged;
+    }
+
+    // ─── Real-time updates ──────────────────────────────────────────────
+
+    private void OnContactChanged(ContactChangeEvent evt)
+    {
+        if (IsNew || evt.ContactId != Id!.Value) return;
+        if (evt.OriginId == originId) return;
+
+        _ = InvokeAsync(() => HandleChangeAsync(evt));
+    }
+
+    private async Task HandleChangeAsync(ContactChangeEvent evt)
+    {
+        switch (evt.Kind)
+        {
+            case ContactChangeKind.NoteAdded when evt.Note is not null:
+                if (detail is not null)
+                {
+                    var newNotes = new List<NoteDto>(detail.Notes.Count + 1) { evt.Note };
+                    newNotes.AddRange(detail.Notes);
+                    detail = detail with { Notes = newNotes };
+                }
+                AddToast($"{evt.Note.CreatedByUserName} added a note.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.PhotoChanged:
+                detail = await ContactService.GetAsync(Id!.Value);
+                if (detail is null) { deletedByOther = true; break; }
+                photoVer++;
+                AddToast("Profile picture was updated.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.Updated:
+                if (editContext.IsModified())
+                {
+                    AddToast(
+                        "Another user changed this contact. Reload to see their changes, or save to overwrite.",
+                        ToastSeverity.Warn,
+                        hasReload: true);
+                }
+                else
+                {
+                    await ReloadFromServer();
+                    AddToast("This contact was updated by another user.", ToastSeverity.Info, false);
+                }
+                break;
+
+            case ContactChangeKind.Deleted:
+                deletedByOther = true;
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ReloadFromServer()
+    {
+        if (IsNew) return;
+
+        var fresh = await ContactService.GetAsync(Id!.Value);
+        if (fresh is null)
+        {
+            deletedByOther = true;
+            StateHasChanged();
+            return;
+        }
+
+        detail = fresh;
+        model = ContactFormModel.FromDetail(fresh);
+        editContext = new EditContext(model);
+        photoVer++;
+
+        toasts.RemoveAll(t => t.HasReload);
+        StateHasChanged();
+    }
+
+    // ─── Toast helpers ──────────────────────────────────────────────────
+
+    private void AddToast(string message, ToastSeverity severity, bool hasReload)
+    {
+        if (hasReload && toasts.Any(t => t.HasReload)) return;
+
+        var toast = new ToastMessage(nextToastId++, message, severity, hasReload);
+        toasts.Add(toast);
+
+        if (severity == ToastSeverity.Info)
+        {
+            _ = AutoDismiss(toast.Id, TimeSpan.FromSeconds(5));
+        }
+    }
+
+    private async Task AutoDismiss(int id, TimeSpan after)
+    {
+        await Task.Delay(after);
+        await InvokeAsync(() =>
+        {
+            if (toasts.RemoveAll(t => t.Id == id) > 0)
+                StateHasChanged();
+        });
+    }
+
+    private void DismissToast(int id) => toasts.RemoveAll(t => t.Id == id);
+
+    private enum ToastSeverity { Info, Warn }
+
+    private sealed record ToastMessage(
+        int Id, string Message, ToastSeverity Severity, bool HasReload)
+    {
+        public string SeverityClass => Severity == ToastSeverity.Warn ? "warn" : "info";
+    }
+
+    // ─── Existing handlers ──────────────────────────────────────────────
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        saved = false;
+        error = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var newId = await ContactService.CreateAsync(model);
+                Logger.LogInformation("Created contact {Id}", newId);
+                Nav.NavigateTo($"/contacts/{newId}");
+            }
+            else
+            {
+                await ContactService.UpdateAsync(Id!.Value, model, originId: originId);
+                detail = await ContactService.GetAsync(Id!.Value);
+                saved = true;
+                toasts.RemoveAll(t => t.HasReload);
+                editContext = new EditContext(model);
+                Logger.LogInformation("Updated contact {Id}", Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Save failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to save contact");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        saving = true;
+        error = null;
+
+        try
+        {
+            await ContactService.DeleteAsync(Id!.Value, originId: originId);
+            Logger.LogInformation("Deleted contact {Id}", Id);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            error = $"Delete failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to delete contact {Id}", Id);
+            saving = false;
+        }
+    }
+
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        error = null;
+        var file = e.File;
+        const int maxBytes = 2 * 1024 * 1024;
+
+        if (file.Size > maxBytes)
+        {
+            error = "Image must be under 2 MB.";
+            return;
+        }
+
+        if (file.ContentType is not ("image/jpeg" or "image/png" or "image/webp"))
+        {
+            error = "Only JPEG, PNG, and WebP images are supported.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            await ContactService.SetProfilePictureAsync(
+                Id!.Value, ms.ToArray(), file.ContentType, originId: originId);
+            detail = await ContactService.GetAsync(Id!.Value);
+            photoVer++;
+        }
+        catch (Exception ex)
+        {
+            error = $"Upload failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to upload photo for contact {Id}", Id);
+        }
+    }
+
+    private async Task RemovePhoto()
+    {
+        error = null;
+        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId: originId);
+        detail = await ContactService.GetAsync(Id!.Value);
+        photoVer++;
+    }
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent)) return;
+        error = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+            var userName = authState.User.Identity?.Name ?? "unknown";
+
+            await ContactService.AddNoteAsync(
+                Id!.Value, newNoteContent, userId, userName, originId: originId);
+            newNoteContent = "";
+            detail = await ContactService.GetAsync(Id!.Value);
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to add note: {ex.Message}";
+            Logger.LogError(ex, "Failed to add note to contact {Id}", Id);
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/");
+}
+```
+
+---
+
+The trade-off here is a tiny readability hit: putting `Guid? originId` *after* `CancellationToken ct` looks slightly unusual (convention is `ct` last). But it's the cleanest way to keep your test suite working without touching it. The four call sites in the razor file use named-argument syntax (`originId: originId`) to make intent obvious.
+
+My apologies for the false confidence on the first round — I should have actually traced through the overload resolution before claiming the tests would just work.
+
+100
+47
