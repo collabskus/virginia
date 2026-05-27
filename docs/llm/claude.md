@@ -14230,3 +14230,2839 @@ Since the byte array is `static readonly`, all 500 contacts share the same refer
 
 62
 09
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+I thought because we use blazor server, when someone edits and adds a note to a contact on one machine, it shows up automatically on everyone who is looking at the same contact detail page? 
+do details not get transfered?
+
+Good instinct, and no, it's not too much effort — it's actually a clean design. Let me check the current form structure to ground the answer.Let me look at the actual current ContactDetail to see exactly how the form is structured today.I have what I need. Now let me think through the design before answering.
+
+The user's idea is good — it's a real, well-known pattern (last-writer-wins for individual fields with stale-detection signaling to the user). And they're right that **notes are append-only and independent**, so they can always be silently merged in. The main contact (name, emails, phones, addresses) is where dirty-tracking matters.
+
+The key design questions:
+
+1. **What is "dirty"?** Two practical definitions:
+   - **Per-field dirty**: track which individual fields the user has touched. Most precise but lots of bookkeeping.
+   - **Per-section/form dirty**: track whether the whole form has been edited since load. Much simpler, slightly less precise.
+   
+   `EditForm` provides `EditContext` which has `IsModified()` (whole form) and `IsModified(FieldIdentifier)` (per-field) — Blazor already tracks this for us. No need to roll our own.
+
+2. **What's the merge strategy when an update arrives from another user?**
+   - If form is clean → silently replace `model` with fresh data from DB, show a subtle toast "Updated by Alice"
+   - If form is dirty → don't touch `model` (would destroy their typing), show a more prominent toast: "Bob changed this contact. Reload to see his changes — or save to overwrite."
+   
+3. **Notes are easy**: always append silently, show toast.
+
+4. **Architecture**: Need a singleton `IContactChangeNotifier` (raised by `ContactService` after writes), and `ContactDetail.razor` subscribes per-contact-id.
+
+Effort estimate: ~150 lines across 4-5 files. Not bad at all. Let me explain this clearly.
+
+---
+
+Not too much effort — it's a solid design, and you have most of the pieces already. Let me lay out what makes it work and where the subtle bits live.
+
+## The dirty-tracking part is free
+
+`EditForm` already gives you an `EditContext` with `IsModified()` (whole form) and `IsModified(FieldIdentifier)` (per-field). Blazor tracks modification automatically on every bound input — you just have to grab the `EditContext` via `OnSubmit` or by constructing one yourself and exposing it. No custom bookkeeping needed.
+
+You have two granularity choices:
+
+- **Per-form dirty** (recommended for Virginia): "has the user touched *anything* in this form?" → one bool, easy logic, slight over-protection (if Alice only typed in the notes textarea, the contact form is still "clean" → safe to merge incoming changes).
+- **Per-field dirty**: "did Alice touch the email field specifically?" → can merge phone/address changes even while she edits email. Much more bookkeeping for marginal benefit.
+
+Per-form is the right call. The cost of being slightly conservative (showing the "reload?" toast when only an unrelated field changed) is minimal; the cost of getting per-field merging wrong is corrupted forms.
+
+## The split that makes it clean
+
+Treat the three pieces independently because they have different semantics:
+
+| Section | Strategy when update arrives from another user |
+|---------|-----------------------------------------------|
+| **Notes** | Always silently append. Show neutral toast: "Bob added a note." Notes are independent records — no merge conflict possible. |
+| **Photo** | Always silently refresh (bump `photoVer`). Toast: "Photo updated." Not in the EditForm, so dirtiness doesn't apply. |
+| **Contact form** (name/emails/phones/addresses) | If form is **clean** → silently replace `model` with fresh data, toast "Bob updated this contact." If **dirty** → leave `model` alone, show actionable toast: "Bob made changes. [Reload] [Keep mine]." |
+
+This matches your instinct exactly: notes are independent (always merge), email/etc. is last-write-wins but you warn the user before they unknowingly clobber.
+
+## What you need to build
+
+Roughly four pieces:
+
+1. **`IContactChangeNotifier`** (singleton service): in-process pub/sub with events like `NoteAdded(int contactId, ContactNoteDto)`, `ContactUpdated(int contactId)`, `PhotoChanged(int contactId)`, `ContactDeleted(int contactId)`. Plus an `OriginCircuitId` on each event so the originating circuit ignores its own echoes.
+
+2. **`ContactService` raises events** after `SaveChangesAsync` in `UpdateAsync`, `AddNoteAsync`, `SetProfilePictureAsync`, `RemoveProfilePictureAsync`, `DeleteAsync`.
+
+3. **`ContactDetail.razor` subscribes** in `OnInitializedAsync` for the current `Id`, captures the `EditContext` from the `EditForm`, and on each event:
+   - filter by `contactId == Id`
+   - dispatch by event type and current dirty state
+   - call `InvokeAsync(StateHasChanged)` after mutating local state
+   - unsubscribe in `Dispose`
+
+4. **Toast component** — simple shared component with a queue, auto-dismiss timer, and optional action buttons. Maybe 40 lines of Razor + a small singleton `ToastService` scoped per circuit. (You could also reuse the existing `error` / `saved` banner pattern and skip a real toast system, but a proper toast lets multiple notifications stack without overwriting each other.)
+
+## Subtleties worth knowing upfront
+
+A few things that bite people building this:
+
+- **Circuit identity for origin filtering.** When Alice saves, her own circuit receives the same event. Without origin filtering she'd see "Alice updated this contact" pop up on her own screen. Easiest fix: pass an `originCircuitId` (any guid generated per-circuit, e.g. injected via a scoped service) into the service call, include it on the event, and skip rendering when it matches.
+
+- **`InvokeAsync(StateHasChanged)` is mandatory.** Event handlers fire on a thread pool thread, not the renderer's sync context. Without `InvokeAsync` you'll get sporadic crashes or silent no-ops.
+
+- **Unsubscribe in `Dispose`** (or `IAsyncDisposable.DisposeAsync`). If you don't, the notifier holds a reference to the disposed circuit, leaks memory, and may throw when raising.
+
+- **`EditContext.IsModified()` returns `true` after any field is touched — even if the user typed something and then deleted it back to the original value.** Blazor tracks modification, not equality. Usually fine; if it bothers you later, you can compare `model` against a deep-cloned `originalModel` snapshot instead.
+
+- **The "Keep mine" toast button doesn't actually need to do anything special.** The user keeps editing; when they save, last-write-wins kicks in and their version overwrites Bob's. The toast is just an informed-consent UI. You might want a "Reload anyway" button that confirms before discarding their edits.
+
+- **Deletion is its own case.** If Bob deletes the contact while Alice has it open, you can't silently update — there's nothing to show. Probably a modal-ish banner: "This contact was deleted by Bob. [Back to list]" and disable Save.
+
+## Bottom line
+
+Probably 150-200 lines of new code across a notifier service, a toast component, and edits to `ContactService` + `ContactDetail.razor`. Maybe an afternoon's work including tests for the notifier. The dirty-detection itself is one line — `editContext.IsModified()` — because Blazor's already doing the hard part.
+
+Want me to build this out? If yes, a couple of decisions to make first:
+
+- **Toast system: real one, or reuse your existing banner pattern?** Real toast is nicer UX but more code. Banner is what's already there.
+- **Scope: just notes + contact updates, or also include deletes and photo changes in the same pass?** Doing it all together is cleaner architecturally.
+- **Tests: do you want unit tests for the notifier (easy) and/or integration tests for the end-to-end flow (harder, Blazor multi-circuit testing is fiddly)?**
+
+maybe we can show a toast message saying it has changed? I think we can simply show notes because each note is independent(?) but yes for things like email address, we decided last save wins because it is simpler. is there a way to show a toast message and silently update only if the element is NOT dirty and only show toast if the element is dirty? I mean dirty means the element has changed since we loaded the page... is this too much effort?
+
+I'll need to read the current state of several files to give you complete, correct updates. Let me pull what I need.Now let me check the test infrastructure to see what tests pass and how `ContactService` is constructed there (since I'm adding a constructor param):Good. Now let me check the AppClaimsPrincipalFactory and what `OriginCircuitId` patterns are reasonable. Actually, I'll use a simpler approach — pass `originCircuitId` as a parameter to `ContactService` methods rather than as a separate scoped service. That keeps the surface clean and the test harness still works (just pass `null` or a fresh guid).
+
+Let me also check the existing tests to make sure my interface changes don't break anything:Now I have a clear picture. Design decisions:
+
+1. **`OriginId`** — A new optional `Guid? originId` parameter on each mutating service method. Default `null`. Tests stay backward-compatible because they don't supply it.
+
+2. **`IContactChangeNotifier`** — Singleton service raising `event Action<ContactChangeEvent>`. Single event type with a `Kind` discriminator keeps subscription simple.
+
+3. **Origin tracking in `ContactDetail.razor`** — Generate one `Guid` per circuit on first render; pass to each service call; filter out events with matching `OriginId`.
+
+4. **Toast component** — Adding a separate `<Toast>` component would be a lot of new infrastructure. I'll use a lightweight inline toast section inside `ContactDetail.razor` instead — same pattern as the existing banner. The user asked specifically about toast-on-this-page, not a global toast system.
+
+5. **`NoteDto` already exposes everything needed** — I can pass the new `NoteDto` directly inside the event payload, so subscribers can append without re-querying.
+
+6. **For contact updates**, the notifier just needs `contactId`; the subscriber re-fetches if the form is clean.
+
+7. **Deletes** are simpler: navigate away.
+
+Let me also check if `EditContext` needs to be created manually or if I can capture it from `EditForm`:
+
+I'll create the `EditContext` manually so I can hold onto it and call `IsModified()` outside the form's handlers. That's the standard pattern.
+
+Now let me write everything. Files that change:
+
+1. **NEW:** `Virginia/Services/IContactChangeNotifier.cs`
+2. **NEW:** `Virginia/Services/ContactChangeNotifier.cs`
+3. **MODIFIED:** `Virginia/Services/IContactService.cs` — add `originId` params
+4. **MODIFIED:** `Virginia/Services/ContactService.cs` — accept `originId`, raise events
+5. **MODIFIED:** `Virginia/Program.cs` — register singleton
+6. **MODIFIED:** `Virginia/Components/Pages/ContactDetail.razor` — subscribe, dirty-check, toasts
+7. **MODIFIED:** `Virginia/Components/Pages/ContactDetail.razor.css` — toast styles
+8. **MODIFIED:** `Virginia.Tests/TestInfrastructure.cs` — pass notifier (or use a no-op)
+
+Let me check if there's a way to avoid changing the test infra. If I make `originId` a parameter with a default value and the notifier a constructor dep with a default... actually it's cleaner to just update the test harness. Let me also make `IContactChangeNotifier` injectable but have a `NullContactChangeNotifier` for tests, OR just inject the real one in tests too — it has no state worth caring about between tests.
+
+Decision: use the real `ContactChangeNotifier` in tests (it's trivial), and update `TestInfrastructure.cs`. That's the cleanest.
+
+Let me write the files now.Here are all the files that change. Eight files total — two new services, four modified files, plus test infra and CSS.
+
+---
+
+## NEW FILE: `Virginia/Services/IContactChangeNotifier.cs`
+
+```csharp
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+/// <summary>
+/// In-process pub/sub for contact mutations. A singleton — one instance for the
+/// whole app — so events raised on one circuit are visible to all other circuits.
+///
+/// Each event carries an <see cref="ContactChangeEvent.OriginId"/> identifying
+/// the circuit that caused the change, so subscribers can ignore their own echoes.
+/// </summary>
+public interface IContactChangeNotifier
+{
+    event Action<ContactChangeEvent>? Changed;
+
+    void Publish(ContactChangeEvent evt);
+}
+
+public enum ContactChangeKind
+{
+    Updated,        // FirstName, LastName, Emails, Phones, Addresses
+    Deleted,
+    PhotoChanged,   // Set or removed
+    NoteAdded
+}
+
+/// <summary>
+/// A single contact mutation. <see cref="Note"/> is populated when
+/// <see cref="Kind"/> is <see cref="ContactChangeKind.NoteAdded"/>.
+/// </summary>
+public sealed record ContactChangeEvent(
+    int ContactId,
+    ContactChangeKind Kind,
+    Guid? OriginId,
+    NoteDto? Note = null);
+```
+
+---
+
+## NEW FILE: `Virginia/Services/ContactChangeNotifier.cs`
+
+```csharp
+namespace Virginia.Services;
+
+/// <summary>
+/// Default implementation of <see cref="IContactChangeNotifier"/>. Catches and
+/// logs subscriber exceptions individually so one broken subscriber can't take
+/// down the others (or the calling write).
+/// </summary>
+public sealed partial class ContactChangeNotifier(
+    ILogger<ContactChangeNotifier> logger) : IContactChangeNotifier
+{
+    public event Action<ContactChangeEvent>? Changed;
+
+    public void Publish(ContactChangeEvent evt)
+    {
+        var handlers = Changed;
+        if (handlers is null) return;
+
+        foreach (var handler in handlers.GetInvocationList().Cast<Action<ContactChangeEvent>>())
+        {
+            try
+            {
+                handler(evt);
+            }
+            catch (Exception ex)
+            {
+                Log.SubscriberFailed(logger, evt.ContactId, evt.Kind.ToString(), ex);
+            }
+        }
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Change-notifier subscriber threw for contact {ContactId} ({Kind})")]
+        public static partial void SubscriberFailed(
+            ILogger logger, int contactId, string kind, Exception ex);
+    }
+}
+```
+
+---
+
+## MODIFIED: `Virginia/Services/IContactService.cs`
+
+```csharp
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public interface IContactService
+{
+    Task<PagedResult<ContactListItem>> ListAsync(
+        ContactFilter filter, int page, int pageSize, CancellationToken ct = default);
+
+    Task<ContactDetailDto?> GetAsync(int id, CancellationToken ct = default);
+
+    Task<int> CreateAsync(ContactFormModel form, CancellationToken ct = default);
+
+    Task UpdateAsync(
+        int id, ContactFormModel form,
+        Guid? originId = null, CancellationToken ct = default);
+
+    Task DeleteAsync(
+        int id, Guid? originId = null, CancellationToken ct = default);
+
+    Task SetProfilePictureAsync(
+        int id, byte[] data, string contentType,
+        Guid? originId = null, CancellationToken ct = default);
+
+    Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
+
+    Task RemoveProfilePictureAsync(
+        int id, Guid? originId = null, CancellationToken ct = default);
+
+    Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        Guid? originId = null, CancellationToken ct = default);
+
+    Task<int> CreateBulkAsync(int count, CancellationToken ct = default);
+
+    Task<int> DeleteAllAsync(CancellationToken ct = default);
+}
+```
+
+---
+
+## MODIFIED: `Virginia/Services/ContactService.cs`
+
+```csharp
+using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public sealed partial class ContactService(
+    AppDbContext db,
+    ILogger<ContactService> logger,
+    ContactTelemetry telemetry,
+    IContactChangeNotifier notifier) : IContactService
+{
+    private const int MaxPageSize = 100;
+    private const int BulkBatchSize = 50;
+
+    // ─── List ────────────────────────────────────────────────────────────
+
+    public async Task<PagedResult<ContactListItem>> ListAsync(
+        ContactFilter filter, int page, int pageSize, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("ListContacts");
+        activity?.SetTag("filter.name", filter.Name);
+        activity?.SetTag("filter.city", filter.City);
+        activity?.SetTag("filter.state", filter.State);
+        activity?.SetTag("page", page);
+        activity?.SetTag("pageSize", pageSize);
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, MaxPageSize);
+
+        var sw = Stopwatch.StartNew();
+
+        var query = db.Contacts.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Name))
+        {
+            var pattern = $"%{filter.Name.Trim()}%";
+            query = query.Where(c =>
+                EF.Functions.Like(c.FirstName, pattern)
+                || EF.Functions.Like(c.LastName, pattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Email))
+        {
+            var pattern = $"%{filter.Email.Trim()}%";
+            query = query.Where(c =>
+                c.Emails.Any(e => EF.Functions.Like(e.Address, pattern)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Phone))
+        {
+            var term = filter.Phone.Trim();
+            query = query.Where(c =>
+                c.Phones.Any(p => p.Number.Contains(term)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.City))
+        {
+            var pattern = $"%{filter.City.Trim()}%";
+            query = query.Where(c =>
+                c.Addresses.Any(a => EF.Functions.Like(a.City, pattern)));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.State))
+        {
+            var pattern = $"%{filter.State.Trim()}%";
+            query = query.Where(c =>
+                c.Addresses.Any(a => EF.Functions.Like(a.State, pattern)));
+        }
+
+        if (filter.HasPhoto == true)
+            query = query.Where(c => c.ProfilePicture != null);
+        else if (filter.HasPhoto == false)
+            query = query.Where(c => c.ProfilePicture == null);
+
+        var totalCount = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(c => c.LastName)
+            .ThenBy(c => c.FirstName)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new ContactListItem(
+                c.Id,
+                c.FirstName,
+                c.LastName,
+                c.ProfilePicture != null,
+                c.Emails.OrderBy(e => e.Id).Select(e => e.Address).FirstOrDefault(),
+                c.Phones.OrderBy(p => p.Id).Select(p => p.Number).FirstOrDefault(),
+                c.Addresses.OrderBy(a => a.Id).Select(a => a.City).FirstOrDefault(),
+                c.CreatedAtUtc))
+            .ToListAsync(ct);
+
+        sw.Stop();
+
+        activity?.SetTag("result.count", items.Count);
+        activity?.SetTag("result.totalCount", totalCount);
+        telemetry.RecordQueryDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.ListedContacts(logger, items.Count, totalCount, sw.Elapsed.TotalMilliseconds, page);
+
+        return new PagedResult<ContactListItem>(items, totalCount, page, pageSize);
+    }
+
+    // ─── Get ─────────────────────────────────────────────────────────────
+
+    public async Task<ContactDetailDto?> GetAsync(int id, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("GetContact");
+        activity?.SetTag("contact.id", id);
+
+        var sw = Stopwatch.StartNew();
+
+        var c = await db.Contacts
+            .AsNoTracking()
+            .Include(x => x.Emails.OrderBy(e => e.Id))
+            .Include(x => x.Phones.OrderBy(p => p.Id))
+            .Include(x => x.Addresses.OrderBy(a => a.Id))
+            .Include(x => x.Notes.OrderByDescending(n => n.CreatedAtUtc))
+            .FirstOrDefaultAsync(x => x.Id == id, ct);
+
+        sw.Stop();
+        telemetry.RecordQueryDuration(sw.Elapsed.TotalMilliseconds);
+
+        if (c is null)
+        {
+            Log.ContactNotFound(logger, id, sw.Elapsed.TotalMilliseconds);
+            return null;
+        }
+
+        Log.RetrievedContact(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        return new ContactDetailDto(
+            c.Id, c.FirstName, c.LastName,
+            c.ProfilePicture is not null, c.ProfilePictureContentType,
+            c.CreatedAtUtc, c.UpdatedAtUtc,
+            [.. c.Emails.Select(e => new EmailDto(e.Id, e.Label, e.Address))],
+            [.. c.Phones.Select(p => new PhoneDto(p.Id, p.Label, p.Number))],
+            [.. c.Addresses.Select(a => new AddressDto(
+                a.Id, a.Label, a.Street, a.City, a.State, a.PostalCode, a.Country))],
+            [.. c.Notes.Select(n => new NoteDto(
+                n.Id, n.Content, n.CreatedByUserName, n.CreatedAtUtc))]);
+    }
+
+    // ─── Create ──────────────────────────────────────────────────────────
+
+    public async Task<int> CreateAsync(ContactFormModel form, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("CreateContact");
+        var sw = Stopwatch.StartNew();
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var now = DateTime.UtcNow;
+            var contact = new Contact
+            {
+                FirstName = form.FirstName.Trim(),
+                LastName = form.LastName.Trim(),
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now,
+                Emails = [.. form.Emails.Select(e => new ContactEmail
+                {
+                    Label = e.Label.Trim(),
+                    Address = e.Address.Trim()
+                })],
+                Phones = [.. form.Phones.Select(p => new ContactPhone
+                {
+                    Label = p.Label.Trim(),
+                    Number = p.Number.Trim()
+                })],
+                Addresses = [.. form.Addresses.Select(a => new ContactAddress
+                {
+                    Label = a.Label.Trim(),
+                    Street = a.Street.Trim(),
+                    City = a.City.Trim(),
+                    State = a.State.Trim(),
+                    PostalCode = a.PostalCode.Trim(),
+                    Country = a.Country.Trim()
+                })]
+            };
+
+            db.Contacts.Add(contact);
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            sw.Stop();
+            activity?.SetTag("contact.id", contact.Id);
+            telemetry.RecordContactCreated();
+            telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+            Log.CreatedContact(logger, contact.Id, contact.FullName,
+                contact.Emails.Count, contact.Phones.Count, contact.Addresses.Count,
+                sw.Elapsed.TotalMilliseconds);
+
+            return contact.Id;
+        }
+        catch (Exception ex)
+        {
+            await tx.RollbackAsync(ct);
+            Log.FailedToCreateContact(logger, ex);
+            throw;
+        }
+    }
+
+    // ─── Update ──────────────────────────────────────────────────────────
+
+    public async Task UpdateAsync(
+        int id, ContactFormModel form, Guid? originId, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("UpdateContact");
+        activity?.SetTag("contact.id", id);
+        var sw = Stopwatch.StartNew();
+
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        try
+        {
+            var contact = await db.Contacts
+                .Include(c => c.Emails)
+                .Include(c => c.Phones)
+                .Include(c => c.Addresses)
+                .FirstOrDefaultAsync(c => c.Id == id, ct)
+                ?? throw new InvalidOperationException($"Contact {id} not found.");
+
+            contact.FirstName = form.FirstName.Trim();
+            contact.LastName = form.LastName.Trim();
+            contact.UpdatedAtUtc = DateTime.UtcNow;
+
+            SyncChildren(contact.Emails, form.Emails,
+                (e, m) => e.Id == m.Id && m.Id != 0,
+                (e, m) => { e.Label = m.Label.Trim(); e.Address = m.Address.Trim(); },
+                m => new ContactEmail
+                {
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Address = m.Address.Trim()
+                });
+
+            SyncChildren(contact.Phones, form.Phones,
+                (e, m) => e.Id == m.Id && m.Id != 0,
+                (e, m) => { e.Label = m.Label.Trim(); e.Number = m.Number.Trim(); },
+                m => new ContactPhone
+                {
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Number = m.Number.Trim()
+                });
+
+            SyncChildren(contact.Addresses, form.Addresses,
+                (e, m) => e.Id == m.Id && m.Id != 0,
+                (e, m) =>
+                {
+                    e.Label = m.Label.Trim();
+                    e.Street = m.Street.Trim();
+                    e.City = m.City.Trim();
+                    e.State = m.State.Trim();
+                    e.PostalCode = m.PostalCode.Trim();
+                    e.Country = m.Country.Trim();
+                },
+                m => new ContactAddress
+                {
+                    ContactId = id,
+                    Label = m.Label.Trim(),
+                    Street = m.Street.Trim(),
+                    City = m.City.Trim(),
+                    State = m.State.Trim(),
+                    PostalCode = m.PostalCode.Trim(),
+                    Country = m.Country.Trim()
+                });
+
+            await db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            sw.Stop();
+            telemetry.RecordContactUpdated();
+            telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+            Log.UpdatedContact(logger, id, contact.FullName, sw.Elapsed.TotalMilliseconds);
+
+            notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.Updated, originId));
+        }
+        catch (Exception ex) when (ex is not InvalidOperationException)
+        {
+            await tx.RollbackAsync(ct);
+            Log.FailedToUpdateContact(logger, id, ex);
+            throw;
+        }
+    }
+
+    // ─── Delete ──────────────────────────────────────────────────────────
+
+    public async Task DeleteAsync(int id, Guid? originId, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("DeleteContact");
+        activity?.SetTag("contact.id", id);
+        var sw = Stopwatch.StartNew();
+
+        var rows = await db.Contacts.Where(c => c.Id == id).ExecuteDeleteAsync(ct);
+
+        sw.Stop();
+
+        if (rows == 0)
+        {
+            Log.DeleteContactNotFound(logger, id);
+            return;
+        }
+
+        telemetry.RecordContactDeleted();
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+        Log.DeletedContact(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.Deleted, originId));
+    }
+
+    // ─── Profile picture ─────────────────────────────────────────────────
+
+    public async Task SetProfilePictureAsync(
+        int id, byte[] data, string contentType,
+        Guid? originId, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("SetProfilePicture");
+        activity?.SetTag("contact.id", id);
+        activity?.SetTag("picture.bytes", data.Length);
+        activity?.SetTag("picture.contentType", contentType);
+        var sw = Stopwatch.StartNew();
+
+        var rows = await db.Contacts.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.ProfilePicture, data)
+                .SetProperty(c => c.ProfilePictureContentType, contentType)
+                .SetProperty(c => c.UpdatedAtUtc, DateTime.UtcNow), ct);
+
+        sw.Stop();
+
+        if (rows == 0)
+            throw new InvalidOperationException($"Contact {id} not found.");
+
+        Log.SetProfilePicture(logger, id, data.Length, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.PhotoChanged, originId));
+    }
+
+    public async Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct)
+    {
+        var result = await db.Contacts
+            .AsNoTracking()
+            .Where(c => c.Id == id && c.ProfilePicture != null)
+            .Select(c => new { c.ProfilePicture, c.ProfilePictureContentType })
+            .FirstOrDefaultAsync(ct);
+
+        if (result?.ProfilePicture is null)
+            return null;
+
+        return new ProfilePictureResult(
+            result.ProfilePicture,
+            result.ProfilePictureContentType ?? "image/jpeg");
+    }
+
+    public async Task RemoveProfilePictureAsync(int id, Guid? originId, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("RemoveProfilePicture");
+        activity?.SetTag("contact.id", id);
+        var sw = Stopwatch.StartNew();
+
+        await db.Contacts.Where(c => c.Id == id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.ProfilePicture, (byte[]?)null)
+                .SetProperty(c => c.ProfilePictureContentType, (string?)null)
+                .SetProperty(c => c.UpdatedAtUtc, DateTime.UtcNow), ct);
+
+        sw.Stop();
+        Log.RemovedProfilePicture(logger, id, sw.Elapsed.TotalMilliseconds);
+
+        notifier.Publish(new ContactChangeEvent(id, ContactChangeKind.PhotoChanged, originId));
+    }
+
+    // ─── Notes ───────────────────────────────────────────────────────────
+
+    public async Task<int> AddNoteAsync(
+        int contactId, string content, string userId, string userName,
+        Guid? originId, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
+        activity?.SetTag("contact.id", contactId);
+        var sw = Stopwatch.StartNew();
+
+        var contactExists = await db.Contacts.AnyAsync(c => c.Id == contactId, ct);
+        if (!contactExists)
+            throw new InvalidOperationException($"Contact {contactId} not found.");
+
+        var note = new ContactNote
+        {
+            ContactId = contactId,
+            Content = content.Trim(),
+            CreatedByUserId = userId,
+            CreatedByUserName = userName,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        db.ContactNotes.Add(note);
+        await db.SaveChangesAsync(ct);
+
+        sw.Stop();
+        Log.AddedNote(logger, note.Id, contactId, userName, sw.Elapsed.TotalMilliseconds);
+
+        var dto = new NoteDto(note.Id, note.Content, note.CreatedByUserName, note.CreatedAtUtc);
+        notifier.Publish(new ContactChangeEvent(
+            contactId, ContactChangeKind.NoteAdded, originId, dto));
+
+        return note.Id;
+    }
+
+    // ─── Bulk create ─────────────────────────────────────────────────────
+
+    public async Task<int> CreateBulkAsync(int count, CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("BulkCreateContacts");
+        activity?.SetTag("bulk.requested", count);
+        var sw = Stopwatch.StartNew();
+
+        count = Math.Clamp(count, 1, 10_000);
+
+        var rng = new Random();
+        var created = 0;
+
+        for (var batch = 0; batch < count; batch += BulkBatchSize)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var batchSize = Math.Min(BulkBatchSize, count - batch);
+
+            await using var tx = await db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                for (var i = 0; i < batchSize; i++)
+                {
+                    var contact = FakeContactGenerator.Generate(rng);
+                    db.Contacts.Add(contact);
+                }
+
+                await db.SaveChangesAsync(ct);
+                await tx.CommitAsync(ct);
+
+                created += batchSize;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                await tx.RollbackAsync(ct);
+                Log.FailedBulkCreate(logger, created, count, ex);
+                throw;
+            }
+        }
+
+        sw.Stop();
+        telemetry.RecordBulkCreated(created);
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.BulkCreated(logger, created, sw.Elapsed.TotalMilliseconds);
+
+        return created;
+    }
+
+    // ─── Delete all ──────────────────────────────────────────────────────
+
+    public async Task<int> DeleteAllAsync(CancellationToken ct)
+    {
+        using var activity = ContactTelemetry.Source.StartActivity("DeleteAllContacts");
+        var sw = Stopwatch.StartNew();
+
+        // Child tables are cascade-deleted by SQLite, but ExecuteDeleteAsync
+        // on the parent is the cleanest single-statement approach.
+        var rows = await db.Contacts.ExecuteDeleteAsync(ct);
+
+        sw.Stop();
+        telemetry.RecordBulkDeleted(rows);
+        telemetry.RecordWriteDuration(sw.Elapsed.TotalMilliseconds);
+
+        Log.DeletedAll(logger, rows, sw.Elapsed.TotalMilliseconds);
+
+        return rows;
+    }
+
+    // ─── Private helper ──────────────────────────────────────────────────
+
+    private void SyncChildren<TEntity, TModel>(
+        List<TEntity> entities,
+        List<TModel> models,
+        Func<TEntity, TModel, bool> match,
+        Action<TEntity, TModel> update,
+        Func<TModel, TEntity> create) where TEntity : class
+    {
+        var toRemove = entities.Where(e => !models.Any(m => match(e, m))).ToList();
+        foreach (var item in toRemove)
+        {
+            entities.Remove(item);
+            db.Remove(item);
+        }
+
+        foreach (var model in models)
+        {
+            var existing = entities.FirstOrDefault(e => match(e, model));
+            if (existing is not null)
+                update(existing, model);
+            else
+                entities.Add(create(model));
+        }
+    }
+
+    // ─── Source-generated log messages ────────────────────────────────────
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Listed {Count}/{Total} contacts in {ElapsedMs:F1}ms (page {Page})")]
+        public static partial void ListedContacts(
+            ILogger logger, int count, int total, double elapsedMs, int page);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Contact {Id} not found ({ElapsedMs:F1}ms)")]
+        public static partial void ContactNotFound(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Retrieved contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void RetrievedContact(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Created contact {Id} ({Name}) with {Emails}e/{Phones}p/{Addresses}a in {ElapsedMs:F1}ms")]
+        public static partial void CreatedContact(
+            ILogger logger, int id, string name,
+            int emails, int phones, int addresses, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Failed to create contact")]
+        public static partial void FailedToCreateContact(
+            ILogger logger, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Updated contact {Id} ({Name}) in {ElapsedMs:F1}ms")]
+        public static partial void UpdatedContact(
+            ILogger logger, int id, string name, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Failed to update contact {Id}")]
+        public static partial void FailedToUpdateContact(
+            ILogger logger, int id, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Delete: contact {Id} not found")]
+        public static partial void DeleteContactNotFound(
+            ILogger logger, int id);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Deleted contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void DeletedContact(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Set profile picture for contact {Id} ({Bytes} bytes) in {ElapsedMs:F1}ms")]
+        public static partial void SetProfilePicture(
+            ILogger logger, int id, int bytes, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Removed profile picture for contact {Id} in {ElapsedMs:F1}ms")]
+        public static partial void RemovedProfilePicture(
+            ILogger logger, int id, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Added note {NoteId} to contact {ContactId} by {UserName} in {ElapsedMs:F1}ms")]
+        public static partial void AddedNote(
+            ILogger logger, int noteId, int contactId, string userName, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Bulk created {Count} contacts in {ElapsedMs:F1}ms")]
+        public static partial void BulkCreated(
+            ILogger logger, int count, double elapsedMs);
+
+        [LoggerMessage(Level = LogLevel.Error,
+            Message = "Bulk create failed after {Created}/{Requested} contacts")]
+        public static partial void FailedBulkCreate(
+            ILogger logger, int created, int requested, Exception ex);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Deleted all contacts ({Count} rows) in {ElapsedMs:F1}ms")]
+        public static partial void DeletedAll(
+            ILogger logger, int count, double elapsedMs);
+    }
+}
+```
+
+---
+
+## MODIFIED: `Virginia/Program.cs`
+
+```csharp
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Virginia.Components;
+using Virginia.Data;
+using Virginia.ServiceDefaults;
+using Virginia.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Aspire service defaults (OTEL, health checks, resilience, discovery) ─────
+builder.AddServiceDefaults();
+
+// ── EF Core + SQLite ─────────────────────────────────────────────────────────
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=virginia.db"));
+
+// ── ASP.NET Core Identity ────────────────────────────────────────────────────
+builder.Services.AddIdentity<AppUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 8;
+    options.User.RequireUniqueEmail = true;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddDefaultTokenProviders();
+
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, AppClaimsPrincipalFactory>();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.AccessDeniedPath = "/account/login";
+    options.ExpireTimeSpan = TimeSpan.FromDays(14);
+    options.SlidingExpiration = true;
+});
+
+// ── Authorization policies ───────────────────────────────────────────────────
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", policy => policy.RequireRole("Admin"))
+    .AddPolicy("Approved", policy => policy.RequireClaim("approved", "True"));
+
+builder.Services.AddCascadingAuthenticationState();
+
+// ── Application services ─────────────────────────────────────────────────────
+builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddSingleton<ContactTelemetry>();
+builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
+
+// ── Register custom OTEL sources/meters ──────────────────────────────────────
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracing => tracing.AddSource(ContactTelemetry.ServiceName))
+    .WithMetrics(metrics => metrics.AddMeter(ContactTelemetry.ServiceName));
+
+// ── Blazor ───────────────────────────────────────────────────────────────────
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+
+var app = builder.Build();
+
+//// ══════════════════════════════════════════════════════════════════════════════
+//// ██  ONE-TIME DEPLOYMENT: Delete this entire block after successful deploy  ██
+//// ══════════════════════════════════════════════════════════════════════════════
+//{
+//    var connStr = app.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=virginia.db";
+//    var dbPath = connStr.Replace("Data Source=", "", StringComparison.OrdinalIgnoreCase).Trim();
+//    if (File.Exists(dbPath))
+//    {
+//        File.Delete(dbPath);
+//        Console.WriteLine($"*** ONE-TIME: Deleted existing database at {dbPath} ***");
+//    }
+//}
+//// ══════════════════════════════════════════════════════════════════════════════
+//// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
+//// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Apply migrations + seed ──────────────────────────────────────────────────
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    //var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //await db.Database.MigrateAsync();
+
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] roles = ["Admin", "User"];
+    foreach (var role in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+    }
+
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+    var adminSection = app.Configuration.GetSection("AdminUser");
+    var adminEmail = adminSection["Email"] ?? "admin@virginia.local";
+    var adminPassword = adminSection["Password"] ?? "Admin123!";
+
+    var adminUser = await userManager.FindByEmailAsync(adminEmail);
+    if (adminUser is null)
+    {
+        adminUser = new AppUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true,
+            IsApproved = true,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+        var createResult = await userManager.CreateAsync(adminUser, adminPassword);
+        if (createResult.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+}
+
+app.MapDefaultEndpoints();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseHsts();
+}
+
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseAntiforgery();
+
+// ── Minimal API: profile photo endpoint (authenticated) ──────────────────────
+app.MapGet("/api/contacts/{id:int}/photo", async (
+    int id,
+    IContactService svc,
+    CancellationToken ct) =>
+{
+    var result = await svc.GetProfilePictureAsync(id, ct);
+    return result is null
+        ? Results.NotFound()
+        : Results.File(result.Data, result.ContentType);
+})
+.RequireAuthorization("Approved")
+.CacheOutput(p => p.Expire(TimeSpan.FromMinutes(5)).SetVaryByRouteValue("id"));
+
+// ── Minimal API: logout ──────────────────────────────────────────────────────
+app.MapPost("/account/perform-logout", async (
+    SignInManager<AppUser> signInManager) =>
+{
+    await signInManager.SignOutAsync();
+    return Results.Redirect("/account/login");
+});
+
+app.MapStaticAssets();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+
+app.Run();
+```
+
+---
+
+## MODIFIED: `Virginia/Components/Pages/ContactDetail.razor`
+
+```razor
+@page "/contacts/new"
+@page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IContactService ContactService
+@inject IContactChangeNotifier Notifier
+@inject NavigationManager Nav
+@inject ILogger<ContactDetail> Logger
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
+
+<div class="detail">
+    <nav class="detail-nav">
+        <button class="btn btn-ghost" @onclick="GoBack">← Back to list</button>
+    </nav>
+
+    @if (notFound)
+    {
+        <div class="status">Contact not found. <a href="/">Back to list</a></div>
+        return;
+    }
+
+    @if (loading)
+    {
+        <div class="status" aria-live="polite">Loading...</div>
+        return;
+    }
+
+    @if (deletedByOther)
+    {
+        <div class="banner banner-error" role="alert">
+            This contact was deleted by another user.
+            <button class="btn btn-secondary" @onclick="GoBack">Back to list</button>
+        </div>
+        return;
+    }
+
+    <!-- Toasts (collaborative-edit notifications) -->
+    @if (toasts.Count > 0)
+    {
+        <div class="toast-stack" aria-live="polite">
+            @foreach (var toast in toasts)
+            {
+                <div class="toast toast-@toast.Severity" @key="toast.Id">
+                    <span class="toast-text">@toast.Message</span>
+                    @if (toast.HasReload)
+                    {
+                        <button class="btn btn-add" @onclick="ReloadFromServer">Reload</button>
+                    }
+                    <button class="toast-dismiss" @onclick="() => DismissToast(toast.Id)"
+                            aria-label="Dismiss">✕</button>
+                </div>
+            }
+        </div>
+    }
+
+    @if (error is not null)
+    {
+        <div class="banner banner-error" role="alert">@error</div>
+    }
+
+    @if (saved)
+    {
+        <div class="banner banner-success" role="status">Contact saved successfully.</div>
+    }
+
+    <!-- Profile picture (edit mode only) -->
+    @if (!IsNew)
+    {
+        <section class="card">
+            <h2>Profile Picture</h2>
+            <div class="photo-row">
+                @if (detail?.HasPhoto == true)
+                {
+                    <img src="/api/contacts/@Id/photo?v=@photoVer"
+                         alt="@model.FirstName @model.LastName"
+                         class="avatar-lg" />
+                    <button class="btn btn-danger-sm" @onclick="RemovePhoto"
+                            disabled="@saving">Remove</button>
+                }
+                else
+                {
+                    <div class="avatar-lg avatar-empty">No photo</div>
+                }
+                <div class="photo-upload">
+                    <label>Upload (max 2 MB, JPEG/PNG/WebP):</label>
+                    <InputFile OnChange="OnPhotoSelected"
+                               accept="image/jpeg,image/png,image/webp" />
+                </div>
+            </div>
+        </section>
+    }
+
+    <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="contact">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <!-- Basic info -->
+        <section class="card">
+            <h2>Basic Info</h2>
+            <div class="row">
+                <div class="group">
+                    <label for="fn">First Name *</label>
+                    <InputText id="fn" @bind-Value="model.FirstName" />
+                    <ValidationMessage For="() => model.FirstName" />
+                </div>
+                <div class="group">
+                    <label for="ln">Last Name *</label>
+                    <InputText id="ln" @bind-Value="model.LastName" />
+                    <ValidationMessage For="() => model.LastName" />
+                </div>
+            </div>
+        </section>
+
+        <!-- Emails -->
+        <section class="card">
+            <div class="card-head">
+                <h2>Emails</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Emails.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Emails.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Emails[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Address</label>
+                            <InputText @bind-Value="model.Emails[idx].Address"
+                                       type="email" />
+                            <ValidationMessage For="() => model.Emails[idx].Address" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Emails.RemoveAt(idx)"
+                                aria-label="Remove email">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Emails.Count == 0)
+            {
+                <p class="hint">No email addresses yet.</p>
+            }
+        </section>
+
+        <!-- Phones -->
+        <section class="card">
+            <div class="card-head">
+                <h2>Phones</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Phones.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Phones.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Phones[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Number</label>
+                            <InputText @bind-Value="model.Phones[idx].Number"
+                                       type="tel" />
+                            <ValidationMessage For="() => model.Phones[idx].Number" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Phones.RemoveAt(idx)"
+                                aria-label="Remove phone">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Phones.Count == 0)
+            {
+                <p class="hint">No phone numbers yet.</p>
+            }
+        </section>
+
+        <!-- Addresses -->
+        <section class="card">
+            <div class="card-head">
+                <h2>Addresses</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Addresses.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Addresses.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Addresses[idx].Label" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Addresses.RemoveAt(idx)"
+                                aria-label="Remove address">✕</button>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>Street *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Street" />
+                            <ValidationMessage For="() => model.Addresses[idx].Street" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>City *</label>
+                            <InputText @bind-Value="model.Addresses[idx].City" />
+                            <ValidationMessage For="() => model.Addresses[idx].City" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>State</label>
+                            <InputText @bind-Value="model.Addresses[idx].State" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Postal Code *</label>
+                            <InputText @bind-Value="model.Addresses[idx].PostalCode" />
+                            <ValidationMessage For="() => model.Addresses[idx].PostalCode" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>Country *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Country" />
+                            <ValidationMessage For="() => model.Addresses[idx].Country" />
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (model.Addresses.Count == 0)
+            {
+                <p class="hint">No mailing addresses yet.</p>
+            }
+        </section>
+
+        <!-- Actions -->
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" disabled="@saving">
+                @(saving ? "Saving..." : "Save")
+            </button>
+            @if (!IsNew)
+            {
+                @if (confirmingDelete)
+                {
+                    <span class="confirm-delete">
+                        Are you sure?
+                        <button type="button" class="btn btn-danger" disabled="@saving"
+                                @onclick="DeleteAsync">Yes, delete</button>
+                        <button type="button" class="btn btn-secondary"
+                                @onclick="() => confirmingDelete = false">Cancel</button>
+                    </span>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" disabled="@saving"
+                            @onclick="() => confirmingDelete = true">Delete</button>
+                }
+            }
+            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        </div>
+    </EditForm>
+
+    <!-- Notes (edit mode only) -->
+    @if (!IsNew && detail is not null)
+    {
+        <section class="card">
+            <div class="card-head">
+                <h2>Notes</h2>
+            </div>
+
+            <div class="note-input">
+                <textarea @bind="newNoteContent" placeholder="Add a note..."
+                          rows="3" class="note-textarea"></textarea>
+                <button type="button" class="btn btn-add"
+                        @onclick="AddNoteAsync"
+                        disabled="@(string.IsNullOrWhiteSpace(newNoteContent))">
+                    Save Note
+                </button>
+            </div>
+
+            @if (detail.Notes.Count > 0)
+            {
+                <div class="notes-list">
+                    @foreach (var note in detail.Notes)
+                    {
+                        <div class="note-item" @key="note.Id">
+                            <div class="note-meta">
+                                <strong>@note.CreatedByUserName</strong>
+                                <span class="note-date">@note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC</span>
+                            </div>
+                            <div class="note-content">@note.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="hint">No notes yet.</p>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private bool IsNew => Id is null;
+    private ContactFormModel model = new();
+    private EditContext editContext = null!;
+    private ContactDetailDto? detail;
+    private bool loading = true;
+    private bool notFound;
+    private bool saving;
+    private bool saved;
+    private string? error;
+    private int photoVer = 1;
+    private bool confirmingDelete;
+    private string newNoteContent = "";
+    private bool deletedByOther;
+
+    // Unique per-circuit id so we ignore echoes of our own writes.
+    private readonly Guid originId = Guid.NewGuid();
+
+    // Toast queue
+    private readonly List<ToastMessage> toasts = [];
+    private int nextToastId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(model);
+
+        if (!IsNew)
+        {
+            detail = await ContactService.GetAsync(Id!.Value);
+            if (detail is null)
+            {
+                notFound = true;
+                loading = false;
+                return;
+            }
+            model = ContactFormModel.FromDetail(detail);
+            editContext = new EditContext(model);
+
+            Notifier.Changed += OnContactChanged;
+        }
+
+        loading = false;
+    }
+
+    public void Dispose()
+    {
+        Notifier.Changed -= OnContactChanged;
+    }
+
+    // ─── Real-time updates ──────────────────────────────────────────────
+
+    private void OnContactChanged(ContactChangeEvent evt)
+    {
+        // Only care about events for this contact, from other circuits.
+        if (IsNew || evt.ContactId != Id!.Value) return;
+        if (evt.OriginId == originId) return;
+
+        // Marshal back to renderer thread.
+        _ = InvokeAsync(() => HandleChangeAsync(evt));
+    }
+
+    private async Task HandleChangeAsync(ContactChangeEvent evt)
+    {
+        switch (evt.Kind)
+        {
+            case ContactChangeKind.NoteAdded when evt.Note is not null:
+                // Notes are independent: always append silently. Toast is neutral.
+                if (detail is not null)
+                {
+                    var newNotes = new List<NoteDto>(detail.Notes.Count + 1) { evt.Note };
+                    newNotes.AddRange(detail.Notes);
+                    detail = detail with { Notes = newNotes };
+                }
+                AddToast($"{evt.Note.CreatedByUserName} added a note.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.PhotoChanged:
+                // Photo isn't part of the EditForm — always refresh.
+                detail = await ContactService.GetAsync(Id!.Value);
+                if (detail is null) { deletedByOther = true; break; }
+                photoVer++;
+                AddToast("Profile picture was updated.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.Updated:
+                if (editContext.IsModified())
+                {
+                    // Form is dirty — keep user's work. Offer reload.
+                    AddToast(
+                        "Another user changed this contact. Reload to see their changes, or save to overwrite.",
+                        ToastSeverity.Warn,
+                        hasReload: true);
+                }
+                else
+                {
+                    // Clean form — silently refresh.
+                    await ReloadFromServer();
+                    AddToast("This contact was updated by another user.", ToastSeverity.Info, false);
+                }
+                break;
+
+            case ContactChangeKind.Deleted:
+                deletedByOther = true;
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ReloadFromServer()
+    {
+        if (IsNew) return;
+
+        var fresh = await ContactService.GetAsync(Id!.Value);
+        if (fresh is null)
+        {
+            deletedByOther = true;
+            StateHasChanged();
+            return;
+        }
+
+        detail = fresh;
+        model = ContactFormModel.FromDetail(fresh);
+        editContext = new EditContext(model);
+        photoVer++;
+
+        // Drop any "reload" toasts — they're stale now.
+        toasts.RemoveAll(t => t.HasReload);
+        StateHasChanged();
+    }
+
+    // ─── Toast helpers ──────────────────────────────────────────────────
+
+    private void AddToast(string message, ToastSeverity severity, bool hasReload)
+    {
+        // Collapse duplicate "reload" toasts so they don't stack.
+        if (hasReload && toasts.Any(t => t.HasReload)) return;
+
+        var toast = new ToastMessage(nextToastId++, message, severity, hasReload);
+        toasts.Add(toast);
+
+        // Auto-dismiss info toasts after 5s; warn toasts stay until clicked.
+        if (severity == ToastSeverity.Info)
+        {
+            _ = AutoDismiss(toast.Id, TimeSpan.FromSeconds(5));
+        }
+    }
+
+    private async Task AutoDismiss(int id, TimeSpan after)
+    {
+        await Task.Delay(after);
+        await InvokeAsync(() =>
+        {
+            if (toasts.RemoveAll(t => t.Id == id) > 0)
+                StateHasChanged();
+        });
+    }
+
+    private void DismissToast(int id) => toasts.RemoveAll(t => t.Id == id);
+
+    private enum ToastSeverity { Info, Warn }
+
+    private sealed record ToastMessage(int Id, string Message, ToastSeverity Severity, bool HasReload)
+    {
+        public string Severity => Severity == ToastSeverity.Warn ? "warn" : "info";
+    }
+
+    // ─── Existing handlers ──────────────────────────────────────────────
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        saved = false;
+        error = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var newId = await ContactService.CreateAsync(model);
+                Logger.LogInformation("Created contact {Id}", newId);
+                Nav.NavigateTo($"/contacts/{newId}");
+            }
+            else
+            {
+                await ContactService.UpdateAsync(Id!.Value, model, originId);
+                detail = await ContactService.GetAsync(Id!.Value);
+                saved = true;
+                // We just saved — drop any pending stale-warning toasts.
+                toasts.RemoveAll(t => t.HasReload);
+                // Rebuild EditContext so IsModified() resets to false.
+                editContext = new EditContext(model);
+                Logger.LogInformation("Updated contact {Id}", Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Save failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to save contact");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        saving = true;
+        error = null;
+
+        try
+        {
+            await ContactService.DeleteAsync(Id!.Value, originId);
+            Logger.LogInformation("Deleted contact {Id}", Id);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            error = $"Delete failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to delete contact {Id}", Id);
+            saving = false;
+        }
+    }
+
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        error = null;
+        var file = e.File;
+        const int maxBytes = 2 * 1024 * 1024;
+
+        if (file.Size > maxBytes)
+        {
+            error = "Image must be under 2 MB.";
+            return;
+        }
+
+        if (file.ContentType is not ("image/jpeg" or "image/png" or "image/webp"))
+        {
+            error = "Only JPEG, PNG, and WebP images are supported.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            await ContactService.SetProfilePictureAsync(
+                Id!.Value, ms.ToArray(), file.ContentType, originId);
+            detail = await ContactService.GetAsync(Id!.Value);
+            photoVer++;
+        }
+        catch (Exception ex)
+        {
+            error = $"Upload failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to upload photo for contact {Id}", Id);
+        }
+    }
+
+    private async Task RemovePhoto()
+    {
+        error = null;
+        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId);
+        detail = await ContactService.GetAsync(Id!.Value);
+        photoVer++;
+    }
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent)) return;
+        error = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+            var userName = authState.User.Identity?.Name ?? "unknown";
+
+            await ContactService.AddNoteAsync(
+                Id!.Value, newNoteContent, userId, userName, originId);
+            newNoteContent = "";
+            detail = await ContactService.GetAsync(Id!.Value);
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to add note: {ex.Message}";
+            Logger.LogError(ex, "Failed to add note to contact {Id}", Id);
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/");
+}
+```
+
+Wait — I need to fix the `ToastMessage` record. The `Severity` property collides with the parameter. Let me rewrite that section:
+
+In the file above, replace the `ToastMessage` definition with:
+
+```csharp
+    private enum ToastSeverity { Info, Warn }
+
+    private sealed record ToastMessage(
+        int Id, string Message, ToastSeverity Severity, bool HasReload)
+    {
+        public string SeverityClass => Severity == ToastSeverity.Warn ? "warn" : "info";
+    }
+```
+
+And in the markup change `toast-@toast.Severity` to `toast-@toast.SeverityClass`. Let me regenerate the corrected razor file in full so you get one clean copy-paste:
+
+## MODIFIED: `Virginia/Components/Pages/ContactDetail.razor` (corrected — use this one)
+
+```razor
+@page "/contacts/new"
+@page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IContactService ContactService
+@inject IContactChangeNotifier Notifier
+@inject NavigationManager Nav
+@inject ILogger<ContactDetail> Logger
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
+
+<div class="detail">
+    <nav class="detail-nav">
+        <button class="btn btn-ghost" @onclick="GoBack">← Back to list</button>
+    </nav>
+
+    @if (notFound)
+    {
+        <div class="status">Contact not found. <a href="/">Back to list</a></div>
+        return;
+    }
+
+    @if (loading)
+    {
+        <div class="status" aria-live="polite">Loading...</div>
+        return;
+    }
+
+    @if (deletedByOther)
+    {
+        <div class="banner banner-error" role="alert">
+            This contact was deleted by another user.
+            <button class="btn btn-secondary" @onclick="GoBack">Back to list</button>
+        </div>
+        return;
+    }
+
+    @if (toasts.Count > 0)
+    {
+        <div class="toast-stack" aria-live="polite">
+            @foreach (var toast in toasts)
+            {
+                <div class="toast toast-@toast.SeverityClass" @key="toast.Id">
+                    <span class="toast-text">@toast.Message</span>
+                    @if (toast.HasReload)
+                    {
+                        <button class="btn btn-add" @onclick="ReloadFromServer">Reload</button>
+                    }
+                    <button class="toast-dismiss" @onclick="() => DismissToast(toast.Id)"
+                            aria-label="Dismiss">✕</button>
+                </div>
+            }
+        </div>
+    }
+
+    @if (error is not null)
+    {
+        <div class="banner banner-error" role="alert">@error</div>
+    }
+
+    @if (saved)
+    {
+        <div class="banner banner-success" role="status">Contact saved successfully.</div>
+    }
+
+    @if (!IsNew)
+    {
+        <section class="card">
+            <h2>Profile Picture</h2>
+            <div class="photo-row">
+                @if (detail?.HasPhoto == true)
+                {
+                    <img src="/api/contacts/@Id/photo?v=@photoVer"
+                         alt="@model.FirstName @model.LastName"
+                         class="avatar-lg" />
+                    <button class="btn btn-danger-sm" @onclick="RemovePhoto"
+                            disabled="@saving">Remove</button>
+                }
+                else
+                {
+                    <div class="avatar-lg avatar-empty">No photo</div>
+                }
+                <div class="photo-upload">
+                    <label>Upload (max 2 MB, JPEG/PNG/WebP):</label>
+                    <InputFile OnChange="OnPhotoSelected"
+                               accept="image/jpeg,image/png,image/webp" />
+                </div>
+            </div>
+        </section>
+    }
+
+    <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="contact">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <section class="card">
+            <h2>Basic Info</h2>
+            <div class="row">
+                <div class="group">
+                    <label for="fn">First Name *</label>
+                    <InputText id="fn" @bind-Value="model.FirstName" />
+                    <ValidationMessage For="() => model.FirstName" />
+                </div>
+                <div class="group">
+                    <label for="ln">Last Name *</label>
+                    <InputText id="ln" @bind-Value="model.LastName" />
+                    <ValidationMessage For="() => model.LastName" />
+                </div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Emails</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Emails.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Emails.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Emails[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Address</label>
+                            <InputText @bind-Value="model.Emails[idx].Address"
+                                       type="email" />
+                            <ValidationMessage For="() => model.Emails[idx].Address" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Emails.RemoveAt(idx)"
+                                aria-label="Remove email">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Emails.Count == 0)
+            {
+                <p class="hint">No email addresses yet.</p>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Phones</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Phones.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Phones.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Phones[idx].Label" />
+                        </div>
+                        <div class="group">
+                            <label>Number</label>
+                            <InputText @bind-Value="model.Phones[idx].Number"
+                                       type="tel" />
+                            <ValidationMessage For="() => model.Phones[idx].Number" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Phones.RemoveAt(idx)"
+                                aria-label="Remove phone">✕</button>
+                    </div>
+                </div>
+            }
+            @if (model.Phones.Count == 0)
+            {
+                <p class="hint">No phone numbers yet.</p>
+            }
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <h2>Addresses</h2>
+                <button type="button" class="btn btn-add"
+                        @onclick="() => model.Addresses.Add(new())">+ Add</button>
+            </div>
+            @for (var i = 0; i < model.Addresses.Count; i++)
+            {
+                var idx = i;
+                <div class="child-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Label</label>
+                            <InputText @bind-Value="model.Addresses[idx].Label" />
+                        </div>
+                        <button type="button" class="btn-x"
+                                @onclick="() => model.Addresses.RemoveAt(idx)"
+                                aria-label="Remove address">✕</button>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>Street *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Street" />
+                            <ValidationMessage For="() => model.Addresses[idx].Street" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label>City *</label>
+                            <InputText @bind-Value="model.Addresses[idx].City" />
+                            <ValidationMessage For="() => model.Addresses[idx].City" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>State</label>
+                            <InputText @bind-Value="model.Addresses[idx].State" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label>Postal Code *</label>
+                            <InputText @bind-Value="model.Addresses[idx].PostalCode" />
+                            <ValidationMessage For="() => model.Addresses[idx].PostalCode" />
+                        </div>
+                        <div class="group group-sm">
+                            <label>Country *</label>
+                            <InputText @bind-Value="model.Addresses[idx].Country" />
+                            <ValidationMessage For="() => model.Addresses[idx].Country" />
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (model.Addresses.Count == 0)
+            {
+                <p class="hint">No mailing addresses yet.</p>
+            }
+        </section>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary" disabled="@saving">
+                @(saving ? "Saving..." : "Save")
+            </button>
+            @if (!IsNew)
+            {
+                @if (confirmingDelete)
+                {
+                    <span class="confirm-delete">
+                        Are you sure?
+                        <button type="button" class="btn btn-danger" disabled="@saving"
+                                @onclick="DeleteAsync">Yes, delete</button>
+                        <button type="button" class="btn btn-secondary"
+                                @onclick="() => confirmingDelete = false">Cancel</button>
+                    </span>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" disabled="@saving"
+                            @onclick="() => confirmingDelete = true">Delete</button>
+                }
+            }
+            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
+        </div>
+    </EditForm>
+
+    @if (!IsNew && detail is not null)
+    {
+        <section class="card">
+            <div class="card-head">
+                <h2>Notes</h2>
+            </div>
+
+            <div class="note-input">
+                <textarea @bind="newNoteContent" placeholder="Add a note..."
+                          rows="3" class="note-textarea"></textarea>
+                <button type="button" class="btn btn-add"
+                        @onclick="AddNoteAsync"
+                        disabled="@(string.IsNullOrWhiteSpace(newNoteContent))">
+                    Save Note
+                </button>
+            </div>
+
+            @if (detail.Notes.Count > 0)
+            {
+                <div class="notes-list">
+                    @foreach (var note in detail.Notes)
+                    {
+                        <div class="note-item" @key="note.Id">
+                            <div class="note-meta">
+                                <strong>@note.CreatedByUserName</strong>
+                                <span class="note-date">@note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC</span>
+                            </div>
+                            <div class="note-content">@note.Content</div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="hint">No notes yet.</p>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private bool IsNew => Id is null;
+    private ContactFormModel model = new();
+    private EditContext editContext = null!;
+    private ContactDetailDto? detail;
+    private bool loading = true;
+    private bool notFound;
+    private bool saving;
+    private bool saved;
+    private string? error;
+    private int photoVer = 1;
+    private bool confirmingDelete;
+    private string newNoteContent = "";
+    private bool deletedByOther;
+
+    // Unique per-circuit id so we can ignore echoes of our own writes.
+    private readonly Guid originId = Guid.NewGuid();
+
+    private readonly List<ToastMessage> toasts = [];
+    private int nextToastId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        editContext = new EditContext(model);
+
+        if (!IsNew)
+        {
+            detail = await ContactService.GetAsync(Id!.Value);
+            if (detail is null)
+            {
+                notFound = true;
+                loading = false;
+                return;
+            }
+            model = ContactFormModel.FromDetail(detail);
+            editContext = new EditContext(model);
+
+            Notifier.Changed += OnContactChanged;
+        }
+
+        loading = false;
+    }
+
+    public void Dispose()
+    {
+        Notifier.Changed -= OnContactChanged;
+    }
+
+    // ─── Real-time updates ──────────────────────────────────────────────
+
+    private void OnContactChanged(ContactChangeEvent evt)
+    {
+        if (IsNew || evt.ContactId != Id!.Value) return;
+        if (evt.OriginId == originId) return;
+
+        _ = InvokeAsync(() => HandleChangeAsync(evt));
+    }
+
+    private async Task HandleChangeAsync(ContactChangeEvent evt)
+    {
+        switch (evt.Kind)
+        {
+            case ContactChangeKind.NoteAdded when evt.Note is not null:
+                if (detail is not null)
+                {
+                    var newNotes = new List<NoteDto>(detail.Notes.Count + 1) { evt.Note };
+                    newNotes.AddRange(detail.Notes);
+                    detail = detail with { Notes = newNotes };
+                }
+                AddToast($"{evt.Note.CreatedByUserName} added a note.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.PhotoChanged:
+                detail = await ContactService.GetAsync(Id!.Value);
+                if (detail is null) { deletedByOther = true; break; }
+                photoVer++;
+                AddToast("Profile picture was updated.", ToastSeverity.Info, false);
+                break;
+
+            case ContactChangeKind.Updated:
+                if (editContext.IsModified())
+                {
+                    AddToast(
+                        "Another user changed this contact. Reload to see their changes, or save to overwrite.",
+                        ToastSeverity.Warn,
+                        hasReload: true);
+                }
+                else
+                {
+                    await ReloadFromServer();
+                    AddToast("This contact was updated by another user.", ToastSeverity.Info, false);
+                }
+                break;
+
+            case ContactChangeKind.Deleted:
+                deletedByOther = true;
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ReloadFromServer()
+    {
+        if (IsNew) return;
+
+        var fresh = await ContactService.GetAsync(Id!.Value);
+        if (fresh is null)
+        {
+            deletedByOther = true;
+            StateHasChanged();
+            return;
+        }
+
+        detail = fresh;
+        model = ContactFormModel.FromDetail(fresh);
+        editContext = new EditContext(model);
+        photoVer++;
+
+        toasts.RemoveAll(t => t.HasReload);
+        StateHasChanged();
+    }
+
+    // ─── Toast helpers ──────────────────────────────────────────────────
+
+    private void AddToast(string message, ToastSeverity severity, bool hasReload)
+    {
+        if (hasReload && toasts.Any(t => t.HasReload)) return;
+
+        var toast = new ToastMessage(nextToastId++, message, severity, hasReload);
+        toasts.Add(toast);
+
+        if (severity == ToastSeverity.Info)
+        {
+            _ = AutoDismiss(toast.Id, TimeSpan.FromSeconds(5));
+        }
+    }
+
+    private async Task AutoDismiss(int id, TimeSpan after)
+    {
+        await Task.Delay(after);
+        await InvokeAsync(() =>
+        {
+            if (toasts.RemoveAll(t => t.Id == id) > 0)
+                StateHasChanged();
+        });
+    }
+
+    private void DismissToast(int id) => toasts.RemoveAll(t => t.Id == id);
+
+    private enum ToastSeverity { Info, Warn }
+
+    private sealed record ToastMessage(
+        int Id, string Message, ToastSeverity Severity, bool HasReload)
+    {
+        public string SeverityClass => Severity == ToastSeverity.Warn ? "warn" : "info";
+    }
+
+    // ─── Existing handlers ──────────────────────────────────────────────
+
+    private async Task SaveAsync()
+    {
+        saving = true;
+        saved = false;
+        error = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var newId = await ContactService.CreateAsync(model);
+                Logger.LogInformation("Created contact {Id}", newId);
+                Nav.NavigateTo($"/contacts/{newId}");
+            }
+            else
+            {
+                await ContactService.UpdateAsync(Id!.Value, model, originId);
+                detail = await ContactService.GetAsync(Id!.Value);
+                saved = true;
+                toasts.RemoveAll(t => t.HasReload);
+                editContext = new EditContext(model);
+                Logger.LogInformation("Updated contact {Id}", Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Save failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to save contact");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        saving = true;
+        error = null;
+
+        try
+        {
+            await ContactService.DeleteAsync(Id!.Value, originId);
+            Logger.LogInformation("Deleted contact {Id}", Id);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            error = $"Delete failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to delete contact {Id}", Id);
+            saving = false;
+        }
+    }
+
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        error = null;
+        var file = e.File;
+        const int maxBytes = 2 * 1024 * 1024;
+
+        if (file.Size > maxBytes)
+        {
+            error = "Image must be under 2 MB.";
+            return;
+        }
+
+        if (file.ContentType is not ("image/jpeg" or "image/png" or "image/webp"))
+        {
+            error = "Only JPEG, PNG, and WebP images are supported.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(maxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+
+            await ContactService.SetProfilePictureAsync(
+                Id!.Value, ms.ToArray(), file.ContentType, originId);
+            detail = await ContactService.GetAsync(Id!.Value);
+            photoVer++;
+        }
+        catch (Exception ex)
+        {
+            error = $"Upload failed: {ex.Message}";
+            Logger.LogError(ex, "Failed to upload photo for contact {Id}", Id);
+        }
+    }
+
+    private async Task RemovePhoto()
+    {
+        error = null;
+        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId);
+        detail = await ContactService.GetAsync(Id!.Value);
+        photoVer++;
+    }
+
+    private async Task AddNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent)) return;
+        error = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+            var userName = authState.User.Identity?.Name ?? "unknown";
+
+            await ContactService.AddNoteAsync(
+                Id!.Value, newNoteContent, userId, userName, originId);
+            newNoteContent = "";
+            detail = await ContactService.GetAsync(Id!.Value);
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to add note: {ex.Message}";
+            Logger.LogError(ex, "Failed to add note to contact {Id}", Id);
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/");
+}
+```
+
+(Use the second/corrected copy above, not the first.)
+
+---
+
+## MODIFIED: `Virginia/Components/Pages/ContactDetail.razor.css`
+
+```css
+.detail {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 800px;
+}
+
+.detail-nav {
+    margin-bottom: 0.25rem;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+.card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.card-head h2 {
+    margin: 0;
+}
+
+.row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 150px;
+    margin-bottom: 0.5rem;
+}
+
+.group-sm {
+    flex: 0 0 130px;
+    min-width: 110px;
+}
+
+.group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.group ::deep input,
+.group ::deep select {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.group ::deep input:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+}
+
+.group ::deep .validation-message {
+    color: #c62828;
+    font-size: 0.75rem;
+}
+
+.child-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.hint {
+    color: #aaa;
+    font-size: 0.85rem;
+    font-style: italic;
+    margin: 0;
+}
+
+/* ── Photo ───────────────────────────────────────────────────────────────── */
+
+.photo-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+}
+
+.avatar-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eee;
+    color: #999;
+    font-size: 0.8rem;
+}
+
+.photo-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+}
+
+/* ── Banners ─────────────────────────────────────────────────────────────── */
+
+.banner {
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.banner-error {
+    background: #ffeaea;
+    color: #c62828;
+    border: 1px solid #f5c6c6;
+}
+
+.banner-success {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+
+.status {
+    text-align: center;
+    color: #888;
+    padding: 2rem;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.confirm-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #c62828;
+    font-weight: 500;
+}
+
+/* ── Notes ────────────────────────────────────────────────────────────────── */
+
+.note-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.note-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.note-textarea:focus {
+    outline: none;
+    border-color: #4a90d9;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.note-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    color: #666;
+}
+
+.note-date {
+    color: #999;
+}
+
+.note-content {
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+/* ── Toasts ──────────────────────────────────────────────────────────────── */
+
+.toast-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+    animation: toast-in 0.18s ease-out;
+}
+
+.toast-text {
+    flex: 1;
+}
+
+.toast-info {
+    background: #e7f3fb;
+    color: #1565c0;
+    border-color: #c5e1f2;
+}
+
+.toast-warn {
+    background: #fff7e6;
+    color: #b26a00;
+    border-color: #f5d9a4;
+}
+
+.toast-dismiss {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 0.1rem 0.4rem;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.toast-dismiss:hover {
+    opacity: 1;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Buttons (scoped) ────────────────────────────────────────────────────── */
+
+.btn {
+    padding: 0.45rem 0.9rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.15s;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-primary {
+    background: #e94560;
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #c73650;
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d0d0d0;
+}
+
+.btn-danger {
+    background: #c62828;
+    color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #a11b1b;
+}
+
+.btn-danger-sm {
+    background: #ef5350;
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-ghost {
+    background: none;
+    color: #4a90d9;
+    padding: 0.25rem 0.5rem;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-ghost:hover {
+    text-decoration: underline;
+}
+
+.btn-add {
+    background: #4a90d9;
+    color: #fff;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.btn-add:hover {
+    background: #3a7ac0;
+}
+
+.btn-x {
+    background: none;
+    border: none;
+    color: #c62828;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.2rem 0.5rem;
+    align-self: center;
+    flex: 0 0 auto;
+    line-height: 1;
+}
+
+.btn-x:hover {
+    color: #e53935;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+    .group {
+        min-width: 100%;
+    }
+
+    .group-sm {
+        flex: 1;
+        min-width: 100%;
+    }
+
+    .confirm-delete {
+        flex-wrap: wrap;
+    }
+}
+```
+
+---
+
+## MODIFIED: `Virginia.Tests/TestInfrastructure.cs`
+
+```csharp
+using System.Diagnostics.Metrics;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
+using Virginia.Data;
+using Virginia.Services;
+using Xunit;
+
+namespace Virginia.Tests;
+
+/// <summary>
+/// Creates a fresh in-memory SQLite database and wired-up service for each test.
+/// </summary>
+public sealed class TestHarness : IAsyncDisposable
+{
+    private readonly SqliteConnection _connection;
+
+    public AppDbContext Db { get; }
+    public IContactService Service { get; }
+    public IContactChangeNotifier Notifier { get; }
+
+    private TestHarness(
+        SqliteConnection connection,
+        AppDbContext db,
+        IContactService service,
+        IContactChangeNotifier notifier)
+    {
+        _connection = connection;
+        Db = db;
+        Service = service;
+        Notifier = notifier;
+    }
+
+    public static async Task<TestHarness> CreateAsync()
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseSqlite(connection)
+            .Options;
+
+        var db = new AppDbContext(options);
+        await db.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
+
+        var meterFactory = new TestMeterFactory();
+        var telemetry = new ContactTelemetry(meterFactory);
+        IContactChangeNotifier notifier = new ContactChangeNotifier(
+            NullLogger<ContactChangeNotifier>.Instance);
+        IContactService service = new ContactService(
+            db,
+            NullLogger<ContactService>.Instance,
+            telemetry,
+            notifier);
+
+        return new TestHarness(connection, db, service, notifier);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await Db.DisposeAsync();
+        await _connection.DisposeAsync();
+    }
+}
+
+/// <summary>
+/// Minimal IMeterFactory for unit tests.
+/// </summary>
+internal sealed class TestMeterFactory : IMeterFactory
+{
+    private readonly List<Meter> _meters = [];
+
+    public Meter Create(MeterOptions options)
+    {
+        var meter = new Meter(options);
+        _meters.Add(meter);
+        return meter;
+    }
+
+    public void Dispose()
+    {
+        foreach (var m in _meters) m.Dispose();
+    }
+}
+```
+
+---
+
+## How it behaves
+
+A few worth highlighting after you have this running:
+
+The existing test files don't need changes — the new `originId` parameter on `IContactService` methods has a `default = null`, so calls like `h.Service.UpdateAsync(id, form, CT)` still work. The events fire into the test's notifier but nothing subscribes, so they're no-ops.
+
+On the page: the moment you start typing anywhere in the form, `editContext.IsModified()` returns true. If another user saves changes during that time, you get a yellow warning toast with a Reload button that stays put until dismissed. If your form is clean (just viewing, or after a save), changes from others silently update the page and you see a transient blue toast that auto-dismisses after 5 seconds. Notes always merge in silently with a toast. Photos auto-refresh.
+
+The `originId` is a `readonly Guid` field on the component instance, regenerated on every page navigation. That's the right granularity — if you open the same contact in two tabs, they each have their own `originId` and will receive each other's events, which is what you want.
+
+One real edge case: if you start typing, dismiss the "Reload" toast, then save — your save wins (last-write-wins as designed), and Bob's changes are gone. That's the documented behavior you signed up for. If you ever want to soften this, you'd need an optimistic concurrency token (`UpdatedAtUtc` round-tripped on update) — but that's a different feature for another day.
