@@ -18598,6 +18598,9 @@ Error (active)	CA1068	Method 'Virginia.Services.IContactService.UpdateAsync(int,
 
 
 
+00
+47
+
 On another note, the razor file has gotten terribly large.
 contact detail.razor is almost six hundred lines long
 what can we do about this?
@@ -18605,3 +18608,7 @@ does it make sense to make partials for things only used in one place?
 how would you instruct an LLM to rewrite this? use partial components? use state containers? composable child components? each child component should have its own css? use services? move all sorting and all code to its own c sharp file? implement natural sort everywhere? how deep does this rabbithole go? 
 can you do a deep dive and write a complete and comprehensive report on what we need to change to make this state of the art architecture and also explain all the things that we are doing wrong? 
 also we need to make sure that the website is FULLY accessible not just by humans of different abilities but also by automated checks such as playwright so agents can reliably navigate this website 
+please write a full architectural guide and plan that claude can then execute and give FULL files for all files that need to change 
+the `dump.txt` is now up to date and there is a `gemini.md` as well if you need to cross reference something. 
+however, don't blindly follow gemini advice and do your own independent review and plan accordingly 
+do not leave anything ambiguous and form a highly detailed concrete plan 
