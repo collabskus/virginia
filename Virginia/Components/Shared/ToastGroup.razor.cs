@@ -3,7 +3,7 @@ using Virginia.Services;
 
 namespace Virginia.Components.Shared;
 
-public sealed partial class ToastGroup : ComponentBase, IDisposable
+public sealed partial class ToastStack : ComponentBase, IDisposable
 {
     [Inject] private IToastService Toasts { get; set; } = default!;
 

@@ -3,7 +3,7 @@ namespace Virginia.Services;
 /// <summary>
 /// Per-circuit (scoped) toast queue. Components on the page call
 /// <see cref="Show"/> / <see cref="ShowWithReload"/> / <see cref="Dismiss"/>;
-/// the shared <c>ToastStack</c> component subscribes to <see cref="Changed"/>
+/// the shared <c>ToastGroup</c> component subscribes to <see cref="Changed"/>
 /// and re-renders.
 /// </summary>
 public interface IToastService
