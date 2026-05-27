@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 16:48:48
+Generated: 05/27/2026 16:54:01
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -3299,8 +3299,8 @@ MODIFIED: 03/26/2026 20:25:03
 
 ================================================================================
 FILE: Virginia/Components/Pages/ContactDetail.razor
-SIZE: 20.82 KB
-MODIFIED: 05/27/2026 16:41:00
+SIZE: 20.87 KB
+MODIFIED: 05/27/2026 16:53:35
 ================================================================================
 
 @page "/contacts/new"
@@ -3783,7 +3783,7 @@ MODIFIED: 05/27/2026 16:41:00
             }
             else
             {
-                await ContactService.UpdateAsync(Id!.Value, model, originId);
+                await ContactService.UpdateAsync(Id!.Value, model, originId: originId);
                 detail = await ContactService.GetAsync(Id!.Value);
                 saved = true;
                 toasts.RemoveAll(t => t.HasReload);
@@ -3809,7 +3809,7 @@ MODIFIED: 05/27/2026 16:41:00
 
         try
         {
-            await ContactService.DeleteAsync(Id!.Value, originId);
+            await ContactService.DeleteAsync(Id!.Value, originId: originId);
             Logger.LogInformation("Deleted contact {Id}", Id);
             Nav.NavigateTo("/");
         }
@@ -3846,7 +3846,7 @@ MODIFIED: 05/27/2026 16:41:00
             await stream.CopyToAsync(ms);
 
             await ContactService.SetProfilePictureAsync(
-                Id!.Value, ms.ToArray(), file.ContentType, originId);
+                Id!.Value, ms.ToArray(), file.ContentType, originId: originId);
             detail = await ContactService.GetAsync(Id!.Value);
             photoVer++;
         }
@@ -3860,7 +3860,7 @@ MODIFIED: 05/27/2026 16:41:00
     private async Task RemovePhoto()
     {
         error = null;
-        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId);
+        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId: originId);
         detail = await ContactService.GetAsync(Id!.Value);
         photoVer++;
     }
@@ -3877,7 +3877,7 @@ MODIFIED: 05/27/2026 16:41:00
             var userName = authState.User.Identity?.Name ?? "unknown";
 
             await ContactService.AddNoteAsync(
-                Id!.Value, newNoteContent, userId, userName, originId);
+                Id!.Value, newNoteContent, userId, userName, originId: originId);
             newNoteContent = "";
             detail = await ContactService.GetAsync(Id!.Value);
         }
@@ -5886,7 +5886,7 @@ public sealed partial class ContactChangeNotifier(
 ================================================================================
 FILE: Virginia/Services/ContactService.cs
 SIZE: 23 KB
-MODIFIED: 05/27/2026 16:39:09
+MODIFIED: 05/27/2026 16:52:32
 ================================================================================
 
 using System.Diagnostics;
@@ -6097,7 +6097,7 @@ public sealed partial class ContactService(
     // ─── Update ──────────────────────────────────────────────────────────
 
     public async Task UpdateAsync(
-        int id, ContactFormModel form, Guid? originId, CancellationToken ct)
+        int id, ContactFormModel form, CancellationToken ct, Guid? originId)
     {
         using var activity = ContactTelemetry.Source.StartActivity("UpdateContact");
         activity?.SetTag("contact.id", id);
@@ -6180,7 +6180,7 @@ public sealed partial class ContactService(
 
     // ─── Delete ──────────────────────────────────────────────────────────
 
-    public async Task DeleteAsync(int id, Guid? originId, CancellationToken ct)
+    public async Task DeleteAsync(int id, CancellationToken ct, Guid? originId)
     {
         using var activity = ContactTelemetry.Source.StartActivity("DeleteContact");
         activity?.SetTag("contact.id", id);
@@ -6207,7 +6207,7 @@ public sealed partial class ContactService(
 
     public async Task SetProfilePictureAsync(
         int id, byte[] data, string contentType,
-        Guid? originId, CancellationToken ct)
+        CancellationToken ct, Guid? originId)
     {
         using var activity = ContactTelemetry.Source.StartActivity("SetProfilePicture");
         activity?.SetTag("contact.id", id);
@@ -6247,7 +6247,7 @@ public sealed partial class ContactService(
             result.ProfilePictureContentType ?? "image/jpeg");
     }
 
-    public async Task RemoveProfilePictureAsync(int id, Guid? originId, CancellationToken ct)
+    public async Task RemoveProfilePictureAsync(int id, CancellationToken ct, Guid? originId)
     {
         using var activity = ContactTelemetry.Source.StartActivity("RemoveProfilePicture");
         activity?.SetTag("contact.id", id);
@@ -6269,7 +6269,7 @@ public sealed partial class ContactService(
 
     public async Task<int> AddNoteAsync(
         int contactId, string content, string userId, string userName,
-        Guid? originId, CancellationToken ct)
+        CancellationToken ct, Guid? originId)
     {
         using var activity = ContactTelemetry.Source.StartActivity("AddContactNote");
         activity?.SetTag("contact.id", contactId);
@@ -6781,7 +6781,7 @@ public sealed record ContactChangeEvent(
 ================================================================================
 FILE: Virginia/Services/IContactService.cs
 SIZE: 1.23 KB
-MODIFIED: 05/27/2026 16:38:58
+MODIFIED: 05/27/2026 16:51:36
 ================================================================================
 
 using Virginia.Data;
@@ -6799,23 +6799,23 @@ public interface IContactService
 
     Task UpdateAsync(
         int id, ContactFormModel form,
-        Guid? originId = null, CancellationToken ct = default);
+        CancellationToken ct = default, Guid? originId = null);
 
     Task DeleteAsync(
-        int id, Guid? originId = null, CancellationToken ct = default);
+        int id, CancellationToken ct = default, Guid? originId = null);
 
     Task SetProfilePictureAsync(
         int id, byte[] data, string contentType,
-        Guid? originId = null, CancellationToken ct = default);
+        CancellationToken ct = default, Guid? originId = null);
 
     Task<ProfilePictureResult?> GetProfilePictureAsync(int id, CancellationToken ct = default);
 
     Task RemoveProfilePictureAsync(
-        int id, Guid? originId = null, CancellationToken ct = default);
+        int id, CancellationToken ct = default, Guid? originId = null);
 
     Task<int> AddNoteAsync(
         int contactId, string content, string userId, string userName,
-        Guid? originId = null, CancellationToken ct = default);
+        CancellationToken ct = default, Guid? originId = null);
 
     Task<int> CreateBulkAsync(int count, CancellationToken ct = default);
 
@@ -7149,7 +7149,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 16:48:48
+EXPORT COMPLETED: 05/27/2026 16:54:01
 Total Files Exported: 56
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
