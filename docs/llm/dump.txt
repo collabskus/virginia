@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 19:33:12
+Generated: 05/27/2026 19:43:57
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -76,6 +76,40 @@ docs/llm/vendor/files/ToastStack.razor
 docs/llm/vendor/files/ToastStack.razor.cs
 docs/llm/vendor/files/ToastStack.razor.css
 docs/llm/vendor/files/virginia-refactor.zip
+docs/llm/vendor/files/virginia-refactor/APPLY_INSTRUCTIONS.md
+docs/llm/vendor/files/virginia-refactor/REFACTOR_PLAN.md
+docs/llm/vendor/files/virginia-refactor/Virginia.Tests/NaturalComparerTests.cs
+docs/llm/vendor/files/virginia-refactor/Virginia.Tests/ToastServiceTests.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/_Imports.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Layout/MainLayout.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Layout/MainLayout.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/ContactDetail.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/ContactDetail.razor.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/ContactDetail.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ContactActions.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ContactActions.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/NotesCard.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Shared/ToastStack.razor
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Shared/ToastStack.razor.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Components/Shared/ToastStack.razor.css
+docs/llm/vendor/files/virginia-refactor/Virginia/Extensions/NaturalComparer.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Program.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Services/IToastService.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/Services/ToastService.cs
+docs/llm/vendor/files/virginia-refactor/Virginia/wwwroot/app.css
 docs/llm/vendor/gemini.md
 Export.ps1
 README.md
@@ -90,7 +124,9 @@ Virginia.slnx
 Virginia.Tests/ContactServiceTests.cs
 Virginia.Tests/DtoMappingTests.cs
 Virginia.Tests/FormValidationTests.cs
+Virginia.Tests/NaturalComparerTests.cs
 Virginia.Tests/TestInfrastructure.cs
+Virginia.Tests/ToastServiceTests.cs
 Virginia.Tests/Virginia.Tests.csproj
 Virginia/appsettings.Development.json
 Virginia/appsettings.json
@@ -105,19 +141,40 @@ Virginia/Components/Pages/Account/ChangePassword.razor
 Virginia/Components/Pages/Account/Login.razor
 Virginia/Components/Pages/Account/Register.razor
 Virginia/Components/Pages/Admin/UserManagement.razor
-Virginia/Components/Pages/ContactDetail.razor
-Virginia/Components/Pages/ContactDetail.razor.css
 Virginia/Components/Pages/ContactList.razor
 Virginia/Components/Pages/ContactList.razor.css
+Virginia/Components/Pages/Contacts/ContactDetail.razor
+Virginia/Components/Pages/Contacts/ContactDetail.razor.cs
+Virginia/Components/Pages/Contacts/ContactDetail.razor.css
+Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor
+Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor.css
+Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor
+Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor.css
+Virginia/Components/Pages/Contacts/Parts/ContactActions.razor
+Virginia/Components/Pages/Contacts/Parts/ContactActions.razor.css
+Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor
+Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor.css
+Virginia/Components/Pages/Contacts/Parts/NotesCard.razor
+Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.cs
+Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.css
+Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor
+Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor.css
+Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor
+Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.cs
+Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.css
 Virginia/Components/Pages/Error.razor
 Virginia/Components/Pages/NotFound.razor
 Virginia/Components/RedirectToLogin.razor
 Virginia/Components/Routes.razor
+Virginia/Components/Shared/ToastStack.razor
+Virginia/Components/Shared/ToastStack.razor.cs
+Virginia/Components/Shared/ToastStack.razor.css
 Virginia/Data/AppDbContext.cs
 Virginia/Data/AppUser.cs
 Virginia/Data/Dtos.cs
 Virginia/Data/Entities.cs
 Virginia/Data/FormModels.cs
+Virginia/Extensions/NaturalComparer.cs
 Virginia/Program.cs
 Virginia/Properties/launchSettings.json
 Virginia/Services/AppClaimsPrincipalFactory.cs
@@ -127,6 +184,8 @@ Virginia/Services/ContactTelemetry.cs
 Virginia/Services/FakeContactGenerator.cs
 Virginia/Services/IContactChangeNotifier.cs
 Virginia/Services/IContactService.cs
+Virginia/Services/IToastService.cs
+Virginia/Services/ToastService.cs
 Virginia/Virginia.csproj
 Virginia/wwwroot/app.css
 
@@ -2215,6 +2274,163 @@ public sealed class FormValidationTests
 
 
 ================================================================================
+FILE: Virginia.Tests/NaturalComparerTests.cs
+SIZE: 4.37 KB
+MODIFIED: 05/27/2026 19:26:32
+================================================================================
+
+using Virginia.Extensions;
+using Xunit;
+
+namespace Virginia.Tests;
+
+public sealed class NaturalComparerTests
+{
+    [Fact]
+    public void NullValues_HandledConsistently()
+    {
+        var c = NaturalComparer.OrdinalIgnoreCase;
+        Assert.Equal(0, c.Compare(null, null));
+        Assert.True(c.Compare(null, "a") < 0);
+        Assert.True(c.Compare("a", null) > 0);
+    }
+
+    [Fact]
+    public void Equal_Strings_Return_Zero()
+    {
+        var c = NaturalComparer.OrdinalIgnoreCase;
+        Assert.Equal(0, c.Compare("abc", "abc"));
+        Assert.Equal(0, c.Compare("File 10", "File 10"));
+    }
+
+    [Fact]
+    public void Embedded_Numbers_Compared_Numerically()
+    {
+        var c = NaturalComparer.OrdinalIgnoreCase;
+        Assert.True(c.Compare("Item 2", "Item 10") < 0);
+        Assert.True(c.Compare("Item 10", "Item 2") > 0);
+        Assert.True(c.Compare("Item 9", "Item 10") < 0);
+    }
+
+    [Fact]
+    public void Pure_Numeric_Strings_Sort_Numerically()
+    {
+        var input = new[] { "100", "20", "3", "1000", "1" };
+        Array.Sort(input, NaturalComparer.OrdinalIgnoreCase);
+        Assert.Equal(new[] { "1", "3", "20", "100", "1000" }, input);
+    }
+
+    [Fact]
+    public void Case_Insensitive_By_Default()
+    {
+        var c = NaturalComparer.OrdinalIgnoreCase;
+        Assert.Equal(0, c.Compare("ABC", "abc"));
+        Assert.True(c.Compare("apple", "BANANA") < 0);
+    }
+
+    [Fact]
+    public void Case_Sensitive_When_Requested()
+    {
+        var c = NaturalComparer.Ordinal;
+        // In ordinal byte order, 'A' (65) < 'a' (97)
+        Assert.True(c.Compare("ABC", "abc") < 0);
+    }
+
+    [Fact]
+    public void Leading_Zeros_Treated_As_Equal_Magnitude()
+    {
+        var c = NaturalComparer.OrdinalIgnoreCase;
+        // "File 02" and "File 2" are numerically equal; ordering should be
+        // stable and deterministic.
+        Assert.Equal(0, c.Compare("File 2", "File 2"));
+        // With leading zeros stripped they're equal in magnitude — comparer
+        // breaks the tie deterministically.
+        var result = c.Compare("File 02", "File 2");
+        Assert.NotEqual(0, result);
+    }
+
+    [Fact]
+    public void Mixed_AlphaNumeric_Sort_Like_Humans_Expect()
+    {
+        var input = new[]
+        {
+            "Unit 10",
+            "Unit 2",
+            "Unit 1",
+            "Unit 20",
+            "Unit 3"
+        };
+        Array.Sort(input, NaturalComparer.OrdinalIgnoreCase);
+        Assert.Equal(
+            new[] { "Unit 1", "Unit 2", "Unit 3", "Unit 10", "Unit 20" },
+            input);
+    }
+
+    [Fact]
+    public void Pure_Alpha_Strings_Behave_Like_String_Comparison()
+    {
+        var input = new[] { "Charlie", "Alice", "Bob" };
+        Array.Sort(input, NaturalComparer.OrdinalIgnoreCase);
+        Assert.Equal(new[] { "Alice", "Bob", "Charlie" }, input);
+    }
+
+    [Fact]
+    public void OrderByNatural_Extension_Works_On_Selector()
+    {
+        var input = new[]
+        {
+            new { Name = "Building 10" },
+            new { Name = "Building 2" },
+            new { Name = "Building 1" }
+        };
+        var sorted = input.OrderByNatural(x => x.Name).Select(x => x.Name).ToArray();
+        Assert.Equal(new[] { "Building 1", "Building 2", "Building 10" }, sorted);
+    }
+
+    [Fact]
+    public void OrderByNaturalDescending_Reverses_Order()
+    {
+        var input = new[] { "Item 1", "Item 2", "Item 10" };
+        var sorted = input.OrderByNaturalDescending(x => x).ToArray();
+        Assert.Equal(new[] { "Item 10", "Item 2", "Item 1" }, sorted);
+    }
+
+    [Fact]
+    public void Determinism_Across_Platforms_Smoke_Test()
+    {
+        // The whole point of the managed comparer: identical results
+        // regardless of the host OS or culture.
+        var inputs = new[]
+        {
+            "Apartment 1A", "Apartment 1B", "Apartment 10A",
+            "Apartment 2A", "Apartment 20A"
+        };
+        Array.Sort(inputs, NaturalComparer.OrdinalIgnoreCase);
+        Assert.Equal(
+            new[]
+            {
+                "Apartment 1A",
+                "Apartment 1B",
+                "Apartment 2A",
+                "Apartment 10A",
+                "Apartment 20A"
+            },
+            inputs);
+    }
+
+    [Fact]
+    public void Empty_Strings_Compared_Consistently()
+    {
+        var c = NaturalComparer.OrdinalIgnoreCase;
+        Assert.Equal(0, c.Compare("", ""));
+        Assert.True(c.Compare("", "a") < 0);
+        Assert.True(c.Compare("a", "") > 0);
+    }
+}
+
+
+
+================================================================================
 FILE: Virginia.Tests/TestInfrastructure.cs
 SIZE: 2.38 KB
 MODIFIED: 05/27/2026 16:41:42
@@ -2308,6 +2524,184 @@ internal sealed class TestMeterFactory : IMeterFactory
 
 
 ================================================================================
+FILE: Virginia.Tests/ToastServiceTests.cs
+SIZE: 4.46 KB
+MODIFIED: 05/27/2026 19:26:54
+================================================================================
+
+using Microsoft.Extensions.Logging.Abstractions;
+using Virginia.Services;
+using Xunit;
+
+namespace Virginia.Tests;
+
+public sealed class ToastServiceTests
+{
+    private static ToastService NewService() =>
+        new(NullLogger<ToastService>.Instance);
+
+    [Fact]
+    public void Empty_On_Construction()
+    {
+        using var svc = NewService();
+        Assert.Empty(svc.Toasts);
+    }
+
+    [Fact]
+    public void ShowInfo_AddsToast_AndFiresEvent()
+    {
+        using var svc = NewService();
+        var fired = 0;
+        svc.Changed += () => fired++;
+
+        svc.ShowInfo("hello");
+
+        Assert.Single(svc.Toasts);
+        Assert.Equal("hello", svc.Toasts[0].Message);
+        Assert.Equal(ToastSeverity.Info, svc.Toasts[0].Severity);
+        Assert.False(svc.Toasts[0].HasReload);
+        Assert.Equal(1, fired);
+    }
+
+    [Fact]
+    public void ShowSuccess_Adds_Success_Toast()
+    {
+        using var svc = NewService();
+        svc.ShowSuccess("yay");
+
+        Assert.Single(svc.Toasts);
+        Assert.Equal(ToastSeverity.Success, svc.Toasts[0].Severity);
+    }
+
+    [Fact]
+    public void ShowError_Adds_Sticky_Error_Toast()
+    {
+        using var svc = NewService();
+        svc.ShowError("boom");
+
+        Assert.Single(svc.Toasts);
+        Assert.Equal(ToastSeverity.Error, svc.Toasts[0].Severity);
+        Assert.False(svc.Toasts[0].HasReload);
+    }
+
+    [Fact]
+    public void ShowReloadWarning_Adds_Toast_With_Action()
+    {
+        using var svc = NewService();
+        var clicked = 0;
+
+        svc.ShowReloadWarning("conflict", () => clicked++);
+
+        Assert.Single(svc.Toasts);
+        Assert.True(svc.Toasts[0].HasReload);
+        svc.Toasts[0].OnReload!.Invoke();
+        Assert.Equal(1, clicked);
+    }
+
+    [Fact]
+    public void Second_ReloadWarning_Is_Suppressed_While_One_Exists()
+    {
+        using var svc = NewService();
+        svc.ShowReloadWarning("first", () => { });
+        svc.ShowReloadWarning("second", () => { });
+
+        Assert.Single(svc.Toasts);
+        Assert.Equal("first", svc.Toasts[0].Message);
+    }
+
+    [Fact]
+    public void Dismiss_RemovesById_AndFiresEvent()
+    {
+        using var svc = NewService();
+        svc.ShowError("err");
+        var id = svc.Toasts[0].Id;
+
+        var fired = 0;
+        svc.Changed += () => fired++;
+
+        svc.Dismiss(id);
+
+        Assert.Empty(svc.Toasts);
+        Assert.Equal(1, fired);
+    }
+
+    [Fact]
+    public void Dismiss_NonexistentId_DoesNotFireEvent()
+    {
+        using var svc = NewService();
+        var fired = 0;
+        svc.Changed += () => fired++;
+
+        svc.Dismiss(999);
+
+        Assert.Equal(0, fired);
+    }
+
+    [Fact]
+    public void DismissReloadToasts_RemovesOnlyReloadOnes()
+    {
+        using var svc = NewService();
+        svc.ShowInfo("info");
+        svc.ShowError("err");
+        svc.ShowReloadWarning("reload", () => { });
+
+        Assert.Equal(3, svc.Toasts.Count);
+
+        svc.DismissReloadToasts();
+
+        Assert.Equal(2, svc.Toasts.Count);
+        Assert.DoesNotContain(svc.Toasts, t => t.HasReload);
+    }
+
+    [Fact]
+    public void DismissReloadToasts_NoOp_WhenNoneExist()
+    {
+        using var svc = NewService();
+        svc.ShowInfo("info");
+
+        var fired = 0;
+        svc.Changed += () => fired++;
+
+        svc.DismissReloadToasts();
+
+        Assert.Single(svc.Toasts);
+        Assert.Equal(0, fired);
+    }
+
+    [Fact]
+    public void Toast_Ids_Are_Sequential_And_Unique()
+    {
+        using var svc = NewService();
+        svc.ShowInfo("a");
+        svc.ShowInfo("b");
+        svc.ShowInfo("c");
+
+        var ids = svc.Toasts.Select(t => t.Id).ToArray();
+        Assert.Equal(ids.Length, ids.Distinct().Count());
+    }
+
+    [Fact]
+    public void Severity_Classes_Match_Enum()
+    {
+        Assert.Equal("info", new Toast(1, "x", ToastSeverity.Info, null).SeverityClass);
+        Assert.Equal("success", new Toast(1, "x", ToastSeverity.Success, null).SeverityClass);
+        Assert.Equal("warn", new Toast(1, "x", ToastSeverity.Warn, null).SeverityClass);
+        Assert.Equal("error", new Toast(1, "x", ToastSeverity.Error, null).SeverityClass);
+    }
+
+    [Fact]
+    public void Severity_Labels_Are_Human_Readable()
+    {
+        Assert.Equal("Information", new Toast(1, "x", ToastSeverity.Info, null).SeverityLabel);
+        Assert.Equal("Success", new Toast(1, "x", ToastSeverity.Success, null).SeverityLabel);
+        Assert.Equal("Warning", new Toast(1, "x", ToastSeverity.Warn, null).SeverityLabel);
+        Assert.Equal("Error", new Toast(1, "x", ToastSeverity.Error, null).SeverityLabel);
+    }
+}
+
+
+
+================================================================================
 FILE: Virginia.Tests/Virginia.Tests.csproj
 SIZE: 0.79 KB
 MODIFIED: 03/26/2026 20:58:05
@@ -2395,8 +2789,8 @@ MODIFIED: 05/27/2026 15:44:40
 
 ================================================================================
 FILE: Virginia/Components/_Imports.razor
-SIZE: 0.58 KB
-MODIFIED: 03/26/2026 20:18:25
+SIZE: 0.71 KB
+MODIFIED: 05/27/2026 19:15:44
 ================================================================================
 
 @using System.Net.Http
@@ -2413,7 +2807,11 @@ MODIFIED: 03/26/2026 20:18:25
 @using Virginia
 @using Virginia.Components
 @using Virginia.Components.Layout
+@using Virginia.Components.Shared
+@using Virginia.Components.Pages.Contacts
+@using Virginia.Components.Pages.Contacts.Parts
 @using Virginia.Data
+@using Virginia.Extensions
 @using Virginia.Services
 
 
@@ -2447,60 +2845,99 @@ MODIFIED: 03/26/2026 20:18:34
 
 ================================================================================
 FILE: Virginia/Components/Layout/MainLayout.razor
-SIZE: 1.41 KB
-MODIFIED: 03/26/2026 20:41:06
+SIZE: 2.12 KB
+MODIFIED: 05/27/2026 19:16:12
 ================================================================================
 
 @inherits LayoutComponentBase
 @inject NavigationManager Nav
 
 <div class="app-shell">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <header class="app-header">
-        <a href="/" class="app-logo">Virginia</a>
+        <a href="/" class="app-logo" data-testid="app-logo">Virginia</a>
         <span class="app-subtitle">Address Book</span>
         <div class="app-header-spacer"></div>
         <AuthorizeView>
             <Authorized>
-                <span class="app-user">@context.User.Identity?.Name</span>
-                <AuthorizeView Roles="Admin" Context="adminContext">
-                    <Authorized Context="adminInner">
-                        <a href="/admin/users" class="header-link">Users</a>
-                    </Authorized>
-                </AuthorizeView>
-                <a href="/account/change-password" class="header-link">Password</a>
-                <form method="post" action="/account/perform-logout">
-                    <AntiforgeryToken />
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
+                <nav class="app-nav" aria-label="Account">
+                    <span class="app-user" data-testid="current-user">
+                        @context.User.Identity?.Name
+                    </span>
+                    <AuthorizeView Roles="Admin" Context="adminContext">
+                        <Authorized Context="adminInner">
+                            <a href="/admin/users"
+                               class="header-link"
+                               data-testid="nav-users">Users</a>
+                        </Authorized>
+                    </AuthorizeView>
+                    <a href="/account/change-password"
+                       class="header-link"
+                       data-testid="nav-password">Password</a>
+                    <form method="post"
+                          action="/account/perform-logout"
+                          class="logout-form">
+                        <AntiforgeryToken />
+                        <button type="submit"
+                                class="btn-logout"
+                                data-testid="logout-button">
+                            Logout
+                        </button>
+                    </form>
+                </nav>
             </Authorized>
         </AuthorizeView>
     </header>
-    <main class="app-main">
+
+    <main id="main-content" class="app-main" tabindex="-1">
         @Body
     </main>
+
     <footer class="app-footer">
         <small>&copy; @DateTime.UtcNow.Year Virginia — Built with .NET 10, Aspire &amp; Blazor</small>
     </footer>
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
+<div id="blazor-error-ui" data-nosnippet role="alert">
     An unhandled error has occurred.
     <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <span class="dismiss" role="button" tabindex="0" aria-label="Dismiss error">🗙</span>
 </div>
 
 
 
 ================================================================================
 FILE: Virginia/Components/Layout/MainLayout.razor.css
-SIZE: 1.9 KB
-MODIFIED: 03/26/2026 20:19:23
+SIZE: 2.68 KB
+MODIFIED: 05/27/2026 19:16:29
 ================================================================================
 
 .app-shell {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+}
+
+/* Skip-to-content link for keyboard users — visible on focus only. */
+.skip-link {
+    position: absolute;
+    left: 0.5rem;
+    top: -3rem;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    border-radius: 0 0 6px 6px;
+    text-decoration: none;
+    z-index: 1000;
+    font-size: 0.9rem;
+    transition: top 0.15s ease-out;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
 }
 
 .app-header {
@@ -2520,43 +2957,66 @@ MODIFIED: 03/26/2026 20:19:23
 .app-logo {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #e94560;
+    color: #ff5577;
     text-decoration: none;
 }
 
 .app-logo:hover {
-    color: #ff6b81;
+    color: #ff8499;
+}
+
+.app-logo:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+    border-radius: 2px;
 }
 
 .app-subtitle {
     font-size: 0.85rem;
-    color: #8888a0;
+    color: #b8b8c8;
 }
 
 .app-header-spacer {
     flex: 1;
 }
 
+.app-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
 .app-user {
     font-size: 0.8rem;
-    color: #aab;
+    color: #c8c8d8;
 }
 
 .header-link {
     font-size: 0.8rem;
-    color: #8ba8d9;
+    color: #a5c0ec;
     text-decoration: none;
 }
 
 .header-link:hover {
-    color: #c0d0f0;
+    color: #d5e5f8;
     text-decoration: underline;
+}
+
+.header-link:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.logout-form {
+    margin: 0;
 }
 
 .btn-logout {
     background: none;
-    border: 1px solid #555;
-    color: #ccc;
+    border: 1px solid #888;
+    color: #ddd;
     padding: 0.25rem 0.6rem;
     border-radius: 4px;
     cursor: pointer;
@@ -2568,6 +3028,11 @@ MODIFIED: 03/26/2026 20:19:23
     color: #fff;
 }
 
+.btn-logout:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
 .app-main {
     flex: 1;
     padding: 1.5rem;
@@ -2577,10 +3042,14 @@ MODIFIED: 03/26/2026 20:19:23
     box-sizing: border-box;
 }
 
+.app-main:focus {
+    outline: none;
+}
+
 .app-footer {
     text-align: center;
     padding: 1rem;
-    color: #999;
+    color: #595959;
     border-top: 1px solid #e0e0e0;
     background: #fafafa;
 }
@@ -3361,1013 +3830,6 @@ MODIFIED: 03/26/2026 20:25:03
 
 
 ================================================================================
-FILE: Virginia/Components/Pages/ContactDetail.razor
-SIZE: 20.87 KB
-MODIFIED: 05/27/2026 16:53:35
-================================================================================
-
-@page "/contacts/new"
-@page "/contacts/{Id:int}"
-@attribute [Authorize(Policy = "Approved")]
-@rendermode InteractiveServer
-@implements IDisposable
-@inject IContactService ContactService
-@inject IContactChangeNotifier Notifier
-@inject NavigationManager Nav
-@inject ILogger<ContactDetail> Logger
-@inject AuthenticationStateProvider AuthStateProvider
-
-<PageTitle>@(IsNew ? "New Contact" : $"Edit Contact") | Virginia</PageTitle>
-
-<div class="detail">
-    <nav class="detail-nav">
-        <button class="btn btn-ghost" @onclick="GoBack">← Back to list</button>
-    </nav>
-
-    @if (notFound)
-    {
-        <div class="status">Contact not found. <a href="/">Back to list</a></div>
-        return;
-    }
-
-    @if (loading)
-    {
-        <div class="status" aria-live="polite">Loading...</div>
-        return;
-    }
-
-    @if (deletedByOther)
-    {
-        <div class="banner banner-error" role="alert">
-            This contact was deleted by another user.
-            <button class="btn btn-secondary" @onclick="GoBack">Back to list</button>
-        </div>
-        return;
-    }
-
-    @if (toasts.Count > 0)
-    {
-        <div class="toast-stack" aria-live="polite">
-            @foreach (var toast in toasts)
-            {
-                <div class="toast toast-@toast.SeverityClass" @key="toast.Id">
-                    <span class="toast-text">@toast.Message</span>
-                    @if (toast.HasReload)
-                    {
-                        <button class="btn btn-add" @onclick="ReloadFromServer">Reload</button>
-                    }
-                    <button class="toast-dismiss" @onclick="() => DismissToast(toast.Id)"
-                            aria-label="Dismiss">✕</button>
-                </div>
-            }
-        </div>
-    }
-
-    @if (error is not null)
-    {
-        <div class="banner banner-error" role="alert">@error</div>
-    }
-
-    @if (saved)
-    {
-        <div class="banner banner-success" role="status">Contact saved successfully.</div>
-    }
-
-    @if (!IsNew)
-    {
-        <section class="card">
-            <h2>Profile Picture</h2>
-            <div class="photo-row">
-                @if (detail?.HasPhoto == true)
-                {
-                    <img src="/api/contacts/@Id/photo?v=@photoVer"
-                         alt="@model.FirstName @model.LastName"
-                         class="avatar-lg" />
-                    <button class="btn btn-danger-sm" @onclick="RemovePhoto"
-                            disabled="@saving">Remove</button>
-                }
-                else
-                {
-                    <div class="avatar-lg avatar-empty">No photo</div>
-                }
-                <div class="photo-upload">
-                    <label>Upload (max 2 MB, JPEG/PNG/WebP):</label>
-                    <InputFile OnChange="OnPhotoSelected"
-                               accept="image/jpeg,image/png,image/webp" />
-                </div>
-            </div>
-        </section>
-    }
-
-    <EditForm EditContext="editContext" OnValidSubmit="SaveAsync" FormName="contact">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <section class="card">
-            <h2>Basic Info</h2>
-            <div class="row">
-                <div class="group">
-                    <label for="fn">First Name *</label>
-                    <InputText id="fn" @bind-Value="model.FirstName" />
-                    <ValidationMessage For="() => model.FirstName" />
-                </div>
-                <div class="group">
-                    <label for="ln">Last Name *</label>
-                    <InputText id="ln" @bind-Value="model.LastName" />
-                    <ValidationMessage For="() => model.LastName" />
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <div class="card-head">
-                <h2>Emails</h2>
-                <button type="button" class="btn btn-add"
-                        @onclick="() => model.Emails.Add(new())">+ Add</button>
-            </div>
-            @for (var i = 0; i < model.Emails.Count; i++)
-            {
-                var idx = i;
-                <div class="child-item">
-                    <div class="row">
-                        <div class="group group-sm">
-                            <label>Label</label>
-                            <InputText @bind-Value="model.Emails[idx].Label" />
-                        </div>
-                        <div class="group">
-                            <label>Address</label>
-                            <InputText @bind-Value="model.Emails[idx].Address"
-                                       type="email" />
-                            <ValidationMessage For="() => model.Emails[idx].Address" />
-                        </div>
-                        <button type="button" class="btn-x"
-                                @onclick="() => model.Emails.RemoveAt(idx)"
-                                aria-label="Remove email">✕</button>
-                    </div>
-                </div>
-            }
-            @if (model.Emails.Count == 0)
-            {
-                <p class="hint">No email addresses yet.</p>
-            }
-        </section>
-
-        <section class="card">
-            <div class="card-head">
-                <h2>Phones</h2>
-                <button type="button" class="btn btn-add"
-                        @onclick="() => model.Phones.Add(new())">+ Add</button>
-            </div>
-            @for (var i = 0; i < model.Phones.Count; i++)
-            {
-                var idx = i;
-                <div class="child-item">
-                    <div class="row">
-                        <div class="group group-sm">
-                            <label>Label</label>
-                            <InputText @bind-Value="model.Phones[idx].Label" />
-                        </div>
-                        <div class="group">
-                            <label>Number</label>
-                            <InputText @bind-Value="model.Phones[idx].Number"
-                                       type="tel" />
-                            <ValidationMessage For="() => model.Phones[idx].Number" />
-                        </div>
-                        <button type="button" class="btn-x"
-                                @onclick="() => model.Phones.RemoveAt(idx)"
-                                aria-label="Remove phone">✕</button>
-                    </div>
-                </div>
-            }
-            @if (model.Phones.Count == 0)
-            {
-                <p class="hint">No phone numbers yet.</p>
-            }
-        </section>
-
-        <section class="card">
-            <div class="card-head">
-                <h2>Addresses</h2>
-                <button type="button" class="btn btn-add"
-                        @onclick="() => model.Addresses.Add(new())">+ Add</button>
-            </div>
-            @for (var i = 0; i < model.Addresses.Count; i++)
-            {
-                var idx = i;
-                <div class="child-item">
-                    <div class="row">
-                        <div class="group group-sm">
-                            <label>Label</label>
-                            <InputText @bind-Value="model.Addresses[idx].Label" />
-                        </div>
-                        <button type="button" class="btn-x"
-                                @onclick="() => model.Addresses.RemoveAt(idx)"
-                                aria-label="Remove address">✕</button>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label>Street *</label>
-                            <InputText @bind-Value="model.Addresses[idx].Street" />
-                            <ValidationMessage For="() => model.Addresses[idx].Street" />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="group">
-                            <label>City *</label>
-                            <InputText @bind-Value="model.Addresses[idx].City" />
-                            <ValidationMessage For="() => model.Addresses[idx].City" />
-                        </div>
-                        <div class="group group-sm">
-                            <label>State</label>
-                            <InputText @bind-Value="model.Addresses[idx].State" />
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="group group-sm">
-                            <label>Postal Code *</label>
-                            <InputText @bind-Value="model.Addresses[idx].PostalCode" />
-                            <ValidationMessage For="() => model.Addresses[idx].PostalCode" />
-                        </div>
-                        <div class="group group-sm">
-                            <label>Country *</label>
-                            <InputText @bind-Value="model.Addresses[idx].Country" />
-                            <ValidationMessage For="() => model.Addresses[idx].Country" />
-                        </div>
-                    </div>
-                </div>
-            }
-            @if (model.Addresses.Count == 0)
-            {
-                <p class="hint">No mailing addresses yet.</p>
-            }
-        </section>
-
-        <div class="actions">
-            <button type="submit" class="btn btn-primary" disabled="@saving">
-                @(saving ? "Saving..." : "Save")
-            </button>
-            @if (!IsNew)
-            {
-                @if (confirmingDelete)
-                {
-                    <span class="confirm-delete">
-                        Are you sure?
-                        <button type="button" class="btn btn-danger" disabled="@saving"
-                                @onclick="DeleteAsync">Yes, delete</button>
-                        <button type="button" class="btn btn-secondary"
-                                @onclick="() => confirmingDelete = false">Cancel</button>
-                    </span>
-                }
-                else
-                {
-                    <button type="button" class="btn btn-danger" disabled="@saving"
-                            @onclick="() => confirmingDelete = true">Delete</button>
-                }
-            }
-            <button type="button" class="btn btn-secondary" @onclick="GoBack">Cancel</button>
-        </div>
-    </EditForm>
-
-    @if (!IsNew && detail is not null)
-    {
-        <section class="card">
-            <div class="card-head">
-                <h2>Notes</h2>
-            </div>
-
-            <div class="note-input">
-                <textarea @bind="newNoteContent" placeholder="Add a note..."
-                          rows="3" class="note-textarea"></textarea>
-                <button type="button" class="btn btn-add"
-                        @onclick="AddNoteAsync"
-                        disabled="@(string.IsNullOrWhiteSpace(newNoteContent))">
-                    Save Note
-                </button>
-            </div>
-
-            @if (detail.Notes.Count > 0)
-            {
-                <div class="notes-list">
-                    @foreach (var note in detail.Notes)
-                    {
-                        <div class="note-item" @key="note.Id">
-                            <div class="note-meta">
-                                <strong>@note.CreatedByUserName</strong>
-                                <span class="note-date">@note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC</span>
-                            </div>
-                            <div class="note-content">@note.Content</div>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <p class="hint">No notes yet.</p>
-            }
-        </section>
-    }
-</div>
-
-@code {
-    [Parameter] public int? Id { get; set; }
-
-    private bool IsNew => Id is null;
-    private ContactFormModel model = new();
-    private EditContext editContext = null!;
-    private ContactDetailDto? detail;
-    private bool loading = true;
-    private bool notFound;
-    private bool saving;
-    private bool saved;
-    private string? error;
-    private int photoVer = 1;
-    private bool confirmingDelete;
-    private string newNoteContent = "";
-    private bool deletedByOther;
-
-    // Unique per-circuit id so we can ignore echoes of our own writes.
-    private readonly Guid originId = Guid.NewGuid();
-
-    private readonly List<ToastMessage> toasts = [];
-    private int nextToastId = 1;
-
-    protected override async Task OnInitializedAsync()
-    {
-        editContext = new EditContext(model);
-
-        if (!IsNew)
-        {
-            detail = await ContactService.GetAsync(Id!.Value);
-            if (detail is null)
-            {
-                notFound = true;
-                loading = false;
-                return;
-            }
-            model = ContactFormModel.FromDetail(detail);
-            editContext = new EditContext(model);
-
-            Notifier.Changed += OnContactChanged;
-        }
-
-        loading = false;
-    }
-
-    public void Dispose()
-    {
-        Notifier.Changed -= OnContactChanged;
-    }
-
-    // ─── Real-time updates ──────────────────────────────────────────────
-
-    private void OnContactChanged(ContactChangeEvent evt)
-    {
-        if (IsNew || evt.ContactId != Id!.Value) return;
-        if (evt.OriginId == originId) return;
-
-        _ = InvokeAsync(() => HandleChangeAsync(evt));
-    }
-
-    private async Task HandleChangeAsync(ContactChangeEvent evt)
-    {
-        switch (evt.Kind)
-        {
-            case ContactChangeKind.NoteAdded when evt.Note is not null:
-                if (detail is not null)
-                {
-                    var newNotes = new List<NoteDto>(detail.Notes.Count + 1) { evt.Note };
-                    newNotes.AddRange(detail.Notes);
-                    detail = detail with { Notes = newNotes };
-                }
-                AddToast($"{evt.Note.CreatedByUserName} added a note.", ToastSeverity.Info, false);
-                break;
-
-            case ContactChangeKind.PhotoChanged:
-                detail = await ContactService.GetAsync(Id!.Value);
-                if (detail is null) { deletedByOther = true; break; }
-                photoVer++;
-                AddToast("Profile picture was updated.", ToastSeverity.Info, false);
-                break;
-
-            case ContactChangeKind.Updated:
-                if (editContext.IsModified())
-                {
-                    AddToast(
-                        "Another user changed this contact. Reload to see their changes, or save to overwrite.",
-                        ToastSeverity.Warn,
-                        hasReload: true);
-                }
-                else
-                {
-                    await ReloadFromServer();
-                    AddToast("This contact was updated by another user.", ToastSeverity.Info, false);
-                }
-                break;
-
-            case ContactChangeKind.Deleted:
-                deletedByOther = true;
-                break;
-        }
-
-        StateHasChanged();
-    }
-
-    private async Task ReloadFromServer()
-    {
-        if (IsNew) return;
-
-        var fresh = await ContactService.GetAsync(Id!.Value);
-        if (fresh is null)
-        {
-            deletedByOther = true;
-            StateHasChanged();
-            return;
-        }
-
-        detail = fresh;
-        model = ContactFormModel.FromDetail(fresh);
-        editContext = new EditContext(model);
-        photoVer++;
-
-        toasts.RemoveAll(t => t.HasReload);
-        StateHasChanged();
-    }
-
-    // ─── Toast helpers ──────────────────────────────────────────────────
-
-    private void AddToast(string message, ToastSeverity severity, bool hasReload)
-    {
-        if (hasReload && toasts.Any(t => t.HasReload)) return;
-
-        var toast = new ToastMessage(nextToastId++, message, severity, hasReload);
-        toasts.Add(toast);
-
-        if (severity == ToastSeverity.Info)
-        {
-            _ = AutoDismiss(toast.Id, TimeSpan.FromSeconds(5));
-        }
-    }
-
-    private async Task AutoDismiss(int id, TimeSpan after)
-    {
-        await Task.Delay(after);
-        await InvokeAsync(() =>
-        {
-            if (toasts.RemoveAll(t => t.Id == id) > 0)
-                StateHasChanged();
-        });
-    }
-
-    private void DismissToast(int id) => toasts.RemoveAll(t => t.Id == id);
-
-    private enum ToastSeverity { Info, Warn }
-
-    private sealed record ToastMessage(
-        int Id, string Message, ToastSeverity Severity, bool HasReload)
-    {
-        public string SeverityClass => Severity == ToastSeverity.Warn ? "warn" : "info";
-    }
-
-    // ─── Existing handlers ──────────────────────────────────────────────
-
-    private async Task SaveAsync()
-    {
-        saving = true;
-        saved = false;
-        error = null;
-
-        try
-        {
-            if (IsNew)
-            {
-                var newId = await ContactService.CreateAsync(model);
-                Logger.LogInformation("Created contact {Id}", newId);
-                Nav.NavigateTo($"/contacts/{newId}");
-            }
-            else
-            {
-                await ContactService.UpdateAsync(Id!.Value, model, originId: originId);
-                detail = await ContactService.GetAsync(Id!.Value);
-                saved = true;
-                toasts.RemoveAll(t => t.HasReload);
-                editContext = new EditContext(model);
-                Logger.LogInformation("Updated contact {Id}", Id);
-            }
-        }
-        catch (Exception ex)
-        {
-            error = $"Save failed: {ex.Message}";
-            Logger.LogError(ex, "Failed to save contact");
-        }
-        finally
-        {
-            saving = false;
-        }
-    }
-
-    private async Task DeleteAsync()
-    {
-        saving = true;
-        error = null;
-
-        try
-        {
-            await ContactService.DeleteAsync(Id!.Value, originId: originId);
-            Logger.LogInformation("Deleted contact {Id}", Id);
-            Nav.NavigateTo("/");
-        }
-        catch (Exception ex)
-        {
-            error = $"Delete failed: {ex.Message}";
-            Logger.LogError(ex, "Failed to delete contact {Id}", Id);
-            saving = false;
-        }
-    }
-
-    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
-    {
-        error = null;
-        var file = e.File;
-        const int maxBytes = 2 * 1024 * 1024;
-
-        if (file.Size > maxBytes)
-        {
-            error = "Image must be under 2 MB.";
-            return;
-        }
-
-        if (file.ContentType is not ("image/jpeg" or "image/png" or "image/webp"))
-        {
-            error = "Only JPEG, PNG, and WebP images are supported.";
-            return;
-        }
-
-        try
-        {
-            using var stream = file.OpenReadStream(maxBytes);
-            using var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);
-
-            await ContactService.SetProfilePictureAsync(
-                Id!.Value, ms.ToArray(), file.ContentType, originId: originId);
-            detail = await ContactService.GetAsync(Id!.Value);
-            photoVer++;
-        }
-        catch (Exception ex)
-        {
-            error = $"Upload failed: {ex.Message}";
-            Logger.LogError(ex, "Failed to upload photo for contact {Id}", Id);
-        }
-    }
-
-    private async Task RemovePhoto()
-    {
-        error = null;
-        await ContactService.RemoveProfilePictureAsync(Id!.Value, originId: originId);
-        detail = await ContactService.GetAsync(Id!.Value);
-        photoVer++;
-    }
-
-    private async Task AddNoteAsync()
-    {
-        if (string.IsNullOrWhiteSpace(newNoteContent)) return;
-        error = null;
-
-        try
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
-            var userName = authState.User.Identity?.Name ?? "unknown";
-
-            await ContactService.AddNoteAsync(
-                Id!.Value, newNoteContent, userId, userName, originId: originId);
-            newNoteContent = "";
-            detail = await ContactService.GetAsync(Id!.Value);
-        }
-        catch (Exception ex)
-        {
-            error = $"Failed to add note: {ex.Message}";
-            Logger.LogError(ex, "Failed to add note to contact {Id}", Id);
-        }
-    }
-
-    private void GoBack() => Nav.NavigateTo("/");
-}
-
-
-
-================================================================================
-FILE: Virginia/Components/Pages/ContactDetail.razor.css
-SIZE: 7.8 KB
-MODIFIED: 05/27/2026 16:41:32
-================================================================================
-
-.detail {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-width: 800px;
-}
-
-.detail-nav {
-    margin-bottom: 0.25rem;
-}
-
-.card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 1.25rem;
-}
-
-.card h2 {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.card-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-}
-
-.card-head h2 {
-    margin: 0;
-}
-
-.row {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    align-items: flex-end;
-}
-
-.group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    flex: 1;
-    min-width: 150px;
-    margin-bottom: 0.5rem;
-}
-
-.group-sm {
-    flex: 0 0 130px;
-    min-width: 110px;
-}
-
-.group label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-}
-
-.group ::deep input,
-.group ::deep select {
-    padding: 0.4rem 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    width: 100%;
-    box-sizing: border-box;
-    transition: border-color 0.15s;
-}
-
-.group ::deep input:focus {
-    outline: none;
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
-}
-
-.group ::deep .validation-message {
-    color: #c62828;
-    font-size: 0.75rem;
-}
-
-.child-item {
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    background: #fafafa;
-    border: 1px solid #eee;
-    border-radius: 6px;
-}
-
-.hint {
-    color: #aaa;
-    font-size: 0.85rem;
-    font-style: italic;
-    margin: 0;
-}
-
-/* ── Photo ───────────────────────────────────────────────────────────────── */
-
-.photo-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.avatar-lg {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #ddd;
-}
-
-.avatar-empty {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: #eee;
-    color: #999;
-    font-size: 0.8rem;
-}
-
-.photo-upload {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    font-size: 0.85rem;
-}
-
-/* ── Banners ─────────────────────────────────────────────────────────────── */
-
-.banner {
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-}
-
-.banner-error {
-    background: #ffeaea;
-    color: #c62828;
-    border: 1px solid #f5c6c6;
-}
-
-.banner-success {
-    background: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #c8e6c9;
-}
-
-.status {
-    text-align: center;
-    color: #888;
-    padding: 2rem;
-}
-
-/* ── Actions ─────────────────────────────────────────────────────────────── */
-
-.actions {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.confirm-delete {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: #c62828;
-    font-weight: 500;
-}
-
-/* ── Notes ────────────────────────────────────────────────────────────────── */
-
-.note-input {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-}
-
-.note-textarea {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: inherit;
-    font-size: 0.875rem;
-    resize: vertical;
-    box-sizing: border-box;
-}
-
-.note-textarea:focus {
-    outline: none;
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
-}
-
-.notes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.note-item {
-    padding: 0.75rem;
-    background: #f8f9fa;
-    border: 1px solid #eee;
-    border-radius: 6px;
-}
-
-.note-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.35rem;
-    font-size: 0.78rem;
-    color: #666;
-}
-
-.note-date {
-    color: #999;
-}
-
-.note-content {
-    font-size: 0.875rem;
-    white-space: pre-wrap;
-    line-height: 1.5;
-}
-
-/* ── Toasts ──────────────────────────────────────────────────────────────── */
-
-.toast-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 0.85rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    border: 1px solid transparent;
-    animation: toast-in 0.18s ease-out;
-}
-
-.toast-text {
-    flex: 1;
-}
-
-.toast-info {
-    background: #e7f3fb;
-    color: #1565c0;
-    border-color: #c5e1f2;
-}
-
-.toast-warn {
-    background: #fff7e6;
-    color: #b26a00;
-    border-color: #f5d9a4;
-}
-
-.toast-dismiss {
-    background: none;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    font-size: 0.95rem;
-    padding: 0.1rem 0.4rem;
-    opacity: 0.7;
-    line-height: 1;
-}
-
-.toast-dismiss:hover {
-    opacity: 1;
-}
-
-@keyframes toast-in {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Buttons (scoped) ────────────────────────────────────────────────────── */
-
-.btn {
-    padding: 0.45rem 0.9rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: background 0.15s;
-}
-
-.btn:disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
-.btn-primary {
-    background: #e94560;
-    color: #fff;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background: #c73650;
-}
-
-.btn-secondary {
-    background: #e0e0e0;
-    color: #333;
-}
-
-.btn-secondary:hover:not(:disabled) {
-    background: #d0d0d0;
-}
-
-.btn-danger {
-    background: #c62828;
-    color: #fff;
-}
-
-.btn-danger:hover:not(:disabled) {
-    background: #a11b1b;
-}
-
-.btn-danger-sm {
-    background: #ef5350;
-    color: #fff;
-    padding: 0.25rem 0.75rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-.btn-ghost {
-    background: none;
-    color: #4a90d9;
-    padding: 0.25rem 0.5rem;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.btn-ghost:hover {
-    text-decoration: underline;
-}
-
-.btn-add {
-    background: #4a90d9;
-    color: #fff;
-    padding: 0.3rem 0.75rem;
-    font-size: 0.8rem;
-}
-
-.btn-add:hover {
-    background: #3a7ac0;
-}
-
-.btn-x {
-    background: none;
-    border: none;
-    color: #c62828;
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 0.2rem 0.5rem;
-    align-self: center;
-    flex: 0 0 auto;
-    line-height: 1;
-}
-
-.btn-x:hover {
-    color: #e53935;
-}
-
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-
-@media (max-width: 600px) {
-    .group {
-        min-width: 100%;
-    }
-
-    .group-sm {
-        flex: 1;
-        min-width: 100%;
-    }
-
-    .confirm-delete {
-        flex-wrap: wrap;
-    }
-}
-
-
-
-================================================================================
 FILE: Virginia/Components/Pages/ContactList.razor
 SIZE: 13.58 KB
 MODIFIED: 04/12/2026 16:57:27
@@ -5138,6 +4600,1315 @@ MODIFIED: 04/12/2026 16:31:45
 
 
 ================================================================================
+FILE: Virginia/Components/Pages/Contacts/ContactDetail.razor
+SIZE: 3.45 KB
+MODIFIED: 05/27/2026 19:15:59
+================================================================================
+
+@page "/contacts/new"
+@page "/contacts/{Id:int}"
+@attribute [Authorize(Policy = "Approved")]
+@rendermode InteractiveServer
+@using Virginia.Components.Pages.Contacts.Parts
+@using Virginia.Components.Shared
+
+<PageTitle>@(IsNew ? "New Contact" : "Edit Contact") | Virginia</PageTitle>
+
+<div class="detail-page" role="region" aria-labelledby="contact-page-heading">
+    <nav class="detail-nav" aria-label="Detail navigation">
+        <button type="button"
+                class="btn btn-ghost"
+                data-testid="back-to-list"
+                @onclick="GoBack">
+            ← Back to list
+        </button>
+    </nav>
+
+    <h1 id="contact-page-heading" class="page-heading">
+        @(IsNew ? "New Contact" : "Edit Contact")
+    </h1>
+
+    <ToastStack />
+
+    @if (NotFound)
+    {
+        <div class="banner banner-error" role="alert" data-testid="not-found">
+            Contact not found. <a href="/" data-testid="not-found-back">Back to list</a>
+        </div>
+    }
+    else if (Loading)
+    {
+        <div class="status"
+             role="status"
+             aria-live="polite"
+             data-testid="loading">
+            Loading...
+        </div>
+    }
+    else if (DeletedByOther)
+    {
+        <div class="banner banner-error" role="alert" data-testid="deleted-by-other">
+            <span>This contact was deleted by another user.</span>
+            <button type="button"
+                    class="btn btn-secondary"
+                    data-testid="deleted-back"
+                    @onclick="GoBack">
+                Back to list
+            </button>
+        </div>
+    }
+    else
+    {
+        @if (Error is not null)
+        {
+            <div class="banner banner-error"
+                 role="alert"
+                 data-testid="form-error">
+                @Error
+            </div>
+        }
+
+        @if (Saved)
+        {
+            <div class="banner banner-success"
+                 role="status"
+                 aria-live="polite"
+                 data-testid="form-saved">
+                Contact saved successfully.
+            </div>
+        }
+
+        @if (!IsNew && Detail is not null)
+        {
+            <ProfilePictureCard ContactId="Id!.Value"
+                                Detail="Detail"
+                                PhotoVersion="PhotoVer"
+                                Saving="Saving"
+                                OnUpload="OnPhotoUploadAsync"
+                                OnRemove="OnPhotoRemoveAsync" />
+        }
+
+        <EditForm EditContext="EditContext"
+                  OnValidSubmit="SaveAsync"
+                  FormName="contact">
+            <DataAnnotationsValidator />
+            <div class="validation-summary-wrap" data-testid="validation-summary">
+                <ValidationSummary />
+            </div>
+
+            <BasicInfoCard Model="Model" />
+
+            <EmailsCard Items="Model.Emails" />
+            <PhonesCard Items="Model.Phones" />
+            <AddressesCard Items="Model.Addresses" />
+
+            <ContactActions IsNew="IsNew"
+                            Saving="Saving"
+                            ConfirmingDelete="ConfirmingDelete"
+                            OnStartDelete="StartDeleteConfirm"
+                            OnCancelDelete="CancelDeleteConfirm"
+                            OnDelete="DeleteAsync"
+                            OnCancel="GoBack" />
+        </EditForm>
+
+        @if (!IsNew && Detail is not null)
+        {
+            <NotesCard Detail="Detail" OnAddNote="OnAddNoteAsync" />
+        }
+    }
+</div>
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/ContactDetail.razor.cs
+SIZE: 10.04 KB
+MODIFIED: 05/27/2026 19:14:43
+================================================================================
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
+using Virginia.Data;
+using Virginia.Services;
+
+namespace Virginia.Components.Pages.Contacts;
+
+public sealed partial class ContactDetail : ComponentBase, IDisposable
+{
+    [Parameter] public int? Id { get; set; }
+
+    [Inject] private IContactService ContactService { get; set; } = default!;
+    [Inject] private IContactChangeNotifier Notifier { get; set; } = default!;
+    [Inject] private IToastService Toasts { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    [Inject] private ILogger<ContactDetail> Logger { get; set; } = default!;
+
+    private bool IsNew => Id is null;
+    private ContactFormModel Model { get; set; } = new();
+    private EditContext EditContext { get; set; } = null!;
+    private ContactDetailDto? Detail { get; set; }
+    private bool Loading { get; set; } = true;
+    private bool NotFound { get; set; }
+    private bool Saving { get; set; }
+    private bool Saved { get; set; }
+    private string? Error { get; set; }
+    private int PhotoVer { get; set; } = 1;
+    private bool ConfirmingDelete { get; set; }
+    private bool DeletedByOther { get; set; }
+
+    // Per-circuit identifier so we can ignore real-time echoes of our own writes.
+    private readonly Guid _originId = Guid.NewGuid();
+
+    protected override async Task OnInitializedAsync()
+    {
+        EditContext = new EditContext(Model);
+
+        if (!IsNew)
+        {
+            Detail = await ContactService.GetAsync(Id!.Value);
+            if (Detail is null)
+            {
+                NotFound = true;
+                Loading = false;
+                return;
+            }
+            Model = ContactFormModel.FromDetail(Detail);
+            EditContext = new EditContext(Model);
+
+            Notifier.Changed += OnContactChanged;
+        }
+
+        Loading = false;
+    }
+
+    public void Dispose()
+    {
+        Notifier.Changed -= OnContactChanged;
+    }
+
+    // ─── Real-time updates ──────────────────────────────────────────────
+
+    private void OnContactChanged(ContactChangeEvent evt)
+    {
+        if (IsNew || evt.ContactId != Id!.Value) return;
+        if (evt.OriginId == _originId) return;
+
+        _ = InvokeAsync(() => HandleChangeAsync(evt));
+    }
+
+    private async Task HandleChangeAsync(ContactChangeEvent evt)
+    {
+        switch (evt.Kind)
+        {
+            case ContactChangeKind.NoteAdded when evt.Note is not null:
+                if (Detail is not null)
+                {
+                    var newNotes = new List<NoteDto>(Detail.Notes.Count + 1) { evt.Note };
+                    newNotes.AddRange(Detail.Notes);
+                    Detail = Detail with { Notes = newNotes };
+                }
+                Toasts.ShowInfo($"{evt.Note.CreatedByUserName} added a note.");
+                break;
+
+            case ContactChangeKind.PhotoChanged:
+                Detail = await ContactService.GetAsync(Id!.Value);
+                if (Detail is null) { DeletedByOther = true; break; }
+                PhotoVer++;
+                Toasts.ShowInfo("Profile picture was updated.");
+                break;
+
+            case ContactChangeKind.Updated:
+                if (EditContext.IsModified())
+                {
+                    Toasts.ShowReloadWarning(
+                        "Another user changed this contact. Reload to see their changes, or save to overwrite.",
+                        onReload: () => _ = ReloadFromServerAsync());
+                }
+                else
+                {
+                    await ReloadFromServerAsync();
+                    Toasts.ShowInfo("This contact was updated by another user.");
+                }
+                break;
+
+            case ContactChangeKind.Deleted:
+                DeletedByOther = true;
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ReloadFromServerAsync()
+    {
+        if (IsNew) return;
+
+        var fresh = await ContactService.GetAsync(Id!.Value);
+        if (fresh is null)
+        {
+            DeletedByOther = true;
+            StateHasChanged();
+            return;
+        }
+
+        Detail = fresh;
+        Model = ContactFormModel.FromDetail(fresh);
+        EditContext = new EditContext(Model);
+        PhotoVer++;
+
+        Toasts.DismissReloadToasts();
+        StateHasChanged();
+    }
+
+    // ─── Save / Delete ──────────────────────────────────────────────────
+
+    private async Task SaveAsync()
+    {
+        Saving = true;
+        Saved = false;
+        Error = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                var newId = await ContactService.CreateAsync(Model);
+                LogContactCreated(Logger, newId);
+                Nav.NavigateTo($"/contacts/{newId}");
+            }
+            else
+            {
+                await ContactService.UpdateAsync(Id!.Value, Model, originId: _originId);
+                Detail = await ContactService.GetAsync(Id!.Value);
+                Saved = true;
+                Toasts.DismissReloadToasts();
+                EditContext = new EditContext(Model);
+                LogContactUpdated(Logger, Id!.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = $"Save failed: {ex.Message}";
+            LogSaveFailed(Logger, Id, ex);
+        }
+        finally
+        {
+            Saving = false;
+        }
+    }
+
+    private void StartDeleteConfirm() => ConfirmingDelete = true;
+    private void CancelDeleteConfirm() => ConfirmingDelete = false;
+
+    private async Task DeleteAsync()
+    {
+        Saving = true;
+        Error = null;
+
+        try
+        {
+            await ContactService.DeleteAsync(Id!.Value, originId: _originId);
+            LogContactDeleted(Logger, Id!.Value);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Error = $"Delete failed: {ex.Message}";
+            LogDeleteFailed(Logger, Id!.Value, ex);
+            Saving = false;
+        }
+    }
+
+    // ─── Profile picture ────────────────────────────────────────────────
+
+    private async Task OnPhotoUploadAsync((byte[] Data, string ContentType) upload)
+    {
+        Error = null;
+        try
+        {
+            await ContactService.SetProfilePictureAsync(
+                Id!.Value, upload.Data, upload.ContentType, originId: _originId);
+            Detail = await ContactService.GetAsync(Id!.Value);
+            PhotoVer++;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Upload failed: {ex.Message}";
+            LogPhotoSetFailed(Logger, Id!.Value, ex);
+        }
+    }
+
+    private async Task OnPhotoRemoveAsync()
+    {
+        Error = null;
+        try
+        {
+            await ContactService.RemoveProfilePictureAsync(Id!.Value, originId: _originId);
+            Detail = await ContactService.GetAsync(Id!.Value);
+            PhotoVer++;
+        }
+        catch (Exception ex)
+        {
+            Error = $"Remove failed: {ex.Message}";
+            LogPhotoRemoveFailed(Logger, Id!.Value, ex);
+        }
+    }
+
+    // ─── Notes ──────────────────────────────────────────────────────────
+
+    private async Task OnAddNoteAsync(string content)
+    {
+        if (string.IsNullOrWhiteSpace(content)) return;
+        Error = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userId = authState.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+            var userName = authState.User.Identity?.Name ?? "unknown";
+
+            await ContactService.AddNoteAsync(
+                Id!.Value, content, userId, userName, originId: _originId);
+            Detail = await ContactService.GetAsync(Id!.Value);
+        }
+        catch (Exception ex)
+        {
+            Error = $"Failed to add note: {ex.Message}";
+            LogNoteAddFailed(Logger, Id!.Value, ex);
+        }
+    }
+
+    private void GoBack() => Nav.NavigateTo("/");
+
+    // ─── Logging ────────────────────────────────────────────────────────
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Created contact {ContactId}")]
+    private static partial void LogContactCreated(ILogger logger, int contactId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Updated contact {ContactId}")]
+    private static partial void LogContactUpdated(ILogger logger, int contactId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Deleted contact {ContactId}")]
+    private static partial void LogContactDeleted(ILogger logger, int contactId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to save contact {ContactId}")]
+    private static partial void LogSaveFailed(ILogger logger, int? contactId, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to delete contact {ContactId}")]
+    private static partial void LogDeleteFailed(ILogger logger, int contactId, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to set photo for contact {ContactId}")]
+    private static partial void LogPhotoSetFailed(ILogger logger, int contactId, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to remove photo for contact {ContactId}")]
+    private static partial void LogPhotoRemoveFailed(ILogger logger, int contactId, Exception ex);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Failed to add note to contact {ContactId}")]
+    private static partial void LogNoteAddFailed(ILogger logger, int contactId, Exception ex);
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/ContactDetail.razor.css
+SIZE: 0.49 KB
+MODIFIED: 05/27/2026 19:14:48
+================================================================================
+
+.detail-page {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 1rem 2rem;
+}
+
+.detail-nav {
+    margin-bottom: 0.25rem;
+}
+
+.page-heading {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2a2a2a;
+}
+
+.validation-summary-wrap {
+    color: #b71c1c;
+    font-size: 0.85rem;
+}
+
+.validation-summary-wrap:empty {
+    display: none;
+}
+
+.validation-summary-wrap ::deep ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor
+SIZE: 5.39 KB
+MODIFIED: 05/27/2026 19:12:59
+================================================================================
+
+@using Virginia.Data
+
+<section class="card" aria-labelledby="addresses-heading">
+    <div class="card-head">
+        <h2 id="addresses-heading">Addresses</h2>
+        <button type="button"
+                class="btn btn-add"
+                data-testid="add-address"
+                @onclick="AddAddress">
+            + Add address
+        </button>
+    </div>
+
+    @if (Items.Count == 0)
+    {
+        <p class="hint" data-testid="addresses-empty">No mailing addresses yet.</p>
+    }
+    else
+    {
+        <ul class="child-list" role="list" data-testid="addresses-list">
+            @foreach (var item in Items)
+            {
+                var hash = item.GetHashCode().ToString("x");
+                var labelId = $"addr-label-{hash}";
+                var streetId = $"addr-street-{hash}";
+                var cityId = $"addr-city-{hash}";
+                var stateId = $"addr-state-{hash}";
+                var postalId = $"addr-postal-{hash}";
+                var countryId = $"addr-country-{hash}";
+
+                <li class="child-item" @key="item" data-testid="address-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label for="@labelId">Label</label>
+                            <InputText id="@labelId"
+                                       @bind-Value="item.Label"
+                                       data-testid="address-label" />
+                        </div>
+                        <button type="button"
+                                class="btn-x"
+                                aria-label="Remove address"
+                                data-testid="remove-address"
+                                @onclick="() => RemoveAddress(item)">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label for="@streetId">Street <span aria-hidden="true">*</span></label>
+                            <InputText id="@streetId"
+                                       @bind-Value="item.Street"
+                                       aria-required="true"
+                                       aria-describedby="@($"{streetId}-val")"
+                                       data-testid="address-street" />
+                            <div id="@($"{streetId}-val")" class="field-validation">
+                                <ValidationMessage For="() => item.Street" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group">
+                            <label for="@cityId">City <span aria-hidden="true">*</span></label>
+                            <InputText id="@cityId"
+                                       @bind-Value="item.City"
+                                       aria-required="true"
+                                       aria-describedby="@($"{cityId}-val")"
+                                       data-testid="address-city" />
+                            <div id="@($"{cityId}-val")" class="field-validation">
+                                <ValidationMessage For="() => item.City" />
+                            </div>
+                        </div>
+                        <div class="group group-sm">
+                            <label for="@stateId">State</label>
+                            <InputText id="@stateId"
+                                       @bind-Value="item.State"
+                                       data-testid="address-state" />
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label for="@postalId">Postal Code <span aria-hidden="true">*</span></label>
+                            <InputText id="@postalId"
+                                       @bind-Value="item.PostalCode"
+                                       aria-required="true"
+                                       aria-describedby="@($"{postalId}-val")"
+                                       data-testid="address-postal" />
+                            <div id="@($"{postalId}-val")" class="field-validation">
+                                <ValidationMessage For="() => item.PostalCode" />
+                            </div>
+                        </div>
+                        <div class="group group-sm">
+                            <label for="@countryId">Country <span aria-hidden="true">*</span></label>
+                            <InputText id="@countryId"
+                                       @bind-Value="item.Country"
+                                       aria-required="true"
+                                       aria-describedby="@($"{countryId}-val")"
+                                       data-testid="address-country" />
+                            <div id="@($"{countryId}-val")" class="field-validation">
+                                <ValidationMessage For="() => item.Country" />
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<AddressFormModel> Items { get; set; } = default!;
+
+    private void AddAddress() => Items.Add(new AddressFormModel());
+    private void RemoveAddress(AddressFormModel item) => Items.Remove(item);
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor.css
+SIZE: 0.11 KB
+MODIFIED: 05/27/2026 19:13:05
+================================================================================
+
+/* All form-layout primitives come from app.css and the page-level scope.
+   Per-card overrides go here. */
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor
+SIZE: 1.37 KB
+MODIFIED: 05/27/2026 19:11:57
+================================================================================
+
+@using Virginia.Data
+
+<section class="card" aria-labelledby="basic-info-heading">
+    <h2 id="basic-info-heading">Basic Info</h2>
+    <div class="row">
+        <div class="group">
+            <label for="contact-first-name">First Name <span aria-hidden="true">*</span></label>
+            <InputText id="contact-first-name"
+                       @bind-Value="Model.FirstName"
+                       aria-required="true"
+                       aria-describedby="contact-first-name-validation"
+                       data-testid="first-name" />
+            <div id="contact-first-name-validation" class="field-validation">
+                <ValidationMessage For="() => Model.FirstName" />
+            </div>
+        </div>
+        <div class="group">
+            <label for="contact-last-name">Last Name <span aria-hidden="true">*</span></label>
+            <InputText id="contact-last-name"
+                       @bind-Value="Model.LastName"
+                       aria-required="true"
+                       aria-describedby="contact-last-name-validation"
+                       data-testid="last-name" />
+            <div id="contact-last-name-validation" class="field-validation">
+                <ValidationMessage For="() => Model.LastName" />
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public ContactFormModel Model { get; set; } = default!;
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor.css
+SIZE: 0.14 KB
+MODIFIED: 05/27/2026 19:12:02
+================================================================================
+
+/* All form-layout primitives (.row, .group, label, validation) come from
+   the page-level scope. This file kept for future per-card tweaks. */
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/ContactActions.razor
+SIZE: 3.41 KB
+MODIFIED: 05/27/2026 19:13:48
+================================================================================
+
+@* The form submit is triggered by the parent's EditForm OnValidSubmit;
+   this component only needs to render the buttons with type="submit"
+   for save and type="button" for everything else. *@
+
+<div class="actions" role="group" aria-label="Form actions">
+    <button type="submit"
+            class="btn btn-primary"
+            disabled="@Saving"
+            data-testid="save-contact">
+        @(Saving ? "Saving..." : "Save")
+    </button>
+
+    @if (!IsNew)
+    {
+        @if (ConfirmingDelete)
+        {
+            <span class="confirm-delete"
+                  role="group"
+                  aria-label="Confirm deletion">
+                <span id="confirm-delete-prompt">Are you sure?</span>
+                <button type="button"
+                        class="btn btn-danger"
+                        disabled="@Saving"
+                        aria-describedby="confirm-delete-prompt"
+                        data-testid="confirm-delete"
+                        @ref="_confirmButtonRef"
+                        @onclick="OnConfirmDelete">
+                    Yes, delete
+                </button>
+                <button type="button"
+                        class="btn btn-secondary"
+                        disabled="@Saving"
+                        data-testid="cancel-delete"
+                        @onclick="OnCancelDeleteConfirm">
+                    Cancel
+                </button>
+            </span>
+        }
+        else
+        {
+            <button type="button"
+                    class="btn btn-danger"
+                    disabled="@Saving"
+                    data-testid="delete-contact"
+                    @onclick="OnStartDeleteConfirm">
+                Delete
+            </button>
+        }
+    }
+
+    <button type="button"
+            class="btn btn-secondary"
+            data-testid="cancel-contact"
+            @onclick="OnCancelClicked">
+        Cancel
+    </button>
+</div>
+
+@code {
+    [Parameter] public bool IsNew { get; set; }
+    [Parameter] public bool Saving { get; set; }
+    [Parameter] public bool ConfirmingDelete { get; set; }
+    [Parameter] public EventCallback OnStartDelete { get; set; }
+    [Parameter] public EventCallback OnCancelDelete { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private ElementReference _confirmButtonRef;
+    private bool _shouldFocusConfirm;
+    private bool _wasConfirming;
+
+    protected override void OnParametersSet()
+    {
+        // Focus the confirm button only on the transition into confirming state,
+        // not on every re-render while already confirming.
+        if (ConfirmingDelete && !_wasConfirming)
+        {
+            _shouldFocusConfirm = true;
+        }
+        _wasConfirming = ConfirmingDelete;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_shouldFocusConfirm && ConfirmingDelete)
+        {
+            _shouldFocusConfirm = false;
+            try
+            {
+                await _confirmButtonRef.FocusAsync();
+            }
+            catch
+            {
+                // Element not present (race with re-render) — ignore.
+            }
+        }
+    }
+
+    private Task OnStartDeleteConfirm() => OnStartDelete.InvokeAsync();
+    private Task OnCancelDeleteConfirm() => OnCancelDelete.InvokeAsync();
+    private Task OnConfirmDelete() => OnDelete.InvokeAsync();
+    private Task OnCancelClicked() => OnCancel.InvokeAsync();
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/ContactActions.razor.css
+SIZE: 0.33 KB
+MODIFIED: 05/27/2026 19:13:53
+================================================================================
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.confirm-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: #b71c1c;
+    font-weight: 500;
+}
+
+@media (max-width: 600px) {
+    .confirm-delete {
+        flex-wrap: wrap;
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor
+SIZE: 2.66 KB
+MODIFIED: 05/27/2026 19:12:29
+================================================================================
+
+@using Virginia.Data
+
+<section class="card" aria-labelledby="emails-heading">
+    <div class="card-head">
+        <h2 id="emails-heading">Emails</h2>
+        <button type="button"
+                class="btn btn-add"
+                data-testid="add-email"
+                @onclick="AddEmail">
+            + Add email
+        </button>
+    </div>
+
+    @if (Items.Count == 0)
+    {
+        <p class="hint" data-testid="emails-empty">No email addresses yet.</p>
+    }
+    else
+    {
+        <ul class="child-list" role="list" data-testid="emails-list">
+            @foreach (var item in Items)
+            {
+                var labelId = $"email-label-{item.GetHashCode():x}";
+                var addrId = $"email-addr-{item.GetHashCode():x}";
+                var valId = $"email-val-{item.GetHashCode():x}";
+                <li class="child-item" @key="item" data-testid="email-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label for="@labelId">Label</label>
+                            <InputText id="@labelId"
+                                       @bind-Value="item.Label"
+                                       data-testid="email-label" />
+                        </div>
+                        <div class="group">
+                            <label for="@addrId">
+                                Address <span aria-hidden="true">*</span>
+                            </label>
+                            <InputText id="@addrId"
+                                       @bind-Value="item.Address"
+                                       type="email"
+                                       aria-required="true"
+                                       aria-describedby="@valId"
+                                       data-testid="email-address" />
+                            <div id="@valId" class="field-validation">
+                                <ValidationMessage For="() => item.Address" />
+                            </div>
+                        </div>
+                        <button type="button"
+                                class="btn-x"
+                                aria-label="Remove email"
+                                data-testid="remove-email"
+                                @onclick="() => RemoveEmail(item)">
+                            ✕
+                        </button>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<EmailFormModel> Items { get; set; } = default!;
+
+    private void AddEmail() => Items.Add(new EmailFormModel());
+    private void RemoveEmail(EmailFormModel item) => Items.Remove(item);
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor.css
+SIZE: 0.11 KB
+MODIFIED: 05/27/2026 19:13:05
+================================================================================
+
+/* All form-layout primitives come from app.css and the page-level scope.
+   Per-card overrides go here. */
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/NotesCard.razor
+SIZE: 1.79 KB
+MODIFIED: 05/27/2026 19:13:16
+================================================================================
+
+@* Behavior in NotesCard.razor.cs *@
+@using Virginia.Data
+
+<section class="card" aria-labelledby="notes-heading">
+    <div class="card-head">
+        <h2 id="notes-heading">Notes</h2>
+    </div>
+
+    <div class="note-input">
+        <label for="new-note" class="sr-only">New note</label>
+        <textarea id="new-note"
+                  @bind="NewNoteContent"
+                  placeholder="Add a note..."
+                  rows="3"
+                  class="note-textarea"
+                  data-testid="new-note-input"
+                  disabled="@Submitting"></textarea>
+        <button type="button"
+                class="btn btn-add"
+                data-testid="save-note"
+                disabled="@(Submitting || string.IsNullOrWhiteSpace(NewNoteContent))"
+                @onclick="OnSaveNoteAsync">
+            @(Submitting ? "Saving..." : "Save Note")
+        </button>
+    </div>
+
+    @if (Detail.Notes.Count == 0)
+    {
+        <p class="hint" data-testid="notes-empty">No notes yet.</p>
+    }
+    else
+    {
+        <ol class="notes-list" data-testid="notes-list">
+            @foreach (var note in Detail.Notes)
+            {
+                <li class="note-item" @key="note.Id" data-testid="note-item">
+                    <div class="note-meta">
+                        <strong data-testid="note-author">@note.CreatedByUserName</strong>
+                        <time class="note-date"
+                              datetime="@note.CreatedAtUtc.ToString("O")"
+                              data-testid="note-date">
+                            @note.CreatedAtUtc.ToString("MMM d, yyyy h:mm tt") UTC
+                        </time>
+                    </div>
+                    <div class="note-content" data-testid="note-content">@note.Content</div>
+                </li>
+            }
+        </ol>
+    }
+</section>
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.cs
+SIZE: 1.37 KB
+MODIFIED: 05/27/2026 19:27:42
+================================================================================
+
+using Microsoft.AspNetCore.Components;
+using Virginia.Data;
+
+namespace Virginia.Components.Pages.Contacts.Parts;
+
+public sealed partial class NotesCard : ComponentBase
+{
+    [Parameter, EditorRequired] public ContactDetailDto Detail { get; set; } = default!;
+    [Parameter] public EventCallback<string> OnAddNote { get; set; }
+
+    [Inject] private ILogger<NotesCard> Logger { get; set; } = default!;
+
+    private string NewNoteContent { get; set; } = "";
+    private bool Submitting { get; set; }
+
+    private async Task OnSaveNoteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(NewNoteContent) || Submitting) return;
+
+        Submitting = true;
+        try
+        {
+            await OnAddNote.InvokeAsync(NewNoteContent);
+            NewNoteContent = "";
+        }
+        catch (Exception ex)
+        {
+            // Parent (ContactDetail) handles displaying the error via its
+            // Error banner; we just log here and let it propagate by not
+            // swallowing silently. The form input is preserved so the user
+            // can retry.
+            LogAddNoteFailed(Logger, Detail.Id, ex);
+        }
+        finally
+        {
+            Submitting = false;
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "Failed to add note to contact {ContactId}")]
+    private static partial void LogAddNoteFailed(ILogger logger, int contactId, Exception ex);
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/NotesCard.razor.css
+SIZE: 1 KB
+MODIFIED: 05/27/2026 19:13:33
+================================================================================
+
+.note-input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.note-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.note-textarea:focus-visible {
+    outline: 2px solid #1565c0;
+    outline-offset: 1px;
+    border-color: #1565c0;
+}
+
+.notes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.note-item {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+    font-size: 0.78rem;
+    color: #595959;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.note-date {
+    color: #595959;
+}
+
+.note-content {
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor
+SIZE: 2.65 KB
+MODIFIED: 05/27/2026 19:12:43
+================================================================================
+
+@using Virginia.Data
+
+<section class="card" aria-labelledby="phones-heading">
+    <div class="card-head">
+        <h2 id="phones-heading">Phones</h2>
+        <button type="button"
+                class="btn btn-add"
+                data-testid="add-phone"
+                @onclick="AddPhone">
+            + Add phone
+        </button>
+    </div>
+
+    @if (Items.Count == 0)
+    {
+        <p class="hint" data-testid="phones-empty">No phone numbers yet.</p>
+    }
+    else
+    {
+        <ul class="child-list" role="list" data-testid="phones-list">
+            @foreach (var item in Items)
+            {
+                var labelId = $"phone-label-{item.GetHashCode():x}";
+                var numId = $"phone-num-{item.GetHashCode():x}";
+                var valId = $"phone-val-{item.GetHashCode():x}";
+                <li class="child-item" @key="item" data-testid="phone-item">
+                    <div class="row">
+                        <div class="group group-sm">
+                            <label for="@labelId">Label</label>
+                            <InputText id="@labelId"
+                                       @bind-Value="item.Label"
+                                       data-testid="phone-label" />
+                        </div>
+                        <div class="group">
+                            <label for="@numId">
+                                Number <span aria-hidden="true">*</span>
+                            </label>
+                            <InputText id="@numId"
+                                       @bind-Value="item.Number"
+                                       type="tel"
+                                       aria-required="true"
+                                       aria-describedby="@valId"
+                                       data-testid="phone-number" />
+                            <div id="@valId" class="field-validation">
+                                <ValidationMessage For="() => item.Number" />
+                            </div>
+                        </div>
+                        <button type="button"
+                                class="btn-x"
+                                aria-label="Remove phone"
+                                data-testid="remove-phone"
+                                @onclick="() => RemovePhone(item)">
+                            ✕
+                        </button>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired]
+    public List<PhoneFormModel> Items { get; set; } = default!;
+
+    private void AddPhone() => Items.Add(new PhoneFormModel());
+    private void RemovePhone(PhoneFormModel item) => Items.Remove(item);
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor.css
+SIZE: 0.11 KB
+MODIFIED: 05/27/2026 19:13:05
+================================================================================
+
+/* All form-layout primitives come from app.css and the page-level scope.
+   Per-card overrides go here. */
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor
+SIZE: 1.37 KB
+MODIFIED: 05/27/2026 19:11:30
+================================================================================
+
+@* Behavior in ProfilePictureCard.razor.cs *@
+
+<section class="card" aria-labelledby="@HeadingId">
+    <h2 id="@HeadingId">Profile Picture</h2>
+    <div class="photo-row">
+        @if (Detail?.HasPhoto == true)
+        {
+            <img src="/api/contacts/@ContactId/photo?v=@PhotoVersion"
+                 alt="Profile photo of @Detail.FirstName @Detail.LastName"
+                 class="avatar-lg"
+                 data-testid="profile-photo" />
+            <button type="button"
+                    class="btn btn-danger-sm"
+                    disabled="@Saving"
+                    data-testid="remove-photo"
+                    @onclick="OnRemoveClicked">
+                Remove
+            </button>
+        }
+        else
+        {
+            <div class="avatar-lg avatar-empty" aria-hidden="true">No photo</div>
+        }
+        <div class="photo-upload">
+            <label for="@UploadId">Upload (max 2 MB, JPEG/PNG/WebP):</label>
+            <InputFile id="@UploadId"
+                       OnChange="OnFileSelectedAsync"
+                       accept="image/jpeg,image/png,image/webp"
+                       data-testid="upload-photo" />
+            @if (!string.IsNullOrEmpty(LocalError))
+            {
+                <div class="photo-error" role="alert" data-testid="photo-error">
+                    @LocalError
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.cs
+SIZE: 2.24 KB
+MODIFIED: 05/27/2026 19:11:43
+================================================================================
+
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Virginia.Data;
+
+namespace Virginia.Components.Pages.Contacts.Parts;
+
+public sealed partial class ProfilePictureCard : ComponentBase
+{
+    private const int MaxBytes = 2 * 1024 * 1024;
+    private static readonly string[] AllowedContentTypes =
+        ["image/jpeg", "image/png", "image/webp"];
+
+    private readonly string _idSuffix = Guid.NewGuid().ToString("N")[..8];
+
+    [Parameter, EditorRequired] public int ContactId { get; set; }
+    [Parameter] public ContactDetailDto? Detail { get; set; }
+    [Parameter] public int PhotoVersion { get; set; }
+    [Parameter] public bool Saving { get; set; }
+    [Parameter] public EventCallback<(byte[] Data, string ContentType)> OnUpload { get; set; }
+    [Parameter] public EventCallback OnRemove { get; set; }
+
+    [Inject] private ILogger<ProfilePictureCard> Logger { get; set; } = default!;
+
+    private string HeadingId => $"profile-pic-heading-{_idSuffix}";
+    private string UploadId => $"profile-pic-upload-{_idSuffix}";
+    private string? LocalError { get; set; }
+
+    private async Task OnFileSelectedAsync(InputFileChangeEventArgs e)
+    {
+        LocalError = null;
+        var file = e.File;
+
+        if (file.Size > MaxBytes)
+        {
+            LocalError = "Image must be under 2 MB.";
+            return;
+        }
+
+        if (!AllowedContentTypes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+        {
+            LocalError = "Only JPEG, PNG, and WebP images are supported.";
+            return;
+        }
+
+        try
+        {
+            using var stream = file.OpenReadStream(MaxBytes);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            await OnUpload.InvokeAsync((ms.ToArray(), file.ContentType));
+        }
+        catch (Exception ex)
+        {
+            LocalError = $"Upload failed: {ex.Message}";
+            LogPhotoUploadFailed(Logger, ContactId, ex);
+        }
+    }
+
+    private async Task OnRemoveClicked() => await OnRemove.InvokeAsync();
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "Photo upload failed for contact {ContactId}")]
+    private static partial void LogPhotoUploadFailed(ILogger logger, int contactId, Exception ex);
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Contacts/Parts/ProfilePictureCard.razor.css
+SIZE: 0.59 KB
+MODIFIED: 05/27/2026 19:11:49
+================================================================================
+
+.photo-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+}
+
+.avatar-empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #eee;
+    color: #595959;
+    font-size: 0.8rem;
+}
+
+.photo-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+}
+
+.photo-upload label {
+    font-weight: 500;
+}
+
+.photo-error {
+    color: #b71c1c;
+    font-size: 0.8rem;
+}
+
+
+
+================================================================================
 FILE: Virginia/Components/Pages/Error.razor
 SIZE: 0.58 KB
 MODIFIED: 03/26/2026 17:58:04
@@ -5222,6 +5993,212 @@ MODIFIED: 03/26/2026 20:18:42
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+
+
+================================================================================
+FILE: Virginia/Components/Shared/ToastStack.razor
+SIZE: 1.33 KB
+MODIFIED: 05/27/2026 19:11:08
+================================================================================
+
+@* Behavior in ToastStack.razor.cs *@
+
+@if (Toasts.Toasts.Count > 0)
+{
+    <div class="toast-stack" data-testid="toast-stack">
+        @foreach (var toast in Toasts.Toasts)
+        {
+            <div class="toast toast-@toast.SeverityClass"
+                 role="@RoleFor(toast.Severity)"
+                 aria-live="@LiveFor(toast.Severity)"
+                 aria-atomic="true"
+                 data-testid="toast"
+                 data-toast-severity="@toast.SeverityClass"
+                 @key="toast.Id">
+                <span class="sr-only">@toast.SeverityLabel:</span>
+                <span class="toast-text">@toast.Message</span>
+                @if (toast.OnReload is not null)
+                {
+                    <button type="button"
+                            class="toast-action"
+                            data-testid="toast-reload"
+                            @onclick="() => InvokeReload(toast)">
+                        Reload
+                    </button>
+                }
+                <button type="button"
+                        class="toast-dismiss"
+                        aria-label="Dismiss @toast.SeverityLabel"
+                        data-testid="toast-dismiss"
+                        @onclick="() => Toasts.Dismiss(toast.Id)">
+                    ✕
+                </button>
+            </div>
+        }
+    </div>
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Shared/ToastStack.razor.cs
+SIZE: 0.99 KB
+MODIFIED: 05/27/2026 19:10:50
+================================================================================
+
+using Microsoft.AspNetCore.Components;
+using Virginia.Services;
+
+namespace Virginia.Components.Shared;
+
+public sealed partial class ToastStack : ComponentBase, IDisposable
+{
+    [Inject] private IToastService Toasts { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        Toasts.Changed += OnToastsChanged;
+    }
+
+    private void OnToastsChanged() => InvokeAsync(StateHasChanged);
+
+    private void InvokeReload(Toast toast)
+    {
+        toast.OnReload?.Invoke();
+        Toasts.Dismiss(toast.Id);
+    }
+
+    private static string RoleFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "alert",
+        ToastSeverity.Warn => "alert",
+        _ => "status"
+    };
+
+    private static string LiveFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "assertive",
+        ToastSeverity.Warn => "assertive",
+        _ => "polite"
+    };
+
+    public void Dispose()
+    {
+        Toasts.Changed -= OnToastsChanged;
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Shared/ToastStack.razor.css
+SIZE: 1.7 KB
+MODIFIED: 05/27/2026 19:11:18
+================================================================================
+
+.toast-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+    animation: toast-in 0.18s ease-out;
+}
+
+.toast-text {
+    flex: 1;
+}
+
+.toast-info {
+    background: #e7f3fb;
+    color: #0d47a1;
+    border-color: #c5e1f2;
+}
+
+.toast-success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border-color: #c8e6c9;
+}
+
+.toast-warn {
+    background: #fff7e6;
+    color: #8a4a00;
+    border-color: #f5d9a4;
+}
+
+.toast-error {
+    background: #ffeaea;
+    color: #b71c1c;
+    border-color: #f5c6c6;
+}
+
+.toast-dismiss,
+.toast-action {
+    background: none;
+    border: 1px solid currentColor;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.toast-dismiss {
+    border: none;
+    font-size: 0.95rem;
+    padding: 0.1rem 0.4rem;
+    opacity: 0.7;
+}
+
+.toast-dismiss:hover,
+.toast-dismiss:focus-visible {
+    opacity: 1;
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+
+.toast-action:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.toast-action:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast {
+        animation: none;
+    }
+}
 
 
 
@@ -5668,9 +6645,131 @@ public sealed class ChangePasswordFormModel
 
 
 ================================================================================
+FILE: Virginia/Extensions/NaturalComparer.cs
+SIZE: 4.07 KB
+MODIFIED: 05/27/2026 19:10:10
+================================================================================
+
+using System.Globalization;
+
+namespace Virginia.Extensions;
+
+/// <summary>
+/// Compares strings using natural ordering: embedded digit runs are compared
+/// as numbers rather than character-by-character. "Item 2" sorts before
+/// "Item 10". Non-digit runs are compared with the supplied
+/// <see cref="StringComparison"/> (default: <c>OrdinalIgnoreCase</c>).
+/// Fully managed, cross-platform, deterministic.
+/// </summary>
+public sealed class NaturalComparer : IComparer<string?>
+{
+    public static readonly NaturalComparer OrdinalIgnoreCase = new(StringComparison.OrdinalIgnoreCase);
+    public static readonly NaturalComparer Ordinal = new(StringComparison.Ordinal);
+    public static readonly NaturalComparer CurrentCultureIgnoreCase = new(StringComparison.CurrentCultureIgnoreCase);
+
+    private readonly StringComparison _comparison;
+
+    public NaturalComparer(StringComparison comparison = StringComparison.OrdinalIgnoreCase)
+    {
+        _comparison = comparison;
+    }
+
+    public int Compare(string? x, string? y)
+    {
+        if (ReferenceEquals(x, y)) return 0;
+        if (x is null) return -1;
+        if (y is null) return 1;
+
+        ReadOnlySpan<char> a = x.AsSpan();
+        ReadOnlySpan<char> b = y.AsSpan();
+        int ia = 0, ib = 0;
+
+        while (ia < a.Length && ib < b.Length)
+        {
+            bool digitA = char.IsDigit(a[ia]);
+            bool digitB = char.IsDigit(b[ib]);
+
+            if (digitA && digitB)
+            {
+                int endA = ia;
+                while (endA < a.Length && char.IsDigit(a[endA])) endA++;
+                int endB = ib;
+                while (endB < b.Length && char.IsDigit(b[endB])) endB++;
+
+                ReadOnlySpan<char> numA = a[ia..endA];
+                ReadOnlySpan<char> numB = b[ib..endB];
+
+                // Strip leading zeros for true numeric comparison; preserve
+                // a single zero if the run is all zeros.
+                ReadOnlySpan<char> trimmedA = TrimLeadingZeros(numA);
+                ReadOnlySpan<char> trimmedB = TrimLeadingZeros(numB);
+
+                if (trimmedA.Length != trimmedB.Length)
+                    return trimmedA.Length - trimmedB.Length;
+
+                int cmp = trimmedA.SequenceCompareTo(trimmedB);
+                if (cmp != 0) return cmp;
+
+                // Equal numerically; the one with more leading zeros sorts
+                // first so ordering is stable.
+                int leadDiff = (numA.Length - trimmedA.Length) - (numB.Length - trimmedB.Length);
+                if (leadDiff != 0) return -leadDiff;
+
+                ia = endA;
+                ib = endB;
+            }
+            else
+            {
+                int endA = ia;
+                while (endA < a.Length && !char.IsDigit(a[endA])) endA++;
+                int endB = ib;
+                while (endB < b.Length && !char.IsDigit(b[endB])) endB++;
+
+                int len = Math.Min(endA - ia, endB - ib);
+                int cmp = string.Compare(
+                    x, ia, y, ib, len, _comparison);
+                if (cmp != 0) return cmp;
+
+                int lenDiff = (endA - ia) - (endB - ib);
+                if (lenDiff != 0) return lenDiff;
+
+                ia = endA;
+                ib = endB;
+            }
+        }
+
+        return (a.Length - ia) - (b.Length - ib);
+    }
+
+    private static ReadOnlySpan<char> TrimLeadingZeros(ReadOnlySpan<char> s)
+    {
+        int i = 0;
+        while (i < s.Length - 1 && s[i] == '0') i++;
+        return s[i..];
+    }
+}
+
+public static class NaturalSortExtensions
+{
+    public static IOrderedEnumerable<T> OrderByNatural<T>(
+        this IEnumerable<T> source, Func<T, string?> keySelector) =>
+        source.OrderBy(keySelector, NaturalComparer.OrdinalIgnoreCase);
+
+    public static IOrderedEnumerable<T> OrderByNaturalDescending<T>(
+        this IEnumerable<T> source, Func<T, string?> keySelector) =>
+        source.OrderByDescending(keySelector, NaturalComparer.OrdinalIgnoreCase);
+
+    public static IOrderedEnumerable<T> ThenByNatural<T>(
+        this IOrderedEnumerable<T> source, Func<T, string?> keySelector) =>
+        source.ThenBy(keySelector, NaturalComparer.OrdinalIgnoreCase);
+}
+
+
+
+================================================================================
 FILE: Virginia/Program.cs
-SIZE: 7.66 KB
-MODIFIED: 05/27/2026 16:39:24
+SIZE: 7.56 KB
+MODIFIED: 05/27/2026 19:26:09
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -5723,6 +6822,7 @@ builder.Services.AddCascadingAuthenticationState();
 
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
 
@@ -6893,6 +7993,209 @@ public interface IContactService
 
 
 ================================================================================
+FILE: Virginia/Services/IToastService.cs
+SIZE: 1.85 KB
+MODIFIED: 05/27/2026 19:10:21
+================================================================================
+
+namespace Virginia.Services;
+
+/// <summary>
+/// Per-circuit (scoped) toast queue. Components on the page call
+/// <see cref="Show"/> / <see cref="ShowWithReload"/> / <see cref="Dismiss"/>;
+/// the shared <c>ToastStack</c> component subscribes to <see cref="Changed"/>
+/// and re-renders.
+/// </summary>
+public interface IToastService
+{
+    IReadOnlyList<Toast> Toasts { get; }
+    event Action? Changed;
+
+    /// <summary>Adds an auto-dismissing informational toast.</summary>
+    void ShowInfo(string message);
+
+    /// <summary>Adds an auto-dismissing success toast.</summary>
+    void ShowSuccess(string message);
+
+    /// <summary>
+    /// Adds a sticky warning toast with an inline "Reload" action.
+    /// Only one reload-toast can be active at a time; calling this when
+    /// one already exists is a no-op.
+    /// </summary>
+    void ShowReloadWarning(string message, Action onReload);
+
+    /// <summary>Adds a sticky error toast (manual dismiss only).</summary>
+    void ShowError(string message);
+
+    void Dismiss(int id);
+
+    /// <summary>Removes all reload-action toasts (e.g. after a successful reload).</summary>
+    void DismissReloadToasts();
+}
+
+public enum ToastSeverity { Info, Success, Warn, Error }
+
+public sealed record Toast(
+    int Id,
+    string Message,
+    ToastSeverity Severity,
+    Action? OnReload)
+{
+    public bool HasReload => OnReload is not null;
+    public string SeverityClass => Severity switch
+    {
+        ToastSeverity.Info => "info",
+        ToastSeverity.Success => "success",
+        ToastSeverity.Warn => "warn",
+        ToastSeverity.Error => "error",
+        _ => "info"
+    };
+
+    public string SeverityLabel => Severity switch
+    {
+        ToastSeverity.Info => "Information",
+        ToastSeverity.Success => "Success",
+        ToastSeverity.Warn => "Warning",
+        ToastSeverity.Error => "Error",
+        _ => "Information"
+    };
+}
+
+
+
+================================================================================
+FILE: Virginia/Services/ToastService.cs
+SIZE: 3.21 KB
+MODIFIED: 05/27/2026 19:10:34
+================================================================================
+
+namespace Virginia.Services;
+
+public sealed partial class ToastService : IToastService, IDisposable
+{
+    private readonly List<Toast> _toasts = [];
+    private readonly Lock _gate = new();
+    private readonly ILogger<ToastService> _logger;
+    private int _nextId = 1;
+    private bool _disposed;
+
+    public ToastService(ILogger<ToastService> logger)
+    {
+        _logger = logger;
+    }
+
+    public IReadOnlyList<Toast> Toasts
+    {
+        get
+        {
+            lock (_gate)
+            {
+                // Snapshot to avoid race between background dismiss and the
+                // renderer iterating.
+                return _toasts.ToArray();
+            }
+        }
+    }
+
+    public event Action? Changed;
+
+    public void ShowInfo(string message)
+    {
+        var toast = Add(message, ToastSeverity.Info, onReload: null);
+        ScheduleAutoDismiss(toast.Id, TimeSpan.FromSeconds(5));
+    }
+
+    public void ShowSuccess(string message)
+    {
+        var toast = Add(message, ToastSeverity.Success, onReload: null);
+        ScheduleAutoDismiss(toast.Id, TimeSpan.FromSeconds(4));
+    }
+
+    public void ShowError(string message) =>
+        Add(message, ToastSeverity.Error, onReload: null);
+
+    public void ShowReloadWarning(string message, Action onReload)
+    {
+        lock (_gate)
+        {
+            if (_toasts.Any(t => t.HasReload))
+            {
+                LogReloadToastSuppressed(_logger, message);
+                return;
+            }
+            var toast = new Toast(_nextId++, message, ToastSeverity.Warn, onReload);
+            _toasts.Add(toast);
+        }
+        Changed?.Invoke();
+    }
+
+    public void Dismiss(int id)
+    {
+        bool changed;
+        lock (_gate)
+        {
+            changed = _toasts.RemoveAll(t => t.Id == id) > 0;
+        }
+        if (changed) Changed?.Invoke();
+    }
+
+    public void DismissReloadToasts()
+    {
+        bool changed;
+        lock (_gate)
+        {
+            changed = _toasts.RemoveAll(t => t.HasReload) > 0;
+        }
+        if (changed) Changed?.Invoke();
+    }
+
+    private Toast Add(string message, ToastSeverity severity, Action? onReload)
+    {
+        Toast toast;
+        lock (_gate)
+        {
+            toast = new Toast(_nextId++, message, severity, onReload);
+            _toasts.Add(toast);
+        }
+        Changed?.Invoke();
+        return toast;
+    }
+
+    private void ScheduleAutoDismiss(int id, TimeSpan after)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(after).ConfigureAwait(false);
+                if (_disposed) return;
+                Dismiss(id);
+            }
+            catch (Exception ex)
+            {
+                LogAutoDismissFailed(_logger, id, ex);
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        Changed = null;
+    }
+
+    [LoggerMessage(Level = LogLevel.Debug,
+        Message = "Suppressed duplicate reload-toast: {Message}")]
+    private static partial void LogReloadToastSuppressed(ILogger logger, string message);
+
+    [LoggerMessage(Level = LogLevel.Warning,
+        Message = "Auto-dismiss for toast {ToastId} threw")]
+    private static partial void LogAutoDismissFailed(ILogger logger, int toastId, Exception ex);
+}
+
+
+
+================================================================================
 FILE: Virginia/Virginia.csproj
 SIZE: 0.7 KB
 MODIFIED: 03/26/2026 20:15:15
@@ -6923,8 +8226,8 @@ MODIFIED: 03/26/2026 20:15:15
 
 ================================================================================
 FILE: Virginia/wwwroot/app.css
-SIZE: 5.23 KB
-MODIFIED: 03/26/2026 20:22:32
+SIZE: 10.36 KB
+MODIFIED: 05/27/2026 19:15:37
 ================================================================================
 
 *,
@@ -6953,7 +8256,7 @@ h1:focus {
 }
 
 a {
-    color: #4a90d9;
+    color: #1565c0;
     text-decoration: none;
 }
 
@@ -6961,17 +8264,55 @@ a:hover {
     text-decoration: underline;
 }
 
+a:focus-visible {
+    outline: 2px solid #1565c0;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* ── Universal focus visibility (a11y) ───────────────────────────────────── */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+    outline: 2px solid #1565c0;
+    outline-offset: 1px;
+}
+
+/* Visually hidden but available to assistive tech */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid #1b5e20;
 }
 
 .invalid {
-    outline: 1px solid #e50000;
+    outline: 1px solid #b71c1c;
 }
 
 .validation-message {
-    color: #c62828;
+    color: #b71c1c;
     font-size: 0.8rem;
+}
+
+.field-validation {
+    min-height: 0;
+}
+
+.field-validation:empty {
+    display: none;
 }
 
 .blazor-error-boundary {
@@ -6983,6 +8324,114 @@ a:hover {
 
 .blazor-error-boundary::after {
     content: "An error has occurred.";
+}
+
+/* ── Shared form-card primitives (used across pages) ─────────────────────── */
+
+.card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.25rem;
+}
+
+.card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #2a2a2a;
+}
+
+.card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.card-head h2 {
+    margin: 0;
+}
+
+.row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+
+.group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+    min-width: 150px;
+    margin-bottom: 0.5rem;
+}
+
+.group-sm {
+    flex: 0 0 130px;
+    min-width: 110px;
+}
+
+.group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.group input,
+.group select {
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.group input:focus,
+.group select:focus {
+    outline: none;
+    border-color: #1565c0;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.18);
+}
+
+.child-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.child-item {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 6px;
+}
+
+.hint {
+    color: #595959;
+    font-size: 0.85rem;
+    font-style: italic;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .group {
+        min-width: 100%;
+    }
+
+    .group-sm {
+        flex: 1;
+        min-width: 100%;
+    }
 }
 
 /* ── Auth pages ──────────────────────────────────────────────────────────── */
@@ -7018,7 +8467,7 @@ a:hover {
 .auth-card .field label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #555;
+    color: #444;
     text-transform: uppercase;
     letter-spacing: 0.03em;
 }
@@ -7032,8 +8481,8 @@ a:hover {
 
 .auth-card .field input:focus {
     outline: none;
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+    border-color: #1565c0;
+    box-shadow: 0 0 0 2px rgba(21, 101, 192, 0.18);
 }
 
 .auth-card .field-check {
@@ -7055,19 +8504,19 @@ a:hover {
 }
 
 .auth-card .btn-primary {
-    background: #e94560;
+    background: #c41e3a;
     color: #fff;
 }
 
 .auth-card .btn-primary:hover {
-    background: #c73650;
+    background: #a01730;
 }
 
 .auth-link {
     text-align: center;
     margin-top: 1rem;
     font-size: 0.85rem;
-    color: #666;
+    color: #555;
 }
 
 /* ── Banners (global) ────────────────────────────────────────────────────── */
@@ -7081,14 +8530,136 @@ a:hover {
 
 .banner-error {
     background: #ffeaea;
-    color: #c62828;
+    color: #b71c1c;
     border: 1px solid #f5c6c6;
 }
 
 .banner-success {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: #1b5e20;
     border: 1px solid #c8e6c9;
+}
+
+/* ── Buttons (global) ────────────────────────────────────────────────────── */
+
+.btn {
+    padding: 0.45rem 0.9rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background 0.15s;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-primary {
+    background: #c41e3a;
+    color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #a01730;
+}
+
+.btn-secondary {
+    background: #e0e0e0;
+    color: #2a2a2a;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #d0d0d0;
+}
+
+.btn-danger {
+    background: #b71c1c;
+    color: #fff;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #8c1010;
+}
+
+.btn-danger-sm {
+    background: #c62828;
+    color: #fff;
+    padding: 0.25rem 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.btn-danger-sm:hover:not(:disabled) {
+    background: #a01b1b;
+}
+
+.btn-ghost {
+    background: none;
+    color: #1565c0;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-ghost:hover:not(:disabled) {
+    text-decoration: underline;
+}
+
+.btn-ghost:focus-visible {
+    border-color: #1565c0;
+    text-decoration: none;
+}
+
+.btn-add {
+    background: #1565c0;
+    color: #fff;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+}
+
+.btn-add:hover:not(:disabled) {
+    background: #0d47a1;
+}
+
+.btn-x {
+    background: none;
+    border: 1px solid transparent;
+    color: #b71c1c;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0.2rem 0.5rem;
+    align-self: center;
+    flex: 0 0 auto;
+    line-height: 1;
+    border-radius: 4px;
+}
+
+.btn-x:hover {
+    color: #8c1010;
+    background: rgba(183, 28, 28, 0.06);
+}
+
+.btn-x:focus-visible {
+    border-color: #b71c1c;
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: #1565c0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.btn-text:hover {
+    text-decoration: underline;
 }
 
 /* ── Admin table ─────────────────────────────────────────────────────────── */
@@ -7103,12 +8674,12 @@ a:hover {
 
 .badge-ok {
     background: #e8f5e9;
-    color: #2e7d32;
+    color: #1b5e20;
 }
 
 .badge-pending {
     background: #fff3e0;
-    color: #e65100;
+    color: #b25000;
 }
 
 .actions-cell {
@@ -7126,39 +8697,39 @@ a:hover {
 }
 
 .btn-approve {
-    background: #4caf50;
+    background: #2e7d32;
     color: #fff;
 }
 
 .btn-approve:hover {
-    background: #388e3c;
+    background: #1b5e20;
 }
 
 .btn-revoke {
-    background: #ff9800;
+    background: #e65100;
     color: #fff;
 }
 
 .btn-revoke:hover {
-    background: #f57c00;
+    background: #bf3f00;
 }
 
 .btn-promote {
-    background: #2196f3;
+    background: #1565c0;
     color: #fff;
 }
 
 .btn-promote:hover {
-    background: #1976d2;
+    background: #0d47a1;
 }
 
 .btn-delete {
-    background: #f44336;
+    background: #c62828;
     color: #fff;
 }
 
 .btn-delete:hover {
-    background: #d32f2f;
+    background: #8c1010;
 }
 
 /* ── Shared table/page ───────────────────────────────────────────────────── */
@@ -7167,6 +8738,9 @@ a:hover {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem;
 }
 
 .page-header {
@@ -7203,21 +8777,47 @@ a:hover {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: #888;
+    color: #595959;
     font-weight: 600;
 }
 
 .status {
     text-align: center;
-    color: #888;
+    color: #595959;
     padding: 3rem 1rem;
     font-size: 0.95rem;
+}
+
+/* ── Reduced motion (a11y) ───────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ── High contrast media query ───────────────────────────────────────────── */
+
+@media (prefers-contrast: more) {
+    .card {
+        border-color: #444;
+    }
+
+    .group input,
+    .group select {
+        border-color: #444;
+    }
 }
 
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 19:33:13
-Total Files Exported: 56
+EXPORT COMPLETED: 05/27/2026 19:43:58
+Total Files Exported: 81
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
