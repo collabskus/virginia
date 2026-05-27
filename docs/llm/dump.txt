@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 16:42:15
+Generated: 05/27/2026 16:46:06
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -16,8 +16,6 @@ docs/llm/claude.md
 docs/llm/dump.txt
 Export.ps1
 README.md
-Services/ContactChangeNotifier.cs
-Services/IContactChangeNotifier.cs
 Virginia.AppHost/AppHost.cs
 Virginia.AppHost/appsettings.Development.json
 Virginia.AppHost/appsettings.json
@@ -60,9 +58,11 @@ Virginia/Data/FormModels.cs
 Virginia/Program.cs
 Virginia/Properties/launchSettings.json
 Virginia/Services/AppClaimsPrincipalFactory.cs
+Virginia/Services/ContactChangeNotifier.cs
 Virginia/Services/ContactService.cs
 Virginia/Services/ContactTelemetry.cs
 Virginia/Services/FakeContactGenerator.cs
+Virginia/Services/IContactChangeNotifier.cs
 Virginia/Services/IContactService.cs
 Virginia/Virginia.csproj
 Virginia/wwwroot/app.css
@@ -874,97 +874,6 @@ Pop-Location
 Write-Host "`nExport completed!" -ForegroundColor Green
 Write-Host "Total files exported: $i" -ForegroundColor Green
 Write-Host "Output file size: $([math]::Round((Get-Item $OutputPath).Length / 1KB, 2)) KB" -ForegroundColor Cyan
-
-
-
-================================================================================
-FILE: Services/ContactChangeNotifier.cs
-SIZE: 1.23 KB
-MODIFIED: 05/27/2026 16:38:28
-================================================================================
-
-namespace Virginia.Services;
-
-/// <summary>
-/// Default implementation of <see cref="IContactChangeNotifier"/>. Catches and
-/// logs subscriber exceptions individually so one broken subscriber can't take
-/// down the others (or the calling write).
-/// </summary>
-public sealed partial class ContactChangeNotifier(
-    ILogger<ContactChangeNotifier> logger) : IContactChangeNotifier
-{
-    public event Action<ContactChangeEvent>? Changed;
-
-    public void Publish(ContactChangeEvent evt)
-    {
-        var handlers = Changed;
-        if (handlers is null) return;
-
-        foreach (var handler in handlers.GetInvocationList().Cast<Action<ContactChangeEvent>>())
-        {
-            try
-            {
-                handler(evt);
-            }
-            catch (Exception ex)
-            {
-                Log.SubscriberFailed(logger, evt.ContactId, evt.Kind.ToString(), ex);
-            }
-        }
-    }
-
-    private static partial class Log
-    {
-        [LoggerMessage(Level = LogLevel.Warning,
-            Message = "Change-notifier subscriber threw for contact {ContactId} ({Kind})")]
-        public static partial void SubscriberFailed(
-            ILogger logger, int contactId, string kind, Exception ex);
-    }
-}
-
-
-
-================================================================================
-FILE: Services/IContactChangeNotifier.cs
-SIZE: 1.03 KB
-MODIFIED: 05/27/2026 16:38:07
-================================================================================
-
-using Virginia.Data;
-
-namespace Virginia.Services;
-
-/// <summary>
-/// In-process pub/sub for contact mutations. A singleton — one instance for the
-/// whole app — so events raised on one circuit are visible to all other circuits.
-///
-/// Each event carries an <see cref="ContactChangeEvent.OriginId"/> identifying
-/// the circuit that caused the change, so subscribers can ignore their own echoes.
-/// </summary>
-public interface IContactChangeNotifier
-{
-    event Action<ContactChangeEvent>? Changed;
-
-    void Publish(ContactChangeEvent evt);
-}
-
-public enum ContactChangeKind
-{
-    Updated,        // FirstName, LastName, Emails, Phones, Addresses
-    Deleted,
-    PhotoChanged,   // Set or removed
-    NoteAdded
-}
-
-/// <summary>
-/// A single contact mutation. <see cref="Note"/> is populated when
-/// <see cref="Kind"/> is <see cref="ContactChangeKind.NoteAdded"/>.
-/// </summary>
-public sealed record ContactChangeEvent(
-    int ContactId,
-    ContactChangeKind Kind,
-    Guid? OriginId,
-    NoteDto? Note = null);
 
 
 
@@ -5928,6 +5837,53 @@ public sealed class AppClaimsPrincipalFactory(
 
 
 ================================================================================
+FILE: Virginia/Services/ContactChangeNotifier.cs
+SIZE: 1.23 KB
+MODIFIED: 05/27/2026 16:38:28
+================================================================================
+
+namespace Virginia.Services;
+
+/// <summary>
+/// Default implementation of <see cref="IContactChangeNotifier"/>. Catches and
+/// logs subscriber exceptions individually so one broken subscriber can't take
+/// down the others (or the calling write).
+/// </summary>
+public sealed partial class ContactChangeNotifier(
+    ILogger<ContactChangeNotifier> logger) : IContactChangeNotifier
+{
+    public event Action<ContactChangeEvent>? Changed;
+
+    public void Publish(ContactChangeEvent evt)
+    {
+        var handlers = Changed;
+        if (handlers is null) return;
+
+        foreach (var handler in handlers.GetInvocationList().Cast<Action<ContactChangeEvent>>())
+        {
+            try
+            {
+                handler(evt);
+            }
+            catch (Exception ex)
+            {
+                Log.SubscriberFailed(logger, evt.ContactId, evt.Kind.ToString(), ex);
+            }
+        }
+    }
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Warning,
+            Message = "Change-notifier subscriber threw for contact {ContactId} ({Kind})")]
+        public static partial void SubscriberFailed(
+            ILogger logger, int contactId, string kind, Exception ex);
+    }
+}
+
+
+
+================================================================================
 FILE: Virginia/Services/ContactService.cs
 SIZE: 23 KB
 MODIFIED: 05/27/2026 16:39:09
@@ -6779,6 +6735,50 @@ internal static class FakeContactGenerator
 
 
 ================================================================================
+FILE: Virginia/Services/IContactChangeNotifier.cs
+SIZE: 1.03 KB
+MODIFIED: 05/27/2026 16:38:07
+================================================================================
+
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+/// <summary>
+/// In-process pub/sub for contact mutations. A singleton — one instance for the
+/// whole app — so events raised on one circuit are visible to all other circuits.
+///
+/// Each event carries an <see cref="ContactChangeEvent.OriginId"/> identifying
+/// the circuit that caused the change, so subscribers can ignore their own echoes.
+/// </summary>
+public interface IContactChangeNotifier
+{
+    event Action<ContactChangeEvent>? Changed;
+
+    void Publish(ContactChangeEvent evt);
+}
+
+public enum ContactChangeKind
+{
+    Updated,        // FirstName, LastName, Emails, Phones, Addresses
+    Deleted,
+    PhotoChanged,   // Set or removed
+    NoteAdded
+}
+
+/// <summary>
+/// A single contact mutation. <see cref="Note"/> is populated when
+/// <see cref="Kind"/> is <see cref="ContactChangeKind.NoteAdded"/>.
+/// </summary>
+public sealed record ContactChangeEvent(
+    int ContactId,
+    ContactChangeKind Kind,
+    Guid? OriginId,
+    NoteDto? Note = null);
+
+
+
+================================================================================
 FILE: Virginia/Services/IContactService.cs
 SIZE: 1.23 KB
 MODIFIED: 05/27/2026 16:38:58
@@ -7149,7 +7149,7 @@ a:hover {
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 16:42:15
+EXPORT COMPLETED: 05/27/2026 16:46:06
 Total Files Exported: 56
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
