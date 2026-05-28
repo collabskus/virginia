@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 20:08:12
+Generated: 05/27/2026 20:09:29
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -36,6 +36,10 @@ Virginia/appsettings.Development.json
 Virginia/appsettings.json
 Virginia/Components/_Imports.razor
 Virginia/Components/App.razor
+Virginia/Components/Common/ToastGroup.razor
+Virginia/Components/Common/ToastGroup.razor.cs
+Virginia/Components/Common/ToastGroup.razor.css
+Virginia/Components/Common/ToastStack.razor.cs
 Virginia/Components/Layout/MainLayout.razor
 Virginia/Components/Layout/MainLayout.razor.css
 Virginia/Components/Layout/ReconnectModal.razor
@@ -70,10 +74,6 @@ Virginia/Components/Pages/Error.razor
 Virginia/Components/Pages/NotFound.razor
 Virginia/Components/RedirectToLogin.razor
 Virginia/Components/Routes.razor
-Virginia/Components/Shared/ToastGroup.razor
-Virginia/Components/Shared/ToastGroup.razor.cs
-Virginia/Components/Shared/ToastGroup.razor.css
-Virginia/Components/Shared/ToastStack.razor.cs
 Virginia/Data/AppDbContext.cs
 Virginia/Data/AppUser.cs
 Virginia/Data/Dtos.cs
@@ -2745,6 +2745,256 @@ MODIFIED: 03/26/2026 20:18:34
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 </html>
+
+
+
+================================================================================
+FILE: Virginia/Components/Common/ToastGroup.razor
+SIZE: 1.36 KB
+MODIFIED: 05/27/2026 19:59:19
+================================================================================
+
+@* Behavior in ToastGroup.razor.cs *@
+
+@if (Toasts.Toasts.Count > 0)
+{
+    <div class="toast-stack" data-testid="toast-stack">
+        @foreach (var toast in Toasts.Toasts)
+        {
+            <div class="toast toast-@toast.SeverityClass"
+                 role="@RoleFor(toast.Severity)"
+                 aria-live="@LiveFor(toast.Severity)"
+                 aria-atomic="true"
+                 data-testid="toast"
+                 data-toast-severity="@toast.SeverityClass"
+                 @key="toast.Id">
+                <span class="sr-only">@toast.SeverityLabel:</span>
+                <span class="toast-text">@toast.Message</span>
+                @if (toast.OnReload is not null)
+                {
+                    <button type="button"
+                            class="toast-action"
+                            data-testid="toast-reload"
+                            @onclick="() => InvokeReload(toast)">
+                        Reload
+                    </button>
+                }
+                <button type="button"
+                        class="toast-dismiss"
+                        aria-label="Dismiss @toast.SeverityLabel"
+                        data-testid="toast-dismiss"
+                        @onclick="() => Toasts.Dismiss(toast.Id)">
+                    ✕
+                </button>
+            </div>
+        }
+    </div>
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Common/ToastGroup.razor.cs
+SIZE: 0.99 KB
+MODIFIED: 05/27/2026 20:07:16
+================================================================================
+
+using Microsoft.AspNetCore.Components;
+using Virginia.Services;
+
+namespace Virginia.Components.Common;
+
+public sealed partial class ToastContainer : ComponentBase, IDisposable
+{
+    [Inject] private IToastService Toasts { get; set; } = default!;
+
+    protected override void OnInitialized() => Toasts.Changed += OnToastsChanged;
+
+    private void OnToastsChanged() => InvokeAsync(StateHasChanged);
+
+    private void InvokeReload(Toast toast)
+    {
+        toast.OnReload?.Invoke();
+        Toasts.Dismiss(toast.Id);
+    }
+
+    private static string RoleFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "alert",
+        ToastSeverity.Warn => "alert",
+        _ => "status"
+    };
+
+    private static string LiveFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "assertive",
+        ToastSeverity.Warn => "assertive",
+        _ => "polite"
+    };
+
+    public void Dispose() => Toasts.Changed -= OnToastsChanged;
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Common/ToastGroup.razor.css
+SIZE: 1.8 KB
+MODIFIED: 05/27/2026 19:47:07
+================================================================================
+
+.toast-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    border: 1px solid transparent;
+    animation: toast-in 0.18s ease-out;
+}
+
+.toast-text {
+    flex: 1;
+}
+
+.toast-info {
+    background: #e7f3fb;
+    color: #0d47a1;
+    border-color: #c5e1f2;
+}
+
+.toast-success {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border-color: #c8e6c9;
+}
+
+.toast-warn {
+    background: #fff7e6;
+    color: #8a4a00;
+    border-color: #f5d9a4;
+}
+
+.toast-error {
+    background: #ffeaea;
+    color: #b71c1c;
+    border-color: #f5c6c6;
+}
+
+.toast-dismiss,
+.toast-action {
+    background: none;
+    border: 1px solid currentColor;
+    color: inherit;
+    cursor: pointer;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    line-height: 1;
+}
+
+.toast-dismiss {
+    border: none;
+    font-size: 0.95rem;
+    padding: 0.1rem 0.4rem;
+    opacity: 0.7;
+}
+
+.toast-dismiss:hover,
+.toast-dismiss:focus-visible {
+    opacity: 1;
+    outline: 2px solid currentColor;
+    outline-offset: 1px;
+}
+
+.toast-action:hover {
+    background: rgba(0, 0, 0, 0.04);
+}
+
+.toast-action:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@keyframes toast-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .toast {
+        animation: none;
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Common/ToastStack.razor.cs
+SIZE: 1.03 KB
+MODIFIED: 05/27/2026 20:07:14
+================================================================================
+
+using Microsoft.AspNetCore.Components;
+using Virginia.Services;
+
+namespace Virginia.Components.Common;
+
+public sealed partial class ToastGroup : ComponentBase, IDisposable
+{
+    [Inject] private IToastService Toasts { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        Toasts.Changed += OnToastsChanged;
+    }
+
+    private void OnToastsChanged() => InvokeAsync(StateHasChanged);
+
+    private void InvokeReload(Toast toast)
+    {
+        toast.OnReload?.Invoke();
+        Toasts.Dismiss(toast.Id);
+    }
+
+    private static string RoleFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "alert",
+        ToastSeverity.Warn => "alert",
+        _ => "status"
+    };
+
+    private static string LiveFor(ToastSeverity severity) => severity switch
+    {
+        ToastSeverity.Error => "assertive",
+        ToastSeverity.Warn => "assertive",
+        _ => "polite"
+    };
+
+    public void Dispose()
+    {
+        Toasts.Changed -= OnToastsChanged;
+    }
+}
 
 
 
@@ -5912,256 +6162,6 @@ MODIFIED: 03/26/2026 20:18:42
 
 
 ================================================================================
-FILE: Virginia/Components/Shared/ToastGroup.razor
-SIZE: 1.36 KB
-MODIFIED: 05/27/2026 19:59:19
-================================================================================
-
-@* Behavior in ToastGroup.razor.cs *@
-
-@if (Toasts.Toasts.Count > 0)
-{
-    <div class="toast-stack" data-testid="toast-stack">
-        @foreach (var toast in Toasts.Toasts)
-        {
-            <div class="toast toast-@toast.SeverityClass"
-                 role="@RoleFor(toast.Severity)"
-                 aria-live="@LiveFor(toast.Severity)"
-                 aria-atomic="true"
-                 data-testid="toast"
-                 data-toast-severity="@toast.SeverityClass"
-                 @key="toast.Id">
-                <span class="sr-only">@toast.SeverityLabel:</span>
-                <span class="toast-text">@toast.Message</span>
-                @if (toast.OnReload is not null)
-                {
-                    <button type="button"
-                            class="toast-action"
-                            data-testid="toast-reload"
-                            @onclick="() => InvokeReload(toast)">
-                        Reload
-                    </button>
-                }
-                <button type="button"
-                        class="toast-dismiss"
-                        aria-label="Dismiss @toast.SeverityLabel"
-                        data-testid="toast-dismiss"
-                        @onclick="() => Toasts.Dismiss(toast.Id)">
-                    ✕
-                </button>
-            </div>
-        }
-    </div>
-}
-
-
-
-================================================================================
-FILE: Virginia/Components/Shared/ToastGroup.razor.cs
-SIZE: 0.99 KB
-MODIFIED: 05/27/2026 20:07:16
-================================================================================
-
-using Microsoft.AspNetCore.Components;
-using Virginia.Services;
-
-namespace Virginia.Components.Common;
-
-public sealed partial class ToastContainer : ComponentBase, IDisposable
-{
-    [Inject] private IToastService Toasts { get; set; } = default!;
-
-    protected override void OnInitialized() => Toasts.Changed += OnToastsChanged;
-
-    private void OnToastsChanged() => InvokeAsync(StateHasChanged);
-
-    private void InvokeReload(Toast toast)
-    {
-        toast.OnReload?.Invoke();
-        Toasts.Dismiss(toast.Id);
-    }
-
-    private static string RoleFor(ToastSeverity severity) => severity switch
-    {
-        ToastSeverity.Error => "alert",
-        ToastSeverity.Warn => "alert",
-        _ => "status"
-    };
-
-    private static string LiveFor(ToastSeverity severity) => severity switch
-    {
-        ToastSeverity.Error => "assertive",
-        ToastSeverity.Warn => "assertive",
-        _ => "polite"
-    };
-
-    public void Dispose() => Toasts.Changed -= OnToastsChanged;
-}
-
-
-
-================================================================================
-FILE: Virginia/Components/Shared/ToastGroup.razor.css
-SIZE: 1.8 KB
-MODIFIED: 05/27/2026 19:47:07
-================================================================================
-
-.toast-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.toast {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 0.85rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    border: 1px solid transparent;
-    animation: toast-in 0.18s ease-out;
-}
-
-.toast-text {
-    flex: 1;
-}
-
-.toast-info {
-    background: #e7f3fb;
-    color: #0d47a1;
-    border-color: #c5e1f2;
-}
-
-.toast-success {
-    background: #e8f5e9;
-    color: #1b5e20;
-    border-color: #c8e6c9;
-}
-
-.toast-warn {
-    background: #fff7e6;
-    color: #8a4a00;
-    border-color: #f5d9a4;
-}
-
-.toast-error {
-    background: #ffeaea;
-    color: #b71c1c;
-    border-color: #f5c6c6;
-}
-
-.toast-dismiss,
-.toast-action {
-    background: none;
-    border: 1px solid currentColor;
-    color: inherit;
-    cursor: pointer;
-    font-size: 0.8rem;
-    padding: 0.2rem 0.55rem;
-    border-radius: 4px;
-    line-height: 1;
-}
-
-.toast-dismiss {
-    border: none;
-    font-size: 0.95rem;
-    padding: 0.1rem 0.4rem;
-    opacity: 0.7;
-}
-
-.toast-dismiss:hover,
-.toast-dismiss:focus-visible {
-    opacity: 1;
-    outline: 2px solid currentColor;
-    outline-offset: 1px;
-}
-
-.toast-action:hover {
-    background: rgba(0, 0, 0, 0.04);
-}
-
-.toast-action:focus-visible {
-    outline: 2px solid currentColor;
-    outline-offset: 2px;
-}
-
-.sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-}
-
-@keyframes toast-in {
-    from { opacity: 0; transform: translateY(-4px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .toast {
-        animation: none;
-    }
-}
-
-
-
-================================================================================
-FILE: Virginia/Components/Shared/ToastStack.razor.cs
-SIZE: 1.03 KB
-MODIFIED: 05/27/2026 20:07:14
-================================================================================
-
-using Microsoft.AspNetCore.Components;
-using Virginia.Services;
-
-namespace Virginia.Components.Common;
-
-public sealed partial class ToastGroup : ComponentBase, IDisposable
-{
-    [Inject] private IToastService Toasts { get; set; } = default!;
-
-    protected override void OnInitialized()
-    {
-        Toasts.Changed += OnToastsChanged;
-    }
-
-    private void OnToastsChanged() => InvokeAsync(StateHasChanged);
-
-    private void InvokeReload(Toast toast)
-    {
-        toast.OnReload?.Invoke();
-        Toasts.Dismiss(toast.Id);
-    }
-
-    private static string RoleFor(ToastSeverity severity) => severity switch
-    {
-        ToastSeverity.Error => "alert",
-        ToastSeverity.Warn => "alert",
-        _ => "status"
-    };
-
-    private static string LiveFor(ToastSeverity severity) => severity switch
-    {
-        ToastSeverity.Error => "assertive",
-        ToastSeverity.Warn => "assertive",
-        _ => "polite"
-    };
-
-    public void Dispose()
-    {
-        Toasts.Changed -= OnToastsChanged;
-    }
-}
-
-
-
-================================================================================
 FILE: Virginia/Data/AppDbContext.cs
 SIZE: 2.11 KB
 MODIFIED: 03/26/2026 20:41:42
@@ -8776,7 +8776,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 20:08:13
+EXPORT COMPLETED: 05/27/2026 20:09:29
 Total Files Exported: 82
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
