@@ -7,10 +7,7 @@ public sealed partial class ToastContainer : ComponentBase, IDisposable
 {
     [Inject] private IToastService Toasts { get; set; } = default!;
 
-    protected override void OnInitialized()
-    {
-        Toasts.Changed += OnToastsChanged;
-    }
+    protected override void OnInitialized() => Toasts.Changed += OnToastsChanged;
 
     private void OnToastsChanged() => InvokeAsync(StateHasChanged);
 
@@ -34,8 +31,5 @@ public sealed partial class ToastContainer : ComponentBase, IDisposable
         _ => "polite"
     };
 
-    public void Dispose()
-    {
-        Toasts.Changed -= OnToastsChanged;
-    }
+    public void Dispose() => Toasts.Changed -= OnToastsChanged;
 }
