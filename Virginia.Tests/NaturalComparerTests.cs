@@ -31,12 +31,26 @@ public sealed class NaturalComparerTests
         Assert.True(c.Compare("Item 9", "Item 10") < 0);
     }
 
+    private static readonly string[] expected = ["1", "3", "20", "100", "1000"];
+    private static readonly string[] expectedArray = ["Unit 1", "Unit 2", "Unit 3", "Unit 10", "Unit 20"];
+    private static readonly string[] expectedArray0 = ["Alice", "Bob", "Charlie"];
+    private static readonly string[] expectedArray1 = ["Building 1", "Building 2", "Building 10"];
+    private static readonly string[] expectedArray2 = ["Item 10", "Item 2", "Item 1"];
+    private static readonly string[] expectedArray3 =
+            [
+                "Apartment 1A",
+                "Apartment 1B",
+                "Apartment 2A",
+                "Apartment 10A",
+                "Apartment 20A"
+            ];
+
     [Fact]
     public void Pure_Numeric_Strings_Sort_Numerically()
     {
         var input = new[] { "100", "20", "3", "1000", "1" };
         Array.Sort(input, NaturalComparer.OrdinalIgnoreCase);
-        Assert.Equal(new[] { "1", "3", "20", "100", "1000" }, input);
+        Assert.Equal(expected, input);
     }
 
     [Fact]
@@ -81,7 +95,7 @@ public sealed class NaturalComparerTests
         };
         Array.Sort(input, NaturalComparer.OrdinalIgnoreCase);
         Assert.Equal(
-            new[] { "Unit 1", "Unit 2", "Unit 3", "Unit 10", "Unit 20" },
+            expectedArray,
             input);
     }
 
@@ -90,7 +104,7 @@ public sealed class NaturalComparerTests
     {
         var input = new[] { "Charlie", "Alice", "Bob" };
         Array.Sort(input, NaturalComparer.OrdinalIgnoreCase);
-        Assert.Equal(new[] { "Alice", "Bob", "Charlie" }, input);
+        Assert.Equal(expectedArray0, input);
     }
 
     [Fact]
@@ -103,7 +117,7 @@ public sealed class NaturalComparerTests
             new { Name = "Building 1" }
         };
         var sorted = input.OrderByNatural(x => x.Name).Select(x => x.Name).ToArray();
-        Assert.Equal(new[] { "Building 1", "Building 2", "Building 10" }, sorted);
+        Assert.Equal(expectedArray1, sorted);
     }
 
     [Fact]
@@ -111,7 +125,7 @@ public sealed class NaturalComparerTests
     {
         var input = new[] { "Item 1", "Item 2", "Item 10" };
         var sorted = input.OrderByNaturalDescending(x => x).ToArray();
-        Assert.Equal(new[] { "Item 10", "Item 2", "Item 1" }, sorted);
+        Assert.Equal(expectedArray2, sorted);
     }
 
     [Fact]
@@ -126,14 +140,7 @@ public sealed class NaturalComparerTests
         };
         Array.Sort(inputs, NaturalComparer.OrdinalIgnoreCase);
         Assert.Equal(
-            new[]
-            {
-                "Apartment 1A",
-                "Apartment 1B",
-                "Apartment 2A",
-                "Apartment 10A",
-                "Apartment 20A"
-            },
+            expectedArray3,
             inputs);
     }
 
