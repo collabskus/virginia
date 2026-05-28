@@ -2,8 +2,8 @@
 @page "/contacts/{Id:int}"
 @attribute [Authorize(Policy = "Approved")]
 @rendermode InteractiveServer
+@using Virginia.Components.Common
 @using Virginia.Components.Pages.Contacts.Parts
-@using Virginia.Components.Shared
 
 <PageTitle>@(IsNew ? "New Contact" : "Edit Contact") | Virginia</PageTitle>
 

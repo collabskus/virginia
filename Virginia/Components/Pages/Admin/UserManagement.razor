@@ -1,5 +1,6 @@
 @page "/admin/users"
 @using Microsoft.AspNetCore.Identity
+@using Virginia.Components.Common
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @inject UserManager<AppUser> UserManager

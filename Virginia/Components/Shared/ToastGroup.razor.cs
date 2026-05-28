@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Virginia.Services;
 
-namespace Virginia.Components.Shared;
+namespace Virginia.Components.Common;
 
 public sealed partial class ToastContainer : ComponentBase, IDisposable
 {
