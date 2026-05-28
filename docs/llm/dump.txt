@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/27/2026 20:04:44
+Generated: 05/27/2026 20:08:12
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -2694,8 +2694,8 @@ MODIFIED: 05/27/2026 15:44:40
 
 ================================================================================
 FILE: Virginia/Components/_Imports.razor
-SIZE: 0.71 KB
-MODIFIED: 05/27/2026 19:15:44
+SIZE: 0.73 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @using System.Net.Http
@@ -2706,18 +2706,18 @@ MODIFIED: 05/27/2026 19:15:44
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
-@using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
 @using Virginia
 @using Virginia.Components
+@using Virginia.Components.Common
 @using Virginia.Components.Layout
-@using Virginia.Components.Shared
 @using Virginia.Components.Pages.Contacts
 @using Virginia.Components.Pages.Contacts.Parts
 @using Virginia.Data
 @using Virginia.Extensions
 @using Virginia.Services
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
 
 
 
@@ -3268,12 +3268,13 @@ async function retryWhenDocumentBecomesVisible() {
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/ChangePassword.razor
-SIZE: 2.98 KB
-MODIFIED: 03/26/2026 20:24:19
+SIZE: 3.02 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @page "/account/change-password"
 @using Microsoft.AspNetCore.Identity
+@using Virginia.Components.Common
 @attribute [Authorize]
 @rendermode InteractiveServer
 @inject UserManager<AppUser> UserManager
@@ -3369,12 +3370,13 @@ MODIFIED: 03/26/2026 20:24:19
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Login.razor
-SIZE: 2.73 KB
-MODIFIED: 03/26/2026 21:02:26
+SIZE: 2.76 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @page "/account/login"
 @using Microsoft.AspNetCore.Identity
+@using Virginia.Components.Common
 @attribute [AllowAnonymous]
 @layout MainLayout
 @inject SignInManager<AppUser> SignInManager
@@ -3468,12 +3470,13 @@ MODIFIED: 03/26/2026 21:02:26
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Register.razor
-SIZE: 2.59 KB
-MODIFIED: 03/26/2026 20:41:15
+SIZE: 2.62 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @page "/account/register"
 @using Microsoft.AspNetCore.Identity
+@using Virginia.Components.Common
 @attribute [AllowAnonymous]
 @layout MainLayout
 @inject UserManager<AppUser> UserManager
@@ -3562,12 +3565,13 @@ MODIFIED: 03/26/2026 20:41:15
 
 ================================================================================
 FILE: Virginia/Components/Pages/Admin/UserManagement.razor
-SIZE: 5.89 KB
-MODIFIED: 03/26/2026 20:25:03
+SIZE: 5.92 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @page "/admin/users"
 @using Microsoft.AspNetCore.Identity
+@using Virginia.Components.Common
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
 @inject UserManager<AppUser> UserManager
@@ -4507,15 +4511,15 @@ MODIFIED: 04/12/2026 16:31:45
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/ContactDetail.razor
 SIZE: 3.56 KB
-MODIFIED: 05/27/2026 19:51:34
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @page "/contacts/new"
 @page "/contacts/{Id:int}"
 @attribute [Authorize(Policy = "Approved")]
 @rendermode InteractiveServer
+@using Virginia.Components.Common
 @using Virginia.Components.Pages.Contacts.Parts
-@using Virginia.Components.Shared
 
 <PageTitle>@(IsNew ? "New Contact" : "Edit Contact") | Virginia</PageTitle>
 
@@ -4961,10 +4965,11 @@ MODIFIED: 05/27/2026 19:14:48
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/Parts/AddressesCard.razor
-SIZE: 5.39 KB
-MODIFIED: 05/27/2026 19:12:59
+SIZE: 5.42 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
+@using Virginia.Components.Common
 @using Virginia.Data
 
 <section class="card" aria-labelledby="addresses-heading">
@@ -5096,10 +5101,11 @@ MODIFIED: 05/27/2026 19:13:05
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/Parts/BasicInfoCard.razor
-SIZE: 1.37 KB
-MODIFIED: 05/27/2026 19:11:57
+SIZE: 1.41 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
+@using Virginia.Components.Common
 @using Virginia.Data
 
 <section class="card" aria-labelledby="basic-info-heading">
@@ -5291,10 +5297,11 @@ MODIFIED: 05/27/2026 19:13:53
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/Parts/EmailsCard.razor
-SIZE: 2.66 KB
-MODIFIED: 05/27/2026 19:12:29
+SIZE: 2.69 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
+@using Virginia.Components.Common
 @using Virginia.Data
 
 <section class="card" aria-labelledby="emails-heading">
@@ -5379,11 +5386,12 @@ MODIFIED: 05/27/2026 19:13:05
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/Parts/NotesCard.razor
-SIZE: 1.79 KB
-MODIFIED: 05/27/2026 19:13:16
+SIZE: 1.83 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @* Behavior in NotesCard.razor.cs *@
+@using Virginia.Components.Common
 @using Virginia.Data
 
 <section class="card" aria-labelledby="notes-heading">
@@ -5559,10 +5567,11 @@ MODIFIED: 05/27/2026 19:13:33
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/Parts/PhonesCard.razor
-SIZE: 2.65 KB
-MODIFIED: 05/27/2026 19:12:43
+SIZE: 2.68 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
+@using Virginia.Components.Common
 @using Virginia.Data
 
 <section class="card" aria-labelledby="phones-heading">
@@ -5815,12 +5824,13 @@ MODIFIED: 05/27/2026 19:11:49
 
 ================================================================================
 FILE: Virginia/Components/Pages/Error.razor
-SIZE: 0.58 KB
-MODIFIED: 03/26/2026 17:58:04
+SIZE: 0.61 KB
+MODIFIED: 05/27/2026 20:07:15
 ================================================================================
 
 @page "/Error"
 @using System.Diagnostics
+@using Virginia.Components.Common
 
 <PageTitle>Error | Virginia</PageTitle>
 
@@ -5949,13 +5959,13 @@ MODIFIED: 05/27/2026 19:59:19
 ================================================================================
 FILE: Virginia/Components/Shared/ToastGroup.razor.cs
 SIZE: 0.99 KB
-MODIFIED: 05/27/2026 20:04:24
+MODIFIED: 05/27/2026 20:07:16
 ================================================================================
 
 using Microsoft.AspNetCore.Components;
 using Virginia.Services;
 
-namespace Virginia.Components.Shared;
+namespace Virginia.Components.Common;
 
 public sealed partial class ToastContainer : ComponentBase, IDisposable
 {
@@ -6104,13 +6114,13 @@ MODIFIED: 05/27/2026 19:47:07
 ================================================================================
 FILE: Virginia/Components/Shared/ToastStack.razor.cs
 SIZE: 1.03 KB
-MODIFIED: 05/27/2026 19:51:34
+MODIFIED: 05/27/2026 20:07:14
 ================================================================================
 
 using Microsoft.AspNetCore.Components;
 using Virginia.Services;
 
-namespace Virginia.Components.Shared;
+namespace Virginia.Components.Common;
 
 public sealed partial class ToastGroup : ComponentBase, IDisposable
 {
@@ -8766,7 +8776,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/27/2026 20:04:44
+EXPORT COMPLETED: 05/27/2026 20:08:13
 Total Files Exported: 82
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
