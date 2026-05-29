@@ -1,0 +1,26 @@
+services:
+  virginia:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: virginia:latest
+    container_name: virginia
+    restart: unless-stopped
+    ports:
+      # host:container — reach the app at http://192.168.0.106:8080
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      # SQLite file path INSIDE the container (backed by the volume below).
+      ConnectionStrings__DefaultConnection: "Data Source=/data/virginia.db"
+      # Seed admin — CHANGE THESE before first run.
+      AdminUser__Email: "admin@virginia.local"
+      AdminUser__Password: "Admin123!"
+      # App serves plain HTTP behind the host; leave HTTPS redirect off.
+      ENABLE_HTTPS_REDIRECT: "false"
+    volumes:
+      - virginia-data:/data
+
+volumes:
+  virginia-data:

@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/.github/
+**/TestResults/
+**/*.user
+**/*.db
+**/*.db-shm
+**/*.db-wal
+Virginia.AppHost/
+Virginia.Tests/
+docs/
+*.md

@@ -129,7 +129,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+
+// ── HTTPS redirect ───────────────────────────────────────────────────────────
+// Behind a container/reverse proxy we terminate at plain HTTP, so HTTPS
+// redirection must be opt-in. Set ENABLE_HTTPS_REDIRECT=true only when the
+// app itself is serving HTTPS directly.
+var enableHttpsRedirect =
+    app.Configuration.GetValue("ENABLE_HTTPS_REDIRECT", defaultValue: false);
+if (enableHttpsRedirect)
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
