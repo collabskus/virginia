@@ -1,19 +1,23 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/29/2026 11:53:37
+Generated: 05/29/2026 12:30:20
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
 DIRECTORY STRUCTURE (tracked):
 ==============================
 
+.containerignore
 .editorconfig
 .github/workflows/ci.yml
 .gitignore
+compose.yaml
+Containerfile
 Directory.Build.props
 Directory.Packages.props
 docs/llm/claude.md
 docs/llm/dump.txt
+docs/llm/vendor/files-2026-05-29.zip
 docs/llm/vendor/gemini.md
 Export.ps1
 README.md
@@ -34,6 +38,7 @@ Virginia.Tests/ToastServiceTests.cs
 Virginia.Tests/Virginia.Tests.csproj
 Virginia/appsettings.Development.json
 Virginia/appsettings.json
+Virginia/appsettings.Production.json
 Virginia/Components/_Imports.razor
 Virginia/Components/App.razor
 Virginia/Components/Common/ToastGroup.razor
@@ -694,6 +699,41 @@ $RECYCLE.BIN/
 *.db
 *.db-shm
 *.db-wal
+
+
+
+================================================================================
+FILE: compose.yaml
+SIZE: 0.81 KB
+MODIFIED: 05/29/2026 16:26:14
+================================================================================
+
+services:
+  virginia:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: virginia:latest
+    container_name: virginia
+    restart: unless-stopped
+    ports:
+      # host:container — reach the app at http://192.168.0.106:8080
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      # SQLite file path INSIDE the container (backed by the volume below).
+      ConnectionStrings__DefaultConnection: "Data Source=/data/virginia.db"
+      # Seed admin — CHANGE THESE before first run.
+      AdminUser__Email: "admin@virginia.local"
+      AdminUser__Password: "Admin123!"
+      # App serves plain HTTP behind the host; leave HTTPS redirect off.
+      ENABLE_HTTPS_REDIRECT: "false"
+    volumes:
+      - virginia-data:/data
+
+volumes:
+  virginia-data:
 
 
 
@@ -2693,6 +2733,27 @@ MODIFIED: 05/27/2026 15:44:40
   },
   "ApplicationInsights": {
     "ConnectionString": "InstrumentationKey=c109b795-348a-4fe0-92c7-0815a3cf2a66;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=606d432f-1e0e-408c-9aeb-68d52afcec79"
+  }
+}
+
+
+
+================================================================================
+FILE: Virginia/appsettings.Production.json
+SIZE: 0.25 KB
+MODIFIED: 05/29/2026 16:26:14
+================================================================================
+
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=/data/virginia.db"
   }
 }
 
@@ -6733,8 +6794,8 @@ public static class NaturalSortExtensions
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 7.56 KB
-MODIFIED: 05/27/2026 19:26:09
+SIZE: 8.08 KB
+MODIFIED: 05/29/2026 16:26:14
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -6868,7 +6929,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+
+// ── HTTPS redirect ───────────────────────────────────────────────────────────
+// Behind a container/reverse proxy we terminate at plain HTTP, so HTTPS
+// redirection must be opt-in. Set ENABLE_HTTPS_REDIRECT=true only when the
+// app itself is serving HTTPS directly.
+var enableHttpsRedirect =
+    app.Configuration.GetValue("ENABLE_HTTPS_REDIRECT", defaultValue: false);
+if (enableHttpsRedirect)
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -8782,7 +8853,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/29/2026 11:53:37
-Total Files Exported: 82
+EXPORT COMPLETED: 05/29/2026 12:30:22
+Total Files Exported: 84
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
