@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/28/2026 07:24:49
+Generated: 05/29/2026 11:53:37
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -721,8 +721,8 @@ MODIFIED: 03/26/2026 16:10:37
 
 ================================================================================
 FILE: Directory.Packages.props
-SIZE: 1.41 KB
-MODIFIED: 05/27/2026 15:43:44
+SIZE: 1.44 KB
+MODIFIED: 05/29/2026 11:52:55
 ================================================================================
 
 <Project>
@@ -739,7 +739,7 @@ MODIFIED: 05/27/2026 15:43:44
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
     <!-- Azure Monitor (Application Insights) exporter -->
-    <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.3.0" />
+    <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.5.0" />
     <!-- Aspire extensions (service discovery, resilience) -->
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
@@ -749,7 +749,6 @@ MODIFIED: 05/27/2026 15:43:44
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.6.0" />
   </ItemGroup>
 </Project>
-
 
 
 ================================================================================
@@ -8783,7 +8782,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/28/2026 07:24:50
+EXPORT COMPLETED: 05/29/2026 11:53:37
 Total Files Exported: 82
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
