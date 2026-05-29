@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/29/2026 12:30:20
+Generated: 05/29/2026 18:19:39
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -35,6 +35,8 @@ Virginia.Tests/FormValidationTests.cs
 Virginia.Tests/NaturalComparerTests.cs
 Virginia.Tests/TestInfrastructure.cs
 Virginia.Tests/ToastServiceTests.cs
+Virginia.Tests/UserAdminServiceTests.cs
+Virginia.Tests/UserAdminTestHarness.cs
 Virginia.Tests/Virginia.Tests.csproj
 Virginia/appsettings.Development.json
 Virginia/appsettings.json
@@ -54,6 +56,7 @@ Virginia/Components/Pages/Account/ChangePassword.razor
 Virginia/Components/Pages/Account/Login.razor
 Virginia/Components/Pages/Account/Register.razor
 Virginia/Components/Pages/Admin/UserManagement.razor
+Virginia/Components/Pages/Admin/UserManagement.razor.css
 Virginia/Components/Pages/ContactList.razor
 Virginia/Components/Pages/ContactList.razor.css
 Virginia/Components/Pages/Contacts/ContactDetail.razor
@@ -84,6 +87,7 @@ Virginia/Data/AppUser.cs
 Virginia/Data/Dtos.cs
 Virginia/Data/Entities.cs
 Virginia/Data/FormModels.cs
+Virginia/Data/UserAdminDtos.cs
 Virginia/Extensions/NaturalComparer.cs
 Virginia/Program.cs
 Virginia/Properties/launchSettings.json
@@ -95,7 +99,9 @@ Virginia/Services/FakeContactGenerator.cs
 Virginia/Services/IContactChangeNotifier.cs
 Virginia/Services/IContactService.cs
 Virginia/Services/IToastService.cs
+Virginia/Services/IUserAdminService.cs
 Virginia/Services/ToastService.cs
+Virginia/Services/UserAdminService.cs
 Virginia/Virginia.csproj
 Virginia/wwwroot/app.css
 
@@ -2653,6 +2659,399 @@ public sealed class ToastServiceTests
 
 
 ================================================================================
+FILE: Virginia.Tests/UserAdminServiceTests.cs
+SIZE: 8.04 KB
+MODIFIED: 05/29/2026 22:12:36
+================================================================================
+
+using Virginia.Data;
+using Xunit;
+
+namespace Virginia.Tests;
+
+public sealed class UserAdminServiceTests
+{
+    private static CancellationToken CT => TestContext.Current.CancellationToken;
+
+    // ─── List / paging ───────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_Empty_ReturnsZero()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+
+        var page = await h.Service.ListAsync(new UserAdminFilter(), 1, 50, CT);
+
+        Assert.Equal(0, page.TotalCount);
+        Assert.Empty(page.Items);
+        Assert.Equal(0, page.TotalPages);
+    }
+
+    [Fact]
+    public async Task List_RespectsPageSize()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.SeedUsersAsync(120);
+
+        var page = await h.Service.ListAsync(new UserAdminFilter(), 1, 50, CT);
+
+        Assert.Equal(120, page.TotalCount);
+        Assert.Equal(50, page.Items.Count);
+        Assert.Equal(3, page.TotalPages);
+        Assert.True(page.HasNext);
+        Assert.False(page.HasPrevious);
+    }
+
+    [Fact]
+    public async Task List_SecondPage_ReturnsNextSlice()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.SeedUsersAsync(120);
+
+        var p1 = await h.Service.ListAsync(new UserAdminFilter(), 1, 50, CT);
+        var p2 = await h.Service.ListAsync(new UserAdminFilter(), 2, 50, CT);
+
+        Assert.Equal(50, p2.Items.Count);
+        Assert.True(p2.HasPrevious);
+        var overlap = p1.Items.Select(i => i.Id).Intersect(p2.Items.Select(i => i.Id));
+        Assert.Empty(overlap);
+    }
+
+    [Fact]
+    public async Task List_LastPage_MayBePartial()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.SeedUsersAsync(120);
+
+        var p3 = await h.Service.ListAsync(new UserAdminFilter(), 3, 50, CT);
+
+        Assert.Equal(20, p3.Items.Count);
+        Assert.False(p3.HasNext);
+    }
+
+    [Fact]
+    public async Task List_PageSizeClampedToCeiling()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.SeedUsersAsync(10);
+
+        // Request an absurd page size; service clamps to 200.
+        var page = await h.Service.ListAsync(new UserAdminFilter(), 1, 99999, CT);
+
+        Assert.Equal(200, page.PageSize);
+        Assert.Equal(10, page.Items.Count);
+    }
+
+    // ─── Filtering ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task List_FilterByEmail_IsCaseInsensitive()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.CreateUserAsync("Alice@example.com", approved: true);
+        await h.CreateUserAsync("bob@example.com", approved: true);
+
+        var page = await h.Service.ListAsync(
+            new UserAdminFilter(Email: "ALICE"), 1, 50, CT);
+
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal("Alice@example.com", page.Items[0].Email);
+    }
+
+    [Fact]
+    public async Task List_FilterByPending_ExcludesApproved()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.CreateUserAsync("pending@example.com", approved: false);
+        await h.CreateUserAsync("approved@example.com", approved: true);
+
+        var page = await h.Service.ListAsync(
+            new UserAdminFilter(IsApproved: false), 1, 50, CT);
+
+        Assert.Equal(1, page.TotalCount);
+        Assert.Equal("pending@example.com", page.Items[0].Email);
+        Assert.False(page.Items[0].IsApproved);
+    }
+
+    [Fact]
+    public async Task List_PendingOrderedBeforeApproved()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        await h.CreateUserAsync("zapproved@example.com", approved: true);
+        await h.CreateUserAsync("apending@example.com", approved: false);
+
+        var page = await h.Service.ListAsync(new UserAdminFilter(), 1, 50, CT);
+
+        // Pending first regardless of email sort.
+        Assert.False(page.Items[0].IsApproved);
+    }
+
+    // ─── Role resolution (the former N+1) ────────────────────────────────
+
+    [Fact]
+    public async Task List_ResolvesAdminFlag_WithoutPerUserQuery()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        var adminId = await h.CreateUserAsync("admin2@example.com", approved: true);
+        await h.AddToAdminRoleAsync(adminId);
+        await h.CreateUserAsync("plain@example.com", approved: true);
+
+        var page = await h.Service.ListAsync(new UserAdminFilter(), 1, 50, CT);
+
+        var admin = page.Items.Single(i => i.Email == "admin2@example.com");
+        var plain = page.Items.Single(i => i.Email == "plain@example.com");
+        Assert.True(admin.IsAdmin);
+        Assert.Equal("Admin", admin.Role);
+        Assert.False(plain.IsAdmin);
+        Assert.Equal("User", plain.Role);
+    }
+
+    [Fact]
+    public async Task List_FilterByAdmin_ReturnsOnlyAdmins()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        var adminId = await h.CreateUserAsync("theadmin@example.com", approved: true);
+        await h.AddToAdminRoleAsync(adminId);
+        await h.CreateUserAsync("nonadmin@example.com", approved: true);
+
+        var page = await h.Service.ListAsync(
+            new UserAdminFilter(IsAdmin: true), 1, 50, CT);
+
+        Assert.Equal(1, page.TotalCount);
+        Assert.True(page.Items[0].IsAdmin);
+    }
+
+    // ─── Mutations ───────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Approve_SetsApprovedTrue()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        var id = await h.CreateUserAsync("toapprove@example.com", approved: false);
+
+        await h.Service.ApproveAsync(id, CT);
+        var row = await h.Service.GetRowAsync(id, CT);
+
+        Assert.NotNull(row);
+        Assert.True(row.IsApproved);
+    }
+
+    [Fact]
+    public async Task Revoke_SetsApprovedFalse()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        var id = await h.CreateUserAsync("torevoke@example.com", approved: true);
+
+        await h.Service.RevokeAsync(id, CT);
+        var row = await h.Service.GetRowAsync(id, CT);
+
+        Assert.NotNull(row);
+        Assert.False(row.IsApproved);
+    }
+
+    [Fact]
+    public async Task Promote_MakesUserAdminAndApproved()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        var id = await h.CreateUserAsync("topromote@example.com", approved: false);
+
+        await h.Service.PromoteToAdminAsync(id, CT);
+        var row = await h.Service.GetRowAsync(id, CT);
+
+        Assert.NotNull(row);
+        Assert.True(row.IsAdmin);
+        Assert.True(row.IsApproved);
+        Assert.Equal("Admin", row.Role);
+    }
+
+    [Fact]
+    public async Task Delete_RemovesUser()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+        var id = await h.CreateUserAsync("todelete@example.com", approved: true);
+
+        await h.Service.DeleteAsync(id, CT);
+
+        Assert.Null(await h.Service.GetRowAsync(id, CT));
+    }
+
+    [Fact]
+    public async Task Approve_NonExistent_DoesNotThrow()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+
+        // Should be a no-op, not an exception.
+        await h.Service.ApproveAsync("missing-id", CT);
+    }
+
+    [Fact]
+    public async Task GetRow_NonExistent_ReturnsNull()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync();
+
+        Assert.Null(await h.Service.GetRowAsync("nope", CT));
+    }
+
+    [Fact]
+    public async Task PageSize_FromOptions_IsClamped()
+    {
+        await using var h = await UserAdminTestHarness.CreateAsync(configuredPageSize: 5000);
+
+        // 5000 is clamped down to the 200 ceiling.
+        Assert.Equal(200, h.Service.PageSize);
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia.Tests/UserAdminTestHarness.cs
+SIZE: 4.85 KB
+MODIFIED: 05/29/2026 22:12:36
+================================================================================
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Virginia.Data;
+using Virginia.Services;
+using Xunit;
+
+namespace Virginia.Tests;
+
+/// <summary>
+/// Spins up a fresh in-memory SQLite database with a fully wired ASP.NET Core
+/// Identity stack (UserManager / RoleManager) plus the UserAdminService under
+/// test. Uses only the packages the app already references — no Moq, no extra
+/// test doubles. Each instance owns its own service provider and connection,
+/// disposed at the end of the test.
+/// </summary>
+public sealed class UserAdminTestHarness : IAsyncDisposable
+{
+    private const string AdminRole = "Admin";
+    private const string UserRole = "User";
+
+    private readonly SqliteConnection _connection;
+    private readonly ServiceProvider _provider;
+    private readonly IServiceScope _scope;
+
+    public AppDbContext Db { get; }
+    public UserManager<AppUser> UserManager { get; }
+    public RoleManager<IdentityRole> RoleManager { get; }
+    public IUserAdminService Service { get; }
+
+    private UserAdminTestHarness(
+        SqliteConnection connection,
+        ServiceProvider provider,
+        IServiceScope scope,
+        AppDbContext db,
+        UserManager<AppUser> userManager,
+        RoleManager<IdentityRole> roleManager,
+        IUserAdminService service)
+    {
+        _connection = connection;
+        _provider = provider;
+        _scope = scope;
+        Db = db;
+        UserManager = userManager;
+        RoleManager = roleManager;
+        Service = service;
+    }
+
+    public static async Task<UserAdminTestHarness> CreateAsync(int configuredPageSize = 50)
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
+
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddDbContext<AppDbContext>(o => o.UseSqlite(connection));
+
+        services
+            .AddIdentityCore<AppUser>(o =>
+            {
+                o.Password.RequireDigit = true;
+                o.Password.RequireLowercase = true;
+                o.Password.RequireUppercase = true;
+                o.Password.RequireNonAlphanumeric = false;
+                o.Password.RequiredLength = 8;
+                o.User.RequireUniqueEmail = true;
+            })
+            .AddRoles<IdentityRole>()
+            .AddEntityFrameworkStores<AppDbContext>();
+
+        services.Configure<UserAdminOptions>(o => o.UsersPageSize = configuredPageSize);
+        services.AddScoped<IUserAdminService, UserAdminService>();
+
+        var provider = services.BuildServiceProvider();
+        var scope = provider.CreateScope();
+        var sp = scope.ServiceProvider;
+
+        var db = sp.GetRequiredService<AppDbContext>();
+        await db.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
+
+        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+        foreach (var role in new[] { AdminRole, UserRole })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
+
+        var userManager = sp.GetRequiredService<UserManager<AppUser>>();
+        var service = sp.GetRequiredService<IUserAdminService>();
+
+        return new UserAdminTestHarness(
+            connection, provider, scope, db, userManager, roleManager, service);
+    }
+
+    /// <summary>Create one user; returns its id. Assigned the "User" role.</summary>
+    public async Task<string> CreateUserAsync(string email, bool approved)
+    {
+        var user = new AppUser
+        {
+            UserName = email,
+            Email = email,
+            EmailConfirmed = true,
+            IsApproved = approved,
+            CreatedAtUtc = DateTime.UtcNow
+        };
+
+        var result = await UserManager.CreateAsync(user, "Password123!");
+        Assert.True(result.Succeeded,
+            $"User creation failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+
+        await UserManager.AddToRoleAsync(user, UserRole);
+        return user.Id;
+    }
+
+    /// <summary>Bulk-seed N approved users with deterministic emails.</summary>
+    public async Task SeedUsersAsync(int count)
+    {
+        for (var i = 1; i <= count; i++)
+            await CreateUserAsync($"seed-{i:D4}@example.com", approved: true);
+    }
+
+    public async Task AddToAdminRoleAsync(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        Assert.NotNull(user);
+        if (await UserManager.IsInRoleAsync(user, UserRole))
+            await UserManager.RemoveFromRoleAsync(user, UserRole);
+        await UserManager.AddToRoleAsync(user, AdminRole);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _scope.Dispose();
+        await _provider.DisposeAsync();
+        await _connection.DisposeAsync();
+    }
+}
+
+
+
+================================================================================
 FILE: Virginia.Tests/Virginia.Tests.csproj
 SIZE: 0.79 KB
 MODIFIED: 03/26/2026 20:58:05
@@ -2707,8 +3106,8 @@ MODIFIED: 03/26/2026 17:51:05
 
 ================================================================================
 FILE: Virginia/appsettings.json
-SIZE: 0.79 KB
-MODIFIED: 05/27/2026 15:44:40
+SIZE: 0.81 KB
+MODIFIED: 05/29/2026 22:12:36
 ================================================================================
 
 {
@@ -2730,6 +3129,9 @@ MODIFIED: 05/27/2026 15:44:40
   "AdminUser": {
     "Email": "admin@virginia.local",
     "Password": "Admin123!"
+  },
+  "Admin": {
+    "UsersPageSize": 50
   },
   "ApplicationInsights": {
     "ConnectionString": "InstrumentationKey=c109b795-348a-4fe0-92c7-0815a3cf2a66;IngestionEndpoint=https://eastus-8.in.applicationinsights.azure.com/;LiveEndpoint=https://eastus.livediagnostics.monitor.azure.com/;ApplicationId=606d432f-1e0e-408c-9aeb-68d52afcec79"
@@ -3882,17 +4284,18 @@ MODIFIED: 05/27/2026 20:07:15
 
 ================================================================================
 FILE: Virginia/Components/Pages/Admin/UserManagement.razor
-SIZE: 5.92 KB
-MODIFIED: 05/27/2026 20:07:15
+SIZE: 10.88 KB
+MODIFIED: 05/29/2026 22:12:36
 ================================================================================
 
 @page "/admin/users"
-@using Microsoft.AspNetCore.Identity
 @using Virginia.Components.Common
+@using Virginia.Data
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
-@inject UserManager<AppUser> UserManager
+@inject IUserAdminService UserAdmin
 @inject ILogger<UserManagement> Logger
+@implements IDisposable
 
 <PageTitle>User Management | Virginia</PageTitle>
 
@@ -3911,9 +4314,37 @@ MODIFIED: 05/27/2026 20:07:15
         <div class="banner banner-success" role="status">@success</div>
     }
 
-    @if (users is null)
+    <!-- Filters: email search + status. Server-side, so a user on any page
+         is reachable by typing their email — the test relies on this. -->
+    <div class="user-filters">
+        <div class="user-field">
+            <label for="fEmail">Email</label>
+            <input id="fEmail" type="text" placeholder="Search by email..."
+                   data-testid="user-filter-email"
+                   @bind="filterEmail" @bind:event="oninput"
+                   @bind:after="OnFilterChanged" />
+        </div>
+        <div class="user-field">
+            <label for="fStatus">Status</label>
+            <select id="fStatus" data-testid="user-filter-status"
+                    @bind="filterStatus" @bind:after="OnFilterChanged">
+                <option value="">Any</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+            </select>
+        </div>
+        <button class="btn btn-text" @onclick="ClearFilters">Clear filters</button>
+    </div>
+
+    @if (result is null)
     {
-        <div class="status">Loading users...</div>
+        <div class="status" aria-live="polite">Loading users...</div>
+    }
+    else if (result.TotalCount == 0)
+    {
+        <div class="status" aria-live="polite" data-testid="users-empty">
+            No users found.
+        </div>
     }
     else
     {
@@ -3929,7 +4360,7 @@ MODIFIED: 05/27/2026 20:07:15
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var u in users)
+                    @foreach (var u in result.Items)
                     {
                         <tr @key="u.Id">
                             <td>@u.Email</td>
@@ -3949,23 +4380,27 @@ MODIFIED: 05/27/2026 20:07:15
                                 @if (!u.IsApproved)
                                 {
                                     <button class="btn btn-sm btn-approve"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => ApproveAsync(u.Id)">Approve</button>
                                 }
                                 else if (u.Role != "Admin")
                                 {
                                     <button class="btn btn-sm btn-revoke"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => RevokeAsync(u.Id)">Revoke</button>
                                 }
 
                                 @if (u.Role != "Admin")
                                 {
                                     <button class="btn btn-sm btn-promote"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => PromoteAsync(u.Id)">Make Admin</button>
                                 }
 
                                 @if (u.Role != "Admin")
                                 {
                                     <button class="btn btn-sm btn-delete"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => DeleteAsync(u.Id)">Delete</button>
                                 }
                             </td>
@@ -3974,83 +4409,297 @@ MODIFIED: 05/27/2026 20:07:15
                 </tbody>
             </table>
         </div>
+
+        <nav class="pager" aria-label="Pagination">
+            <button class="btn btn-sm" data-testid="users-prev"
+                    disabled="@(!result.HasPrevious)" @onclick="PrevPage">
+                ← Prev
+            </button>
+            <span class="pager-info" data-testid="users-page-info">
+                Page @result.Page of @result.TotalPages
+                <span class="hide-sm">(@result.TotalCount users)</span>
+            </span>
+            <button class="btn btn-sm" data-testid="users-next"
+                    disabled="@(!result.HasNext)" @onclick="NextPage">
+                Next →
+            </button>
+        </nav>
     }
 </div>
 
 @code {
-    private List<UserRow>? users;
+    private PagedResult<UserAdminRow>? result;
     private string? error;
     private string? success;
+    private string? busyId;
+
+    private int page = 1;
+
+    private string filterEmail = "";
+    private string filterStatus = "";
+
+    private CancellationTokenSource? _debounceCts;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private UserAdminFilter BuildFilter()
+    {
+        bool? approved = filterStatus switch
+        {
+            "approved" => true,
+            "pending" => false,
+            _ => null
+        };
+        return new UserAdminFilter(
+            Email: string.IsNullOrWhiteSpace(filterEmail) ? null : filterEmail.Trim(),
+            IsApproved: approved);
+    }
 
     private async Task LoadAsync()
     {
         error = null;
-        var allUsers = UserManager.Users.OrderBy(u => u.Email).ToList();
-        var rows = new List<UserRow>();
-        foreach (var u in allUsers)
+        try
         {
-            var roles = await UserManager.GetRolesAsync(u);
-            rows.Add(new UserRow(
-                u.Id, u.Email ?? "", roles.Contains("Admin") ? "Admin" : "User",
-                u.IsApproved, u.CreatedAtUtc));
+            result = await UserAdmin.ListAsync(
+                BuildFilter(), page, UserAdmin.PageSize, CancellationToken.None);
+
+            // If a deletion emptied the last page, step back one.
+            if (result.TotalCount > 0 && result.Items.Count == 0 && page > 1)
+            {
+                page--;
+                result = await UserAdmin.ListAsync(
+                    BuildFilter(), page, UserAdmin.PageSize, CancellationToken.None);
+            }
         }
-        users = rows;
+        catch (Exception ex)
+        {
+            error = "Failed to load users. Please try again.";
+            Logger.LogError(ex, "Failed to load user list");
+        }
     }
+
+    private async Task OnFilterChanged()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+        try
+        {
+            await Task.Delay(300, token);
+            page = 1;
+            await LoadAsync();
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        filterEmail = "";
+        filterStatus = "";
+        page = 1;
+        await LoadAsync();
+    }
+
+    private async Task PrevPage() { page--; await LoadAsync(); }
+    private async Task NextPage() { page++; await LoadAsync(); }
+
+    // ── Per-row actions: mutate, then refresh ONLY that row ──────────────────
+    // We avoid reloading the whole page on every click (the old behaviour),
+    // which kept the render tree small and the circuit responsive at scale.
 
     private async Task ApproveAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        user.IsApproved = true;
-        await UserManager.UpdateAsync(user);
-        success = $"Approved {user.Email}.";
-        Logger.LogInformation("Approved user {Email}", user.Email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.ApproveAsync(userId, CancellationToken.None);
+            await RefreshRowAsync(userId);
+            success = "User approved.";
+        }
+        catch (Exception ex)
+        {
+            error = "Approve failed.";
+            Logger.LogError(ex, "Approve failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
     private async Task RevokeAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        user.IsApproved = false;
-        await UserManager.UpdateAsync(user);
-        success = $"Revoked approval for {user.Email}.";
-        Logger.LogInformation("Revoked approval for user {Email}", user.Email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.RevokeAsync(userId, CancellationToken.None);
+            await RefreshRowAsync(userId);
+            success = "Approval revoked.";
+        }
+        catch (Exception ex)
+        {
+            error = "Revoke failed.";
+            Logger.LogError(ex, "Revoke failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
     private async Task PromoteAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        await UserManager.RemoveFromRoleAsync(user, "User");
-        await UserManager.AddToRoleAsync(user, "Admin");
-        user.IsApproved = true;
-        await UserManager.UpdateAsync(user);
-        success = $"Promoted {user.Email} to Admin.";
-        Logger.LogInformation("Promoted user {Email} to Admin", user.Email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.PromoteToAdminAsync(userId, CancellationToken.None);
+            await RefreshRowAsync(userId);
+            success = "User promoted to Admin.";
+        }
+        catch (Exception ex)
+        {
+            error = "Promote failed.";
+            Logger.LogError(ex, "Promote failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
     private async Task DeleteAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        var email = user.Email;
-        await UserManager.DeleteAsync(user);
-        success = $"Deleted {email}.";
-        Logger.LogInformation("Deleted user {Email}", email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.DeleteAsync(userId, CancellationToken.None);
+            // A delete changes totals/paging, so a full (but still paged)
+            // reload is correct here.
+            await LoadAsync();
+            success = "User deleted.";
+        }
+        catch (Exception ex)
+        {
+            error = "Delete failed.";
+            Logger.LogError(ex, "Delete failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
-    private sealed record UserRow(
-        string Id, string Email, string Role, bool IsApproved, DateTime CreatedAtUtc);
+    /// <summary>
+    /// Replace a single row in the current page with its fresh state, without
+    /// re-querying or re-rendering the entire list. If the row no longer
+    /// matches the active filter, drop it from the view.
+    /// </summary>
+    private async Task RefreshRowAsync(string userId)
+    {
+        if (result is null) return;
+
+        var idx = result.Items.FindIndex(r => r.Id == userId);
+        if (idx < 0) return;
+
+        var fresh = await UserAdmin.GetRowAsync(userId, CancellationToken.None);
+        if (fresh is null)
+        {
+            result.Items.RemoveAt(idx);
+            return;
+        }
+
+        // Honour the status filter: e.g. after approving, a "pending"-filtered
+        // view should no longer show the row.
+        var stillMatches = filterStatus switch
+        {
+            "approved" => fresh.IsApproved,
+            "pending" => !fresh.IsApproved,
+            _ => true
+        };
+
+        if (stillMatches)
+            result.Items[idx] = fresh;
+        else
+            result.Items.RemoveAt(idx);
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
+}
+
+
+
+================================================================================
+FILE: Virginia/Components/Pages/Admin/UserManagement.razor.css
+SIZE: 1.15 KB
+MODIFIED: 05/29/2026 22:12:36
+================================================================================
+
+.user-filters {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.75rem 0;
+}
+
+.user-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-field label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #595959;
+    font-weight: 600;
+}
+
+.user-field input,
+.user-field select {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 16rem;
+    background: #fff;
+}
+
+.user-field select {
+    min-width: 10rem;
+}
+
+.user-field input:focus,
+.user-field select:focus {
+    outline: 2px solid #1565c0;
+    outline-offset: 1px;
+    border-color: #1565c0;
+}
+
+.pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 0;
+}
+
+.pager-info {
+    font-size: 0.85rem;
+    color: #444;
+}
+
+@media (max-width: 640px) {
+    .hide-sm {
+        display: none;
+    }
+
+    .user-field input,
+    .user-field select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .user-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }
 
 
@@ -6671,6 +7320,45 @@ public sealed class ChangePasswordFormModel
 
 
 ================================================================================
+FILE: Virginia/Data/UserAdminDtos.cs
+SIZE: 1.02 KB
+MODIFIED: 05/29/2026 22:12:36
+================================================================================
+
+namespace Virginia.Data;
+
+// ─── Admin user-management projection ────────────────────────────────────────
+
+public sealed record UserAdminRow(
+    string Id,
+    string Email,
+    bool IsAdmin,
+    bool IsApproved,
+    DateTime CreatedAtUtc)
+{
+    public string Role => IsAdmin ? "Admin" : "User";
+}
+
+// ─── Admin user filter ───────────────────────────────────────────────────────
+
+public sealed record UserAdminFilter(
+    string? Email = null,
+    bool? IsApproved = null,
+    bool? IsAdmin = null);
+
+// ─── Bound from configuration (Admin:UsersPageSize) ──────────────────────────
+
+public sealed class UserAdminOptions
+{
+    public const string SectionName = "Admin";
+
+    // Default 50. Clamped 1–200 at read time by the service.
+    public int UsersPageSize { get; set; } = 50;
+}
+
+
+
+================================================================================
 FILE: Virginia/Extensions/NaturalComparer.cs
 SIZE: 4.07 KB
 MODIFIED: 05/27/2026 19:10:10
@@ -6794,8 +7482,8 @@ public static class NaturalSortExtensions
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 8.08 KB
-MODIFIED: 05/29/2026 16:26:14
+SIZE: 8.33 KB
+MODIFIED: 05/29/2026 22:12:36
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -6846,8 +7534,13 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddCascadingAuthenticationState();
 
+// ── Application configuration ────────────────────────────────────────────────
+builder.Services.Configure<UserAdminOptions>(
+    builder.Configuration.GetSection(UserAdminOptions.SectionName));
+
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
@@ -6879,12 +7572,9 @@ var app = builder.Build();
 //// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
 //// ══════════════════════════════════════════════════════════════════════════════
 
-// ── Apply migrations + seed ──────────────────────────────────────────────────
+// ── Initialize DB + seed ─────────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    //var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //await db.Database.MigrateAsync();
-
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
 
@@ -8100,6 +8790,45 @@ public sealed record Toast(
 
 
 ================================================================================
+FILE: Virginia/Services/IUserAdminService.cs
+SIZE: 1.17 KB
+MODIFIED: 05/29/2026 22:12:36
+================================================================================
+
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+/// <summary>
+/// Admin-facing user operations. All queries are paged and projected so the
+/// admin UI never materializes the entire user table or issues a per-user
+/// role lookup (the N+1 pattern that previously collapsed the Blazor circuit
+/// at high user counts).
+/// </summary>
+public interface IUserAdminService
+{
+    /// <summary>The effective, clamped page size from configuration.</summary>
+    int PageSize { get; }
+
+    /// <summary>
+    /// One paged, filtered, role-resolved slice of users. Roles are resolved
+    /// with a single set-based join, not one query per user.
+    /// </summary>
+    Task<PagedResult<UserAdminRow>> ListAsync(
+        UserAdminFilter filter, int page, int pageSize, CancellationToken ct);
+
+    /// <summary>Fetch a single row (used to refresh one row after an action).</summary>
+    Task<UserAdminRow?> GetRowAsync(string userId, CancellationToken ct);
+
+    Task ApproveAsync(string userId, CancellationToken ct);
+    Task RevokeAsync(string userId, CancellationToken ct);
+    Task PromoteToAdminAsync(string userId, CancellationToken ct);
+    Task DeleteAsync(string userId, CancellationToken ct);
+}
+
+
+
+================================================================================
 FILE: Virginia/Services/ToastService.cs
 SIZE: 3.21 KB
 MODIFIED: 05/27/2026 19:10:34
@@ -8227,6 +8956,184 @@ public sealed partial class ToastService : IToastService, IDisposable
     [LoggerMessage(Level = LogLevel.Warning,
         Message = "Auto-dismiss for toast {ToastId} threw")]
     private static partial void LogAutoDismissFailed(ILogger logger, int toastId, Exception ex);
+}
+
+
+
+================================================================================
+FILE: Virginia/Services/UserAdminService.cs
+SIZE: 6.35 KB
+MODIFIED: 05/29/2026 22:12:36
+================================================================================
+
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Virginia.Data;
+
+namespace Virginia.Services;
+
+public sealed partial class UserAdminService(
+    AppDbContext db,
+    UserManager<AppUser> userManager,
+    IOptions<UserAdminOptions> options,
+    ILogger<UserAdminService> logger) : IUserAdminService
+{
+    private const string AdminRole = "Admin";
+    private const string UserRole = "User";
+    private const int MaxPageSize = 200;
+
+    // Clamp the configured page size into a sane band once, at construction.
+    public int PageSize { get; } = Math.Clamp(options.Value.UsersPageSize, 1, MaxPageSize);
+
+    // ── Read ──────────────────────────────────────────────────────────────
+
+    public async Task<PagedResult<UserAdminRow>> ListAsync(
+        UserAdminFilter filter, int page, int pageSize, CancellationToken ct)
+    {
+        var size = Math.Clamp(pageSize, 1, MaxPageSize);
+        var pageNo = Math.Max(page, 1);
+
+        // The set of user ids that hold the Admin role, expressed as an
+        // IQueryable subquery so it executes server-side (a single SQL
+        // statement), not one GetRolesAsync call per user.
+        var adminUserIds =
+            from ur in db.UserRoles
+            join r in db.Roles on ur.RoleId equals r.Id
+            where r.Name == AdminRole
+            select ur.UserId;
+
+        // Filter the ENTITY query first; project last (mirrors ContactService).
+        var query = userManager.Users.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Email))
+        {
+            var pattern = $"%{filter.Email.Trim()}%";
+            // EF.Functions.Like is case-insensitive on SQLite (same approach
+            // already used for contact filters).
+            query = query.Where(u => u.Email != null && EF.Functions.Like(u.Email, pattern));
+        }
+
+        if (filter.IsApproved is { } approved)
+            query = query.Where(u => u.IsApproved == approved);
+
+        if (filter.IsAdmin is { } isAdmin)
+        {
+            query = isAdmin
+                ? query.Where(u => adminUserIds.Contains(u.Id))
+                : query.Where(u => !adminUserIds.Contains(u.Id));
+        }
+
+        var totalCount = await query.CountAsync(ct);
+
+        // Stable ordering: pending first (so admins act on them), then email.
+        var items = await query
+            .OrderBy(u => u.IsApproved)
+            .ThenBy(u => u.Email)
+            .Skip((pageNo - 1) * size)
+            .Take(size)
+            .Select(u => new UserAdminRow(
+                u.Id,
+                u.Email ?? "",
+                adminUserIds.Contains(u.Id),
+                u.IsApproved,
+                u.CreatedAtUtc))
+            .ToListAsync(ct);
+
+        Log.ListedUsers(logger, items.Count, totalCount, pageNo);
+
+        return new PagedResult<UserAdminRow>(items, totalCount, pageNo, size);
+    }
+
+    public async Task<UserAdminRow?> GetRowAsync(string userId, CancellationToken ct)
+    {
+        var adminUserIds =
+            from ur in db.UserRoles
+            join r in db.Roles on ur.RoleId equals r.Id
+            where r.Name == AdminRole
+            select ur.UserId;
+
+        return await userManager.Users.AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new UserAdminRow(
+                u.Id,
+                u.Email ?? "",
+                adminUserIds.Contains(u.Id),
+                u.IsApproved,
+                u.CreatedAtUtc))
+            .FirstOrDefaultAsync(ct);
+    }
+
+    // ── Mutations ───────────────────────────────────────────────────────────
+
+    public async Task ApproveAsync(string userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null || user.IsApproved) return;
+
+        user.IsApproved = true;
+        await userManager.UpdateAsync(user);
+        Log.Approved(logger, user.Email ?? userId);
+    }
+
+    public async Task RevokeAsync(string userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null || !user.IsApproved) return;
+
+        user.IsApproved = false;
+        await userManager.UpdateAsync(user);
+        Log.Revoked(logger, user.Email ?? userId);
+    }
+
+    public async Task PromoteToAdminAsync(string userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null) return;
+
+        if (await userManager.IsInRoleAsync(user, UserRole))
+            await userManager.RemoveFromRoleAsync(user, UserRole);
+
+        if (!await userManager.IsInRoleAsync(user, AdminRole))
+            await userManager.AddToRoleAsync(user, AdminRole);
+
+        user.IsApproved = true;
+        await userManager.UpdateAsync(user);
+        Log.Promoted(logger, user.Email ?? userId);
+    }
+
+    public async Task DeleteAsync(string userId, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null) return;
+
+        var email = user.Email ?? userId;
+        await userManager.DeleteAsync(user);
+        Log.Deleted(logger, email);
+    }
+
+    // ── Source-generated logging (CA1848/CA1873) ────────────────────────────
+
+    private static partial class Log
+    {
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Listed {Count}/{Total} users (page {Page})")]
+        public static partial void ListedUsers(
+            ILogger logger, int count, int total, int page);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Approved user {Email}")]
+        public static partial void Approved(ILogger logger, string email);
+
+        [LoggerMessage(Level = LogLevel.Information,
+            Message = "Revoked approval for user {Email}")]
+        public static partial void Revoked(ILogger logger, string email);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Promoted user {Email} to Admin")]
+        public static partial void Promoted(ILogger logger, string email);
+
+        [LoggerMessage(Level = LogLevel.Information, Message = "Deleted user {Email}")]
+        public static partial void Deleted(ILogger logger, string email);
+    }
 }
 
 
@@ -8853,7 +9760,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/29/2026 12:30:22
-Total Files Exported: 84
+EXPORT COMPLETED: 05/29/2026 18:19:39
+Total Files Exported: 90
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
