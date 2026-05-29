@@ -46,8 +46,13 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddCascadingAuthenticationState();
 
+// ── Application configuration ────────────────────────────────────────────────
+builder.Services.Configure<UserAdminOptions>(
+    builder.Configuration.GetSection(UserAdminOptions.SectionName));
+
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
@@ -79,12 +84,9 @@ var app = builder.Build();
 //// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
 //// ══════════════════════════════════════════════════════════════════════════════
 
-// ── Apply migrations + seed ──────────────────────────────────────────────────
+// ── Initialize DB + seed ─────────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
 {
-    //var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //await db.Database.MigrateAsync();
-
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
 

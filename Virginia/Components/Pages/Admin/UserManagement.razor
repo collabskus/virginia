@@ -1,10 +1,11 @@
 @page "/admin/users"
-@using Microsoft.AspNetCore.Identity
 @using Virginia.Components.Common
+@using Virginia.Data
 @attribute [Authorize(Roles = "Admin")]
 @rendermode InteractiveServer
-@inject UserManager<AppUser> UserManager
+@inject IUserAdminService UserAdmin
 @inject ILogger<UserManagement> Logger
+@implements IDisposable
 
 <PageTitle>User Management | Virginia</PageTitle>
 
@@ -23,9 +24,37 @@
         <div class="banner banner-success" role="status">@success</div>
     }
 
-    @if (users is null)
+    <!-- Filters: email search + status. Server-side, so a user on any page
+         is reachable by typing their email — the test relies on this. -->
+    <div class="user-filters">
+        <div class="user-field">
+            <label for="fEmail">Email</label>
+            <input id="fEmail" type="text" placeholder="Search by email..."
+                   data-testid="user-filter-email"
+                   @bind="filterEmail" @bind:event="oninput"
+                   @bind:after="OnFilterChanged" />
+        </div>
+        <div class="user-field">
+            <label for="fStatus">Status</label>
+            <select id="fStatus" data-testid="user-filter-status"
+                    @bind="filterStatus" @bind:after="OnFilterChanged">
+                <option value="">Any</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+            </select>
+        </div>
+        <button class="btn btn-text" @onclick="ClearFilters">Clear filters</button>
+    </div>
+
+    @if (result is null)
     {
-        <div class="status">Loading users...</div>
+        <div class="status" aria-live="polite">Loading users...</div>
+    }
+    else if (result.TotalCount == 0)
+    {
+        <div class="status" aria-live="polite" data-testid="users-empty">
+            No users found.
+        </div>
     }
     else
     {
@@ -41,7 +70,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var u in users)
+                    @foreach (var u in result.Items)
                     {
                         <tr @key="u.Id">
                             <td>@u.Email</td>
@@ -61,23 +90,27 @@
                                 @if (!u.IsApproved)
                                 {
                                     <button class="btn btn-sm btn-approve"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => ApproveAsync(u.Id)">Approve</button>
                                 }
                                 else if (u.Role != "Admin")
                                 {
                                     <button class="btn btn-sm btn-revoke"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => RevokeAsync(u.Id)">Revoke</button>
                                 }
 
                                 @if (u.Role != "Admin")
                                 {
                                     <button class="btn btn-sm btn-promote"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => PromoteAsync(u.Id)">Make Admin</button>
                                 }
 
                                 @if (u.Role != "Admin")
                                 {
                                     <button class="btn btn-sm btn-delete"
+                                            disabled="@(busyId == u.Id)"
                                             @onclick="() => DeleteAsync(u.Id)">Delete</button>
                                 }
                             </td>
@@ -86,81 +119,214 @@
                 </tbody>
             </table>
         </div>
+
+        <nav class="pager" aria-label="Pagination">
+            <button class="btn btn-sm" data-testid="users-prev"
+                    disabled="@(!result.HasPrevious)" @onclick="PrevPage">
+                ← Prev
+            </button>
+            <span class="pager-info" data-testid="users-page-info">
+                Page @result.Page of @result.TotalPages
+                <span class="hide-sm">(@result.TotalCount users)</span>
+            </span>
+            <button class="btn btn-sm" data-testid="users-next"
+                    disabled="@(!result.HasNext)" @onclick="NextPage">
+                Next →
+            </button>
+        </nav>
     }
 </div>
 
 @code {
-    private List<UserRow>? users;
+    private PagedResult<UserAdminRow>? result;
     private string? error;
     private string? success;
+    private string? busyId;
+
+    private int page = 1;
+
+    private string filterEmail = "";
+    private string filterStatus = "";
+
+    private CancellationTokenSource? _debounceCts;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private UserAdminFilter BuildFilter()
+    {
+        bool? approved = filterStatus switch
+        {
+            "approved" => true,
+            "pending" => false,
+            _ => null
+        };
+        return new UserAdminFilter(
+            Email: string.IsNullOrWhiteSpace(filterEmail) ? null : filterEmail.Trim(),
+            IsApproved: approved);
+    }
 
     private async Task LoadAsync()
     {
         error = null;
-        var allUsers = UserManager.Users.OrderBy(u => u.Email).ToList();
-        var rows = new List<UserRow>();
-        foreach (var u in allUsers)
+        try
         {
-            var roles = await UserManager.GetRolesAsync(u);
-            rows.Add(new UserRow(
-                u.Id, u.Email ?? "", roles.Contains("Admin") ? "Admin" : "User",
-                u.IsApproved, u.CreatedAtUtc));
+            result = await UserAdmin.ListAsync(
+                BuildFilter(), page, UserAdmin.PageSize, CancellationToken.None);
+
+            // If a deletion emptied the last page, step back one.
+            if (result.TotalCount > 0 && result.Items.Count == 0 && page > 1)
+            {
+                page--;
+                result = await UserAdmin.ListAsync(
+                    BuildFilter(), page, UserAdmin.PageSize, CancellationToken.None);
+            }
         }
-        users = rows;
+        catch (Exception ex)
+        {
+            error = "Failed to load users. Please try again.";
+            Logger.LogError(ex, "Failed to load user list");
+        }
     }
+
+    private async Task OnFilterChanged()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+        try
+        {
+            await Task.Delay(300, token);
+            page = 1;
+            await LoadAsync();
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        filterEmail = "";
+        filterStatus = "";
+        page = 1;
+        await LoadAsync();
+    }
+
+    private async Task PrevPage() { page--; await LoadAsync(); }
+    private async Task NextPage() { page++; await LoadAsync(); }
+
+    // ── Per-row actions: mutate, then refresh ONLY that row ──────────────────
+    // We avoid reloading the whole page on every click (the old behaviour),
+    // which kept the render tree small and the circuit responsive at scale.
 
     private async Task ApproveAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        user.IsApproved = true;
-        await UserManager.UpdateAsync(user);
-        success = $"Approved {user.Email}.";
-        Logger.LogInformation("Approved user {Email}", user.Email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.ApproveAsync(userId, CancellationToken.None);
+            await RefreshRowAsync(userId);
+            success = "User approved.";
+        }
+        catch (Exception ex)
+        {
+            error = "Approve failed.";
+            Logger.LogError(ex, "Approve failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
     private async Task RevokeAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        user.IsApproved = false;
-        await UserManager.UpdateAsync(user);
-        success = $"Revoked approval for {user.Email}.";
-        Logger.LogInformation("Revoked approval for user {Email}", user.Email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.RevokeAsync(userId, CancellationToken.None);
+            await RefreshRowAsync(userId);
+            success = "Approval revoked.";
+        }
+        catch (Exception ex)
+        {
+            error = "Revoke failed.";
+            Logger.LogError(ex, "Revoke failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
     private async Task PromoteAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        await UserManager.RemoveFromRoleAsync(user, "User");
-        await UserManager.AddToRoleAsync(user, "Admin");
-        user.IsApproved = true;
-        await UserManager.UpdateAsync(user);
-        success = $"Promoted {user.Email} to Admin.";
-        Logger.LogInformation("Promoted user {Email} to Admin", user.Email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.PromoteToAdminAsync(userId, CancellationToken.None);
+            await RefreshRowAsync(userId);
+            success = "User promoted to Admin.";
+        }
+        catch (Exception ex)
+        {
+            error = "Promote failed.";
+            Logger.LogError(ex, "Promote failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
     private async Task DeleteAsync(string userId)
     {
-        success = null;
-        var user = await UserManager.FindByIdAsync(userId);
-        if (user is null) { error = "User not found."; return; }
-        var email = user.Email;
-        await UserManager.DeleteAsync(user);
-        success = $"Deleted {email}.";
-        Logger.LogInformation("Deleted user {Email}", email);
-        await LoadAsync();
+        success = null; error = null; busyId = userId;
+        try
+        {
+            await UserAdmin.DeleteAsync(userId, CancellationToken.None);
+            // A delete changes totals/paging, so a full (but still paged)
+            // reload is correct here.
+            await LoadAsync();
+            success = "User deleted.";
+        }
+        catch (Exception ex)
+        {
+            error = "Delete failed.";
+            Logger.LogError(ex, "Delete failed for {UserId}", userId);
+        }
+        finally { busyId = null; }
     }
 
-    private sealed record UserRow(
-        string Id, string Email, string Role, bool IsApproved, DateTime CreatedAtUtc);
+    /// <summary>
+    /// Replace a single row in the current page with its fresh state, without
+    /// re-querying or re-rendering the entire list. If the row no longer
+    /// matches the active filter, drop it from the view.
+    /// </summary>
+    private async Task RefreshRowAsync(string userId)
+    {
+        if (result is null) return;
+
+        var idx = result.Items.FindIndex(r => r.Id == userId);
+        if (idx < 0) return;
+
+        var fresh = await UserAdmin.GetRowAsync(userId, CancellationToken.None);
+        if (fresh is null)
+        {
+            result.Items.RemoveAt(idx);
+            return;
+        }
+
+        // Honour the status filter: e.g. after approving, a "pending"-filtered
+        // view should no longer show the row.
+        var stillMatches = filterStatus switch
+        {
+            "approved" => fresh.IsApproved,
+            "pending" => !fresh.IsApproved,
+            _ => true
+        };
+
+        if (stillMatches)
+            result.Items[idx] = fresh;
+        else
+            result.Items.RemoveAt(idx);
+    }
+
+    public void Dispose()
+    {
+        _debounceCts?.Cancel();
+        _debounceCts?.Dispose();
+    }
 }
