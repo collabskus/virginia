@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/30/2026 07:42:06
+Generated: 05/30/2026 07:51:50
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -7500,8 +7500,8 @@ public static class NaturalSortExtensions
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 9.57 KB
-MODIFIED: 05/30/2026 07:22:32
+SIZE: 9.75 KB
+MODIFIED: 05/30/2026 07:50:44
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -7555,6 +7555,9 @@ builder.Services.AddCascadingAuthenticationState();
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IToastService, ToastService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.Configure<UserAdminOptions>(
+    builder.Configuration.GetSection(UserAdminOptions.SectionName));
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
 
@@ -9830,7 +9833,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/30/2026 07:42:06
+EXPORT COMPLETED: 05/30/2026 07:51:50
 Total Files Exported: 90
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
