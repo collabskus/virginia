@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 05/29/2026 18:19:39
+Generated: 05/30/2026 06:34:32
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -5597,8 +5597,8 @@ MODIFIED: 05/27/2026 20:07:15
 
 ================================================================================
 FILE: Virginia/Components/Pages/Contacts/ContactDetail.razor.cs
-SIZE: 10.04 KB
-MODIFIED: 05/27/2026 19:14:43
+SIZE: 11 KB
+MODIFIED: 05/30/2026 10:30:00
 ================================================================================
 
 using System.Security.Claims;
@@ -5634,6 +5634,11 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
     private bool ConfirmingDelete { get; set; }
     private bool DeletedByOther { get; set; }
 
+    // Set on Dispose so any in-flight change handler that fires during teardown
+    // (a cross-user push arriving as this circuit is closing) bails out instead
+    // of touching disposed state or queuing a render on a dead dispatcher.
+    private bool _disposed;
+
     // Per-circuit identifier so we can ignore real-time echoes of our own writes.
     private readonly Guid _originId = Guid.NewGuid();
 
@@ -5661,6 +5666,7 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
         Notifier.Changed -= OnContactChanged;
     }
 
@@ -5668,6 +5674,7 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
 
     private void OnContactChanged(ContactChangeEvent evt)
     {
+        if (_disposed) return;
         if (IsNew || evt.ContactId != Id!.Value) return;
         if (evt.OriginId == _originId) return;
 
@@ -5676,9 +5683,15 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
 
     private async Task HandleChangeAsync(ContactChangeEvent evt)
     {
+        // The push may have been queued just before disposal; re-check on the
+        // circuit's own dispatcher before doing any work.
+        if (_disposed) return;
+
         switch (evt.Kind)
         {
             case ContactChangeKind.NoteAdded when evt.Note is not null:
+                // In-memory prepend — no DB round-trip. This is the hot path
+                // during heavy note fan-out and must stay allocation-light.
                 if (Detail is not null)
                 {
                     var newNotes = new List<NoteDto>(Detail.Notes.Count + 1) { evt.Note };
@@ -5689,6 +5702,10 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
                 break;
 
             case ContactChangeKind.PhotoChanged:
+                // NOTE: full DB reload on every observer circuit. Acceptable for
+                // photo changes (rare, and we need fresh bytes), but this is the
+                // costliest branch under fan-out — keep that in mind if photo
+                // events ever become high-frequency.
                 Detail = await ContactService.GetAsync(Id!.Value);
                 if (Detail is null) { DeletedByOther = true; break; }
                 PhotoVer++;
@@ -5714,6 +5731,7 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
                 break;
         }
 
+        if (_disposed) return;
         StateHasChanged();
     }
 
@@ -7482,8 +7500,8 @@ public static class NaturalSortExtensions
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 8.33 KB
-MODIFIED: 05/29/2026 22:12:36
+SIZE: 9.35 KB
+MODIFIED: 05/30/2026 10:30:00
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -7534,13 +7552,8 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddCascadingAuthenticationState();
 
-// ── Application configuration ────────────────────────────────────────────────
-builder.Services.Configure<UserAdminOptions>(
-    builder.Configuration.GetSection(UserAdminOptions.SectionName));
-
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
-builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
@@ -7551,8 +7564,43 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics => metrics.AddMeter(ContactTelemetry.ServiceName));
 
 // ── Blazor ───────────────────────────────────────────────────────────────────
+// HubOptions / CircuitOptions tuning: the default per-client parallel-invocation
+// cap is 1, which serializes every operation on a circuit. Under heavy real-time
+// fan-out (many circuits each re-rendering on every cross-user note/edit push),
+// that single-slot dispatch — combined with the default disconnected-circuit
+// retention of 100 — is what starts to wedge at ~100 concurrent live circuits.
+// Raising the parallel cap and the timeouts gives the dispatcher room to keep
+// up; raising MaxRetainedDisconnectedCircuits avoids evicting circuits that
+// briefly disconnect during a large batched fan-out.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        // Allow a circuit to process several queued invocations concurrently
+        // instead of strictly one-at-a-time. This is the single most important
+        // change for high concurrent-circuit counts.
+        options.MaximumParallelInvocationsPerClient = 10;
+
+        // Give SignalR more tolerance before declaring a busy circuit dead.
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+        options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+
+        // Larger inbound message cap for safety under load (default 32 KB).
+        options.MaximumReceiveMessageSize = 512 * 1024;
+    })
+    .AddCircuitOptions(options =>
+    {
+        // Default is 100. Raising this prevents eviction of circuits that
+        // briefly drop while the host is saturated mid-fan-out.
+        options.MaxRetainedDisconnectedCircuits = 256;
+
+        // Keep a disconnected circuit recoverable a bit longer than default.
+        options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
+
+        // Surface real errors to the client during testing/diagnosis.
+        options.DetailedErrors = true;
+    });
 
 var app = builder.Build();
 
@@ -7572,9 +7620,12 @@ var app = builder.Build();
 //// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
 //// ══════════════════════════════════════════════════════════════════════════════
 
-// ── Initialize DB + seed ─────────────────────────────────────────────────────
+// ── Apply migrations + seed ──────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
 {
+    //var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //await db.Database.MigrateAsync();
+
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
 
@@ -7619,17 +7670,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-
-// ── HTTPS redirect ───────────────────────────────────────────────────────────
-// Behind a container/reverse proxy we terminate at plain HTTP, so HTTPS
-// redirection must be opt-in. Set ENABLE_HTTPS_REDIRECT=true only when the
-// app itself is serving HTTPS directly.
-var enableHttpsRedirect =
-    app.Configuration.GetValue("ENABLE_HTTPS_REDIRECT", defaultValue: false);
-if (enableHttpsRedirect)
-{
-    app.UseHttpsRedirection();
-}
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -7727,8 +7768,8 @@ public sealed class AppClaimsPrincipalFactory(
 
 ================================================================================
 FILE: Virginia/Services/ContactChangeNotifier.cs
-SIZE: 1.23 KB
-MODIFIED: 05/27/2026 16:38:28
+SIZE: 2.58 KB
+MODIFIED: 05/30/2026 10:30:00
 ================================================================================
 
 namespace Virginia.Services;
@@ -7737,6 +7778,16 @@ namespace Virginia.Services;
 /// Default implementation of <see cref="IContactChangeNotifier"/>. Catches and
 /// logs subscriber exceptions individually so one broken subscriber can't take
 /// down the others (or the calling write).
+///
+/// Dispatch is deliberately decoupled from the caller's execution context. Each
+/// subscriber's <c>OnContactChanged</c> handler already marshals its own render
+/// onto its circuit via <c>InvokeAsync</c>, but the act of <em>invoking</em> the
+/// handlers used to run inline on the writer's circuit thread. With many live
+/// circuits, that synchronous fan-out (serialized by the per-circuit parallel
+/// invocation cap) is what makes the writer's own request block until every
+/// observer has been poked. We instead hand each handler invocation to the
+/// thread pool, so <see cref="Publish"/> returns to the writer immediately and
+/// the observer renders proceed on their own dispatchers in parallel.
 /// </summary>
 public sealed partial class ContactChangeNotifier(
     ILogger<ContactChangeNotifier> logger) : IContactChangeNotifier
@@ -7748,16 +7799,31 @@ public sealed partial class ContactChangeNotifier(
         var handlers = Changed;
         if (handlers is null) return;
 
-        foreach (var handler in handlers.GetInvocationList().Cast<Action<ContactChangeEvent>>())
+        // Snapshot the invocation list once. Subscribers may add/remove during
+        // dispatch (a circuit disposing mid-fan-out); the snapshot keeps us
+        // iterating a stable set.
+        var invocationList = handlers.GetInvocationList();
+
+        foreach (var del in invocationList)
         {
-            try
+            var handler = (Action<ContactChangeEvent>)del;
+
+            // Dispatch each subscriber off the caller's thread so the writer's
+            // circuit is not held while N observers are notified. The handler
+            // itself (ContactDetail.OnContactChanged) is cheap and immediately
+            // hands off to InvokeAsync on its own circuit, so this thread-pool
+            // work item is short-lived.
+            _ = Task.Run(() =>
             {
-                handler(evt);
-            }
-            catch (Exception ex)
-            {
-                Log.SubscriberFailed(logger, evt.ContactId, evt.Kind.ToString(), ex);
-            }
+                try
+                {
+                    handler(evt);
+                }
+                catch (Exception ex)
+                {
+                    Log.SubscriberFailed(logger, evt.ContactId, evt.Kind.ToString(), ex);
+                }
+            });
         }
     }
 
@@ -9760,7 +9826,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 05/29/2026 18:19:39
+EXPORT COMPLETED: 05/30/2026 06:34:32
 Total Files Exported: 90
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
