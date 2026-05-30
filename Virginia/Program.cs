@@ -49,6 +49,9 @@ builder.Services.AddCascadingAuthenticationState();
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IToastService, ToastService>();
+builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.Configure<UserAdminOptions>(
+    builder.Configuration.GetSection(UserAdminOptions.SectionName));
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
 
