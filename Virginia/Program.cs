@@ -87,7 +87,7 @@ builder.Services.AddRazorComponents()
     {
         // Default is 100. Raising this prevents eviction of circuits that
         // briefly drop while the host is saturated mid-fan-out.
-        options.MaxRetainedDisconnectedCircuits = 256;
+        options.DisconnectedCircuitMaxRetained = 256;
 
         // Keep a disconnected circuit recoverable a bit longer than default.
         options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
