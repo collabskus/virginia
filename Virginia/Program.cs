@@ -58,24 +58,28 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics => metrics.AddMeter(ContactTelemetry.ServiceName));
 
 // ── Blazor ───────────────────────────────────────────────────────────────────
-// HubOptions / CircuitOptions tuning: the default per-client parallel-invocation
-// cap is 1, which serializes every operation on a circuit. Under heavy real-time
-// fan-out (many circuits each re-rendering on every cross-user note/edit push),
-// that single-slot dispatch — combined with the default disconnected-circuit
-// retention of 100 — is what starts to wedge at ~100 concurrent live circuits.
-// Raising the parallel cap and the timeouts gives the dispatcher room to keep
-// up; raising MaxRetainedDisconnectedCircuits avoids evicting circuits that
-// briefly disconnect during a large batched fan-out.
+// Circuit / hub tuning for high concurrent-circuit counts.
+//
+// IMPORTANT: we deliberately do NOT raise MaximumParallelInvocationsPerClient
+// above its default of 1. A Blazor Server circuit is a single-threaded
+// rendering model — the renderer, EditContext, and AuthenticationStateProvider
+// all assume work is serialized onto the circuit's Dispatcher and are NOT
+// thread-safe. Allowing parallel invocations lets concurrent hub messages
+// interleave during circuit warm-up (most visibly on the first authenticated,
+// interactive page load), which faults the circuit before the page renders.
+//
+// The real throughput win for cross-user fan-out lives in ContactChangeNotifier:
+// it dispatches each subscriber off the writer's thread, so a write returns
+// immediately and the observer renders proceed on their own dispatchers. That
+// change does the heavy lifting; raising the parallel cap was both redundant
+// and actively harmful, so it is intentionally absent here.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddHubOptions(options =>
     {
-        // Allow a circuit to process several queued invocations concurrently
-        // instead of strictly one-at-a-time. This is the single most important
-        // change for high concurrent-circuit counts.
-        options.MaximumParallelInvocationsPerClient = 10;
-
         // Give SignalR more tolerance before declaring a busy circuit dead.
+        // These do not change the per-circuit threading contract; they only
+        // widen the timing windows under load.
         options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
         options.HandshakeTimeout = TimeSpan.FromSeconds(30);
         options.KeepAliveInterval = TimeSpan.FromSeconds(15);
