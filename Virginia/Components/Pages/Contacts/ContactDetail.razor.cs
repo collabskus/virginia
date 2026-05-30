@@ -31,6 +31,11 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
     private bool ConfirmingDelete { get; set; }
     private bool DeletedByOther { get; set; }
 
+    // Set on Dispose so any in-flight change handler that fires during teardown
+    // (a cross-user push arriving as this circuit is closing) bails out instead
+    // of touching disposed state or queuing a render on a dead dispatcher.
+    private bool _disposed;
+
     // Per-circuit identifier so we can ignore real-time echoes of our own writes.
     private readonly Guid _originId = Guid.NewGuid();
 
@@ -58,6 +63,7 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
 
     public void Dispose()
     {
+        _disposed = true;
         Notifier.Changed -= OnContactChanged;
     }
 
@@ -65,6 +71,7 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
 
     private void OnContactChanged(ContactChangeEvent evt)
     {
+        if (_disposed) return;
         if (IsNew || evt.ContactId != Id!.Value) return;
         if (evt.OriginId == _originId) return;
 
@@ -73,9 +80,15 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
 
     private async Task HandleChangeAsync(ContactChangeEvent evt)
     {
+        // The push may have been queued just before disposal; re-check on the
+        // circuit's own dispatcher before doing any work.
+        if (_disposed) return;
+
         switch (evt.Kind)
         {
             case ContactChangeKind.NoteAdded when evt.Note is not null:
+                // In-memory prepend — no DB round-trip. This is the hot path
+                // during heavy note fan-out and must stay allocation-light.
                 if (Detail is not null)
                 {
                     var newNotes = new List<NoteDto>(Detail.Notes.Count + 1) { evt.Note };
@@ -86,6 +99,10 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
                 break;
 
             case ContactChangeKind.PhotoChanged:
+                // NOTE: full DB reload on every observer circuit. Acceptable for
+                // photo changes (rare, and we need fresh bytes), but this is the
+                // costliest branch under fan-out — keep that in mind if photo
+                // events ever become high-frequency.
                 Detail = await ContactService.GetAsync(Id!.Value);
                 if (Detail is null) { DeletedByOther = true; break; }
                 PhotoVer++;
@@ -111,6 +128,7 @@ public sealed partial class ContactDetail : ComponentBase, IDisposable
                 break;
         }
 
+        if (_disposed) return;
         StateHasChanged();
     }
 

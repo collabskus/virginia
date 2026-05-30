@@ -46,13 +46,8 @@ builder.Services.AddAuthorizationBuilder()
 
 builder.Services.AddCascadingAuthenticationState();
 
-// ── Application configuration ────────────────────────────────────────────────
-builder.Services.Configure<UserAdminOptions>(
-    builder.Configuration.GetSection(UserAdminOptions.SectionName));
-
 // ── Application services ─────────────────────────────────────────────────────
 builder.Services.AddScoped<IContactService, ContactService>();
-builder.Services.AddScoped<IUserAdminService, UserAdminService>();
 builder.Services.AddScoped<IToastService, ToastService>();
 builder.Services.AddSingleton<ContactTelemetry>();
 builder.Services.AddSingleton<IContactChangeNotifier, ContactChangeNotifier>();
@@ -63,8 +58,43 @@ builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics => metrics.AddMeter(ContactTelemetry.ServiceName));
 
 // ── Blazor ───────────────────────────────────────────────────────────────────
+// HubOptions / CircuitOptions tuning: the default per-client parallel-invocation
+// cap is 1, which serializes every operation on a circuit. Under heavy real-time
+// fan-out (many circuits each re-rendering on every cross-user note/edit push),
+// that single-slot dispatch — combined with the default disconnected-circuit
+// retention of 100 — is what starts to wedge at ~100 concurrent live circuits.
+// Raising the parallel cap and the timeouts gives the dispatcher room to keep
+// up; raising MaxRetainedDisconnectedCircuits avoids evicting circuits that
+// briefly disconnect during a large batched fan-out.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+    .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        // Allow a circuit to process several queued invocations concurrently
+        // instead of strictly one-at-a-time. This is the single most important
+        // change for high concurrent-circuit counts.
+        options.MaximumParallelInvocationsPerClient = 10;
+
+        // Give SignalR more tolerance before declaring a busy circuit dead.
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+        options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+
+        // Larger inbound message cap for safety under load (default 32 KB).
+        options.MaximumReceiveMessageSize = 512 * 1024;
+    })
+    .AddCircuitOptions(options =>
+    {
+        // Default is 100. Raising this prevents eviction of circuits that
+        // briefly drop while the host is saturated mid-fan-out.
+        options.MaxRetainedDisconnectedCircuits = 256;
+
+        // Keep a disconnected circuit recoverable a bit longer than default.
+        options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(5);
+
+        // Surface real errors to the client during testing/diagnosis.
+        options.DetailedErrors = true;
+    });
 
 var app = builder.Build();
 
@@ -84,9 +114,12 @@ var app = builder.Build();
 //// ██  END ONE-TIME DEPLOYMENT BLOCK — DELETE ABOVE AFTER SUCCESSFUL DEPLOY  ██
 //// ══════════════════════════════════════════════════════════════════════════════
 
-// ── Initialize DB + seed ─────────────────────────────────────────────────────
+// ── Apply migrations + seed ──────────────────────────────────────────────────
 await using (var scope = app.Services.CreateAsyncScope())
 {
+    //var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    //await db.Database.MigrateAsync();
+
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await db.Database.EnsureCreatedAsync();
 
@@ -131,17 +164,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-
-// ── HTTPS redirect ───────────────────────────────────────────────────────────
-// Behind a container/reverse proxy we terminate at plain HTTP, so HTTPS
-// redirection must be opt-in. Set ENABLE_HTTPS_REDIRECT=true only when the
-// app itself is serving HTTPS directly.
-var enableHttpsRedirect =
-    app.Configuration.GetValue("ENABLE_HTTPS_REDIRECT", defaultValue: false);
-if (enableHttpsRedirect)
-{
-    app.UseHttpsRedirection();
-}
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
