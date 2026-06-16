@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 06/02/2026 07:42:21
+Generated: 06/16/2026 15:27:38
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -767,28 +767,29 @@ MODIFIED: 03/26/2026 16:10:37
 
 ================================================================================
 FILE: Directory.Packages.props
-SIZE: 1.44 KB
-MODIFIED: 05/29/2026 11:52:55
+SIZE: 1.5 KB
+MODIFIED: 06/16/2026 15:07:31
 ================================================================================
 
 <Project>
   <ItemGroup>
     <!-- EF Core -->
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8" />
+    <PackageVersion Include="MessagePack" Version="3.1.7" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
     <!-- Identity -->
-    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.9" />
     <!-- OpenTelemetry -->
-    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
-    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.15.2" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
     <!-- Azure Monitor (Application Insights) exporter -->
     <PackageVersion Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.5.0" />
     <!-- Aspire extensions (service discovery, resilience) -->
-    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.6.0" />
-    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.6.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+    <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.7.0" />
     <!-- Testing -->
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
@@ -1040,16 +1041,20 @@ MODIFIED: 03/26/2026 16:13:51
 
 ================================================================================
 FILE: Virginia.AppHost/Virginia.AppHost.csproj
-SIZE: 0.29 KB
-MODIFIED: 04/02/2026 10:57:51
+SIZE: 0.37 KB
+MODIFIED: 06/16/2026 15:08:01
 ================================================================================
 
-<Project Sdk="Aspire.AppHost.Sdk/13.2.1">
+<Project Sdk="Aspire.AppHost.Sdk/13.4.4">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <UserSecretsId>6587bc8b-aaa4-48f4-84f2-85a615267c18</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Virginia\Virginia.csproj" />
@@ -9833,7 +9838,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 06/02/2026 07:42:21
+EXPORT COMPLETED: 06/16/2026 15:27:38
 Total Files Exported: 90
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
