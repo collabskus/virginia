@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Aspire service defaults (OTEL, health checks, resilience, discovery) ─────
 builder.AddServiceDefaults();
 
+SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
+
 // ── EF Core + SQLite ─────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(
