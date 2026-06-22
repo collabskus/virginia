@@ -93,6 +93,47 @@ The application has two primary views:
 
 **Contact Detail** — Clicking a contact (or the "+ New Contact" button) opens a form with cards for basic info, emails, phones, addresses, and profile pictures. Child items can be added and removed dynamically.
 
+## Screenshots
+
+Here is a visual overview of Virginia's interfaces, workflows, and administrative features:
+
+### Authentication & Account Security
+
+| Login Screen | Login with "Remember Me" |
+| :---: | :---: |
+| ![Login page interface showing the username and password fields](docs/screenshots/login.png) | ![Login page showing the "Remember Me" checkbox checked for persistent sessions](docs/screenshots/login-remember-me.png) |
+
+| Update Password | Logout Confirmation |
+| :---: | :---: |
+| ![Account security settings panel displaying fields to update the user password](docs/screenshots/update-password.png) | ![Logout view confirming successful session termination](docs/screenshots/logout.png) |
+
+---
+
+### Directory Views & Filtering
+
+#### List View (Filters Collapsed)
+![Main application directory list view with the advanced search and filtering sidebar collapsed for a clean layout](docs/screenshots/list-view-filters-collapsed.png)
+
+#### List View (Filters Expanded)
+![Main application directory list view with the filtering sidebar expanded, showing fields for advanced searching and querying records](docs/screenshots/list-view-filters-expanded.png)
+
+---
+
+### Record Management
+
+#### Contact Details View
+![Detailed profile view for an individual contact showing comprehensive information fields](docs/screenshots/details-view.png)
+
+#### Save Successful Confirmation
+![Contact details view displaying a green success banner indicating that edits were successfully saved to the database](docs/screenshots/details-view-save-successful.png)
+
+---
+
+### Administration
+
+#### User Management Portal
+![Admin panel showing the user administration dashboard for managing application access, roles, and user accounts](docs/screenshots/admin-users.png)
+
 ---
 
 ## Technology Stack
