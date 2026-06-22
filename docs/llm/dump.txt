@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 06/22/2026 10:18:24
+Generated: 06/22/2026 10:23:33
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -4098,13 +4098,12 @@ MODIFIED: 05/27/2026 20:07:15
 
 ================================================================================
 FILE: Virginia/Components/Pages/Account/Login.razor
-SIZE: 2.76 KB
-MODIFIED: 05/27/2026 20:07:15
+SIZE: 2.73 KB
+MODIFIED: 06/22/2026 10:20:59
 ================================================================================
 
 @page "/account/login"
 @using Microsoft.AspNetCore.Identity
-@using Virginia.Components.Common
 @attribute [AllowAnonymous]
 @layout MainLayout
 @inject SignInManager<AppUser> SignInManager
@@ -7531,7 +7530,7 @@ public static class NaturalSortExtensions
 ================================================================================
 FILE: Virginia/Program.cs
 SIZE: 9.81 KB
-MODIFIED: 06/22/2026 10:14:57
+MODIFIED: 06/22/2026 10:19:38
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -7546,7 +7545,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ── Aspire service defaults (OTEL, health checks, resilience, discovery) ─────
 builder.AddServiceDefaults();
 
-SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
+SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());
 
 // ── EF Core + SQLite ─────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -9866,7 +9865,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 06/22/2026 10:18:24
+EXPORT COMPLETED: 06/22/2026 10:23:33
 Total Files Exported: 91
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
