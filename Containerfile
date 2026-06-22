@@ -20,7 +20,7 @@ RUN dotnet restore Virginia/Virginia.csproj
 RUN dotnet publish Virginia/Virginia.csproj \
     -c Release \
     -o /app/publish \
-    --no-restore \
+    -no-restore \
     /p:UseAppHost=false
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -28,6 +28,13 @@ RUN dotnet publish Virginia/Virginia.csproj \
 # ─────────────────────────────────────────────────────────────────────────────
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+
+# 1. INSTALL SYSTEM SQLITE DEPENDENCY (Run as root, which is default here)
+# We chain apt-get commands together and clean up the package cache immediately 
+# to keep the container layer as small as possible.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Kestrel listens on 8080 (plain HTTP); a proxy/host maps it outward.
 ENV ASPNETCORE_URLS=http://+:8080 \
