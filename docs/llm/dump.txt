@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 06/22/2026 10:23:33
+Generated: 06/22/2026 10:32:56
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -20,6 +20,15 @@ docs/llm/dump.txt
 docs/llm/vendor/claude-conversations.md
 docs/llm/vendor/files-2026-05-29.zip
 docs/llm/vendor/gemini.md
+docs/screenshots/admin-users.png
+docs/screenshots/details-view-save-successful.png
+docs/screenshots/details-view.png
+docs/screenshots/list-view-filters-collapsed.png
+docs/screenshots/list-view-filters-expanded.png
+docs/screenshots/login-remember-me.png
+docs/screenshots/login.png
+docs/screenshots/logout.png
+docs/screenshots/update-password.png
 Export.ps1
 README.md
 Virginia.AppHost/AppHost.cs
@@ -9865,7 +9874,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 06/22/2026 10:23:33
+EXPORT COMPLETED: 06/22/2026 10:32:56
 Total Files Exported: 91
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
