@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 06/22/2026 10:11:58
+Generated: 06/22/2026 10:16:27
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -769,14 +769,15 @@ MODIFIED: 03/26/2026 16:10:37
 
 ================================================================================
 FILE: Directory.Packages.props
-SIZE: 1.5 KB
-MODIFIED: 06/16/2026 15:07:31
+SIZE: 1.57 KB
+MODIFIED: 06/22/2026 10:13:16
 ================================================================================
 
 <Project>
   <ItemGroup>
     <!-- EF Core -->
     <PackageVersion Include="MessagePack" Version="3.1.7" />
+    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.3" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
     <!-- Identity -->
@@ -3060,8 +3061,8 @@ public sealed class UserAdminTestHarness : IAsyncDisposable
 
 ================================================================================
 FILE: Virginia.Tests/Virginia.Tests.csproj
-SIZE: 0.79 KB
-MODIFIED: 03/26/2026 20:58:05
+SIZE: 0.86 KB
+MODIFIED: 06/22/2026 10:13:54
 ================================================================================
 
 <Project Sdk="Microsoft.NET.Sdk">
@@ -3077,6 +3078,7 @@ MODIFIED: 03/26/2026 20:58:05
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
@@ -7528,8 +7530,8 @@ public static class NaturalSortExtensions
 
 ================================================================================
 FILE: Virginia/Program.cs
-SIZE: 9.75 KB
-MODIFIED: 05/30/2026 07:50:44
+SIZE: 9.81 KB
+MODIFIED: 06/22/2026 10:14:57
 ================================================================================
 
 using Microsoft.AspNetCore.Identity;
@@ -7543,6 +7545,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ── Aspire service defaults (OTEL, health checks, resilience, discovery) ─────
 builder.AddServiceDefaults();
+
+SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_sqlite3());
 
 // ── EF Core + SQLite ─────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -9241,8 +9245,8 @@ public sealed partial class UserAdminService(
 
 ================================================================================
 FILE: Virginia/Virginia.csproj
-SIZE: 0.7 KB
-MODIFIED: 03/26/2026 20:15:15
+SIZE: 0.76 KB
+MODIFIED: 06/22/2026 10:13:43
 ================================================================================
 
 <Project Sdk="Microsoft.NET.Sdk.Web">
@@ -9256,6 +9260,7 @@ MODIFIED: 03/26/2026 20:15:15
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
@@ -9861,7 +9866,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 06/22/2026 10:11:58
+EXPORT COMPLETED: 06/22/2026 10:16:28
 Total Files Exported: 91
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
