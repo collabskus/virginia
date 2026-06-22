@@ -130,6 +130,9 @@ Here is a visual overview of Virginia's interfaces, workflows, and administrativ
 #### Save Successful Confirmation
 ![Contact details view displaying a green success banner indicating that edits were successfully saved to the database](docs/screenshots/details-view-save-successful.png)
 
+#### Updated by another user - desktop view
+![Contact details view displaying an information banner indicating that another user has edited the contact that we are viewing](docs/screenshots/details-view-contact-updated-by-another-user-desktop.png)
+
 ---
 
 ### Administration
