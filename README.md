@@ -93,7 +93,10 @@ The application has two primary views:
 
 **Contact Detail** — Clicking a contact (or the "+ New Contact" button) opens a form with cards for basic info, emails, phones, addresses, and profile pictures. Child items can be added and removed dynamically.
 
-## Screenshots
+Here is a visual overview of Virginia's interfaces, workflows, and administrative features:
+
+<details>
+<summary><b>📷 Click to expand the screenshot gallery</b></summary>
 
 Here is a visual overview of Virginia's interfaces, workflows, and administrative features:
 
@@ -133,6 +136,8 @@ Here is a visual overview of Virginia's interfaces, workflows, and administrativ
 
 #### User Management Portal
 ![Admin panel showing the user administration dashboard for managing application access, roles, and user accounts](docs/screenshots/admin-users.png)
+
+</details>
 
 ---
 
