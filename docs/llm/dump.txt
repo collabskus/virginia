@@ -1,6 +1,6 @@
 ===============================================================================
 ASP.NET PROJECT EXPORT  (git-tracked files only)
-Generated: 06/22/2026 09:56:56
+Generated: 06/22/2026 10:11:58
 Project Path: D:\DEV\personal\Virginia
 ===============================================================================
 
@@ -17,6 +17,7 @@ Directory.Build.props
 Directory.Packages.props
 docs/llm/claude.md
 docs/llm/dump.txt
+docs/llm/vendor/claude-conversations.md
 docs/llm/vendor/files-2026-05-29.zip
 docs/llm/vendor/gemini.md
 Export.ps1
@@ -9860,7 +9861,7 @@ textarea:focus-visible,
 
 
 ===============================================================================
-EXPORT COMPLETED: 06/22/2026 09:56:56
+EXPORT COMPLETED: 06/22/2026 10:11:58
 Total Files Exported: 91
 Output File: D:\DEV\personal\Virginia\docs\llm\dump.txt
 ===============================================================================
